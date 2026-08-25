@@ -1,8 +1,11 @@
+# stays local, never push
 BOM.csv
 journal/
 pi/
-PCB/README.md
+PCB/*
+firmware/*
 
+# windows junk
 Thumbs.db
 desktop.ini
 ~$*
