@@ -50,7 +50,9 @@ the pump only does one job: get water to the top. after that it's all shape.
 | tower | ~800mm, ~1.35m with the tank |
 | tank | 5 gal, 18.9 L |
 | pump | 550 gph, 2.2m lift, throttled to 1-4 L/min with a bypass |
-| sensors | water level, water temp, air temp + humidity |
+| sensors | water level, water temp, air temp + humidity, ph, ec, flow |
+| dosing | 3 peristaltic pumps, nutrient a/b and ph down |
+| camera | pi camera module 3 wide, growth timelapse |
 | control | esp32 → mqtt → raspberry pi → sqlite + dashboard |
 | scaling | `MODULE_COUNT = 6` gives 24 plants, no redesign |
 

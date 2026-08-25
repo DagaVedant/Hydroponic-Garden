@@ -212,28 +212,36 @@ target **1 to 4 L/min**, continuous while the lights are on.
 
 ## electronics
 
-v1 is a **monitoring system, not a control system.** the pump isn't switched at all. the only thing
-the esp32 drives is the lights.
+the esp32 reads six sensors and drives two things: the lights and three dosing pumps. the main pump
+isn't switched at all, it runs continuously while the lights are on.
 
 ```
    raspberry pi
    ├── mosquitto (mqtt broker)
    ├── python ingest service ──► sqlite
    ├── web dashboard
+   ├── camera timelapse   pi camera module 3 wide
    └── phone alerts
           ▲ mqtt over wifi
    esp32
    ├── water level        jsn-sr04t ultrasonic, in the tank lid plate, non contact
    ├── water temp         ds18b20 waterproof probe
    ├── air temp + rh      sht31 / sht41, i2c
-   └── led control        mosfet on 24 V, pwm and photoperiod timer
+   ├── ph                 analog probe ──► ads1115 16 bit adc
+   ├── ec                 analog probe ──► ads1115 16 bit adc
+   ├── flow               yf-s201 hall effect, on the supply line after the bypass
+   ├── bottle level       3 float switches, one per concentrate bottle
+   ├── led control        mosfet on 24 V, pwm and photoperiod timer
+   └── dosing             3 peristaltic pumps on 12 V, 4 channel mosfet board
 
    pump ──► straight into a gfci outlet. no relay, no esp32 involvement.
 ```
 
-**deferred to v2:** flow sensor, solid state relay, float switch, ph, ec, camera, light sensor. the
-relay and float switch come back with pump cycling, which is the point where firmware first becomes
-capable of leaving the pump on by mistake.
+**the ph and ec probes cross-talk.** two powered probes in the same tank leak current through the
+solution and corrupt each other's readings. either buy isolated interface boards, or power them
+alternately in firmware: read ph, cut power, let it settle, then read ec.
+
+**nothing is deferred.** ph, ec, flow, dosing and the camera are all in this build.
 
 ### pump
 
@@ -264,23 +272,28 @@ and cavitate, so the excess gets **shed instead of throttled**.
 both valves and the bypass return live inside the tank, so nothing extra passes through the lid. the
 returning bypass flow also stirs the tank, which helps keep nutrients mixed.
 
-**tuning.** no flow meter in v1, so set it once at commissioning. disconnect the supply pipe above the
-lid, run into a jug for 30 seconds, and adjust until you collect 0.5 to 2 L. open the bypass first,
-trim with the ball valve, then leave them alone.
+**tuning.** the yf-s201 sits on the supply line after the bypass, so it reads what actually climbs the
+tower rather than raw pump output. open the bypass first, trim with the ball valve, and watch the
+dashboard until flow settles in the 1 to 4 L/min band. check it once against a jug and 30 seconds to
+confirm the sensor agrees with reality.
 
 **wrap the mpt in ptfe tape and don't overtighten.** npt is tapered and the pump housing is plastic.
 
 ### safety
 
-nothing in v1 can stop the pump automatically. that's deliberate. with the pump running continuously
-there's nothing to switch, so a relay and float switch would add a mains adjacent subsystem to guard a
-failure mode that doesn't exist yet.
+nothing can stop the main pump automatically. that's deliberate. it runs continuously while the lights
+are on, so there's nothing to switch, and a relay on the mains side would add a 120 v subsystem to
+guard a failure mode that doesn't exist. the dosing pumps are the opposite case: 12 v, driven directly
+by the esp32, and a stuck-on doser will happily empty a bottle of ph down into the tank. dose in short
+timed bursts with a hard cap on total runtime per hour, enforced in firmware.
 
 | layer | works if software is broken? |
 |---|---|
 | gfci outlet | **yes**, passive, mandatory |
 | drip tray under the whole assembly | **yes**, passive |
 | level sensor → low water phone alert | no |
+| dosing runtime cap per hour | no |
+| float switch per concentrate bottle | no |
 | mqtt heartbeat → missed → phone alert | no |
 | water temp out of range → phone alert | no |
 
@@ -332,10 +345,10 @@ out of range, missed heartbeat.
 
 - mosquitto broker, runs as a system service
 - `ingest/` mqtt subscriber, validates and writes to the db
-- `db/` schema and migrations. sqlite for v1, written so postgres is a swap not a rewrite
+- `db/` schema and migrations. sqlite for now. written so postgres is a swap not a rewrite
 - `web/` dashboard, live tiles and history
 - `alerts/` phone notifications
-- `cv/` v2 only, camera to plant measurements
+- `cv/` camera to plant measurements
 
 ```sql
 CREATE TABLE reading (
