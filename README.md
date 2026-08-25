@@ -41,6 +41,43 @@ the pump only does one job: get water to the top. after that it's all shape.
 | **no o-rings between modules** | nothing is pressurised. a step and recess lip catches splash and that's all it needs to do |
 | **every overhang is exactly 45°** | sockets, both floor cones, the grate ledge. nothing needs support material |
 
+## how it's wired
+
+```
+120 V AC wall
+  └── GFCI outlet
+        ├── pump, 30 W ................. always on, nothing switches it
+        ├── 24 V 100 W PSU
+        │     ├── LED strip, 4 x 800mm .. parallel, switched by a mosfet on the hat
+        │     └── 24 -> 12 V buck
+        │           └── 3 dosing pumps ... switched by the 4 channel mosfet board
+        └── Pi 5 V supply
+              └── raspberry pi 4b
+```
+
+the 24 v never touches the pi. both mosfets are low side, so the pi only ever drives a gate.
+
+```
+raspberry pi 4b
+  └── 40 pin header
+        └── hat   (the custom pcb)
+              │
+              ├── i2c ────┬── ads1115  0x48 ──┬── a0 ◄── ph board ◄── ph probe
+              │           │                   └── a1 ◄── ec board ◄── ec probe
+              │           └── sht31    0x44 ...... air temp + humidity
+              │
+              ├── 1-wire ──── ds18b20 ............ water temp, 4.7k pull-up
+              ├── uart ────── jsn-sr04t .......... tank level
+              │
+              ├── gpio18 pwm ── mosfet ........... led strip
+              ├── gpio x2 ───── mosfets .......... ph and ec probe power
+              └── gpio x3 ───── 4-ch board ....... dosing pumps 1 2 3
+```
+
+the ads1115 is a hard dependency. the pi has no analog input, so ph and ec reach it only through that
+chip. the two gpio switching probe power are the cross-talk fix: ph on, ec off, settle, sample. then
+swap. then both off.
+
 ## specs
 
 | | |
