@@ -1,5 +1,4 @@
 # stays local, never push
-BOM.csv
 journal/
 pi/
 PCB/*
