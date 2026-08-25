@@ -2,7 +2,7 @@
 
 a modular 3d printed hydroponic tower, with one pump, one pipe, and no pumps per level. the shape of the part is the entire system
 
-> **[onshape cad when i finish making it](#)** · **[spec](spec.md)** · **[parameters](parameters.md)**
+> **onshape cad when i finish making it** · **[spec](spec.md)** · **[parameters](parameters.md)**
 
 ## why
 
