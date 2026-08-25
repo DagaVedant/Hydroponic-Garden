@@ -1,11 +1,9 @@
-# stays local, never push
 BOM.csv
 journal/
 pi/
 PCB/*
 firmware/*
 
-# windows junk
 Thumbs.db
 desktop.ini
 ~$*
