@@ -15,7 +15,7 @@ a vertical hydroponic tower for indoor leafy greens and herbs. modular, 3d print
 - module is ⌀190 × 200mm
 - tower is ~800mm, ~1.35m with the tank
 - one pump, one pipe, gravity does the rest
-- `MODULE_COUNT = 6` gives 24 plants with no redesign
+- `MODULE_COUNT` is one number. a taller tower is a parameter change, not a redesign
 
 grown bare root. a net pot with a rockwool cube, no clay pebbles or bulk media. roots hang free in the
 chamber and get wet as water passes.
@@ -195,14 +195,24 @@ travels 60 to 85mm across the cone instead of the full chamber width. drop betwe
 
 ### supply pipe
 
-1/2" pvc sch40, ⌀21.34 outside. **one 200mm segment per module**, joined inside each pipe tunnel with
-an o-ring push coupler. segmenting is what lets you add or remove modules without cutting pipe.
+1/2" pvc sch40, ⌀21.34 outside. **one continuous length** from the pump to the tower top. no
+couplers, no joints anywhere along it.
 
-**the joints don't have to be watertight.** static head is only about 0.13 bar and any weep lands in
-the root chamber, which is the same nutrient solution it was already carrying. the hardest sealing
-problem in the design just isn't one.
+length is the tower plus the tank run. the tower is `#MODULE_COUNT * #MODULE_HEIGHT` = 800mm. below
+the lid plate it has to reach down past the tee and valve to the pump outlet, call it 250mm until i
+can measure it with the fittings in hand. so roughly **1.05m**, cut from the 10ft stock.
 
-a union and a ball valve sit just above the lid plate.
+**there is nothing to seal.** the old design segmented the pipe per module and accepted that the
+couplers might weep, on the grounds that a leak lands in the root chamber carrying the same solution
+it was already there. with one continuous pipe that argument isn't needed at all.
+
+**the cost is that changing module count means cutting a new pipe.** worth it. 10ft of stock is
+nearly three times what this tower needs, so it's a cut, not a redesign.
+
+**assembly.** stack the tower on the lid plate first, then drop the pipe down through the aligned
+pipe tunnels and glue it to the pump below. to service the pump, unscrew the gamma seal lid and lift
+tower, pipe, lid and pump out of the bucket as one unit. nothing separates, and it only needs about
+400mm of headroom to clear the bucket.
 
 ### flow
 
@@ -260,21 +270,27 @@ and cavitate, so the excess gets **shed instead of throttled**.
      pump (1/2" npt female)
        └── 1/2" mpt × slip pvc adapter
        └── short pvc stub
-       └── union                  ← lifts the pump out without cutting pipe
        └── tee
-             └── bypass valve ──► open pipe pointing down into the water
-       └── ball valve (fine trim)
+             └── ball valve ──► open pipe pointing down into the water
        ↓ through the bulkhead in the tank lid plate
    above the lid
        └── supply pipe up the tower
 ```
 
-both valves and the bypass return live inside the tank, so nothing extra passes through the lid. the
+the valve and the bypass return live inside the tank, so nothing extra passes through the lid. the
 returning bypass flow also stirs the tank, which helps keep nutrients mixed.
 
-**tuning.** no flow meter, so set it once at commissioning. disconnect the supply pipe above the lid,
-run into a jug for 30 seconds, and adjust until you collect 0.5 to 2 L. open the bypass first, trim
-with the ball valve, then leave them alone.
+**servicing the pump.** there's no union. the pipe is glued to the pump and stays on it permanently.
+to get at the pump i lift the whole tower off the bucket, unscrew the gamma seal lid, and the lid,
+pipe, tee and pump all come out together as one assembly.
+
+that's one fewer joint, and it was the worst one. a union sitting directly on the pump outlet carries
+full pump pressure and is the single most likely thing in the build to weep. lifting the tower off is
+a two minute job i'd rather do than own that joint.
+
+**tuning.** no flow meter, so set it once at commissioning. lift the tower off the bucket so the pipe
+end is exposed and pointing up, run it into a jug for 30 seconds, and open or close the bypass valve
+until you collect 0.5 to 2 L. then leave it alone.
 
 **wrap the mpt in ptfe tape and don't overtighten.** npt is tapered and the pump housing is plastic.
 
@@ -284,7 +300,7 @@ nothing can stop the main pump automatically. that's deliberate. it runs continu
 are on, so there's nothing to switch, and a relay on the mains side would add a 120 v subsystem to
 guard a failure mode that doesn't exist. the dosing pumps are the opposite case: 12 v, driven directly
 by the pi, and a stuck-on doser will happily empty a bottle of ph down into the tank. dose in short
-timed bursts with a hard cap on total runtime per hour, enforced in firmware.
+timed bursts with a hard cap on total runtime per hour, enforced in the control service.
 
 | layer | works if software is broken? |
 |---|---|
@@ -292,6 +308,8 @@ timed bursts with a hard cap on total runtime per hour, enforced in firmware.
 | drip tray under the whole assembly | **yes**, passive |
 | level sensor → low water phone alert | no |
 | dosing runtime cap per hour | no |
+| ec doesn't rise after a nutrient dose → alert | no |
+| ph doesn't move after a ph down dose → alert | no |
 | mqtt heartbeat → missed → phone alert | no |
 | water temp out of range → phone alert | no |
 
@@ -302,6 +320,10 @@ bare roots that kills plants in hours. partial substitute worth implementing: **
 the 1 to 2 L held in the tower drains back and the tank level rises.** an unexplained level rise is a
 strong pump failure signal. it's a heuristic, not a measurement, but it costs nothing and uses a
 sensor already fitted.
+
+the dosers get the same treatment. there are no float switches in the concentrate bottles, so an
+empty bottle is caught by watching whether ec and ph actually respond to a dose. that catches a
+slipped tube and a dead pump too, which a float switch never would.
 
 ### lighting
 
