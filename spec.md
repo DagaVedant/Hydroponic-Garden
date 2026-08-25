@@ -212,36 +212,36 @@ target **1 to 4 L/min**, continuous while the lights are on.
 
 ## electronics
 
-the esp32 reads six sensors and drives two things: the lights and three dosing pumps. the main pump
-isn't switched at all, it runs continuously while the lights are on.
+the pi reads five sensors and drives two things: the lights and three dosing pumps. everything hangs
+off one custom hat on the 40 pin header. there's no microcontroller. the main pump isn't switched at
+all, it runs continuously while the lights are on.
 
 ```
-   raspberry pi
-   ├── mosquitto (mqtt broker)
-   ├── python ingest service ──► sqlite
+   raspberry pi 4b        lives in the control box, at the tower
+   ├── mosquitto (mqtt broker, local)
+   ├── control service ──► reads the hat, drives lights and dosing
+   ├── ingest service ──► sqlite
    ├── web dashboard
-   ├── camera timelapse   pi camera module 3 wide
-   └── phone alerts
-          ▲ mqtt over wifi
-   esp32
-   ├── water level        jsn-sr04t ultrasonic, in the tank lid plate, non contact
-   ├── water temp         ds18b20 waterproof probe
-   ├── air temp + rh      sht31 / sht41, i2c
-   ├── ph                 analog probe ──► ads1115 16 bit adc
-   ├── ec                 analog probe ──► ads1115 16 bit adc
-   ├── flow               yf-s201 hall effect, on the supply line after the bypass
-   ├── bottle level       3 float switches, one per concentrate bottle
-   ├── led control        mosfet on 24 V, pwm and photoperiod timer
-   └── dosing             3 peristaltic pumps on 12 V, 4 channel mosfet board
+   ├── phone alerts
+   └── custom hat on the 40 pin header
+       ├── water level    jsn-sr04t ultrasonic, uart mode, in the tank lid plate
+       ├── water temp     ds18b20 waterproof probe, 1-wire
+       ├── air temp + rh  sht31 / sht41, i2c
+       ├── ph             analog probe ──► ads1115 16 bit adc, i2c
+       ├── ec             analog probe ──► ads1115 16 bit adc, i2c
+       ├── led control    mosfet on 24 V, pwm and photoperiod timer
+       └── dosing         3 peristaltic pumps on 12 V, 4 channel mosfet board
 
-   pump ──► straight into a gfci outlet. no relay, no esp32 involvement.
+   pump ──► straight into a gfci outlet. nothing switches it.
 ```
 
 **the ph and ec probes cross-talk.** two powered probes in the same tank leak current through the
 solution and corrupt each other's readings. either buy isolated interface boards, or power them
 alternately in firmware: read ph, cut power, let it settle, then read ec.
 
-**nothing is deferred.** ph, ec, flow, dosing and the camera are all in this build.
+**no camera and no flow sensor.** ph, ec and dosing are all in this build. the camera needs a mount
+600mm off the tower axis to clear the foliage and that's a part i haven't designed. flow is set once by
+hand at commissioning instead of being measured continuously.
 
 ### pump
 
@@ -272,10 +272,9 @@ and cavitate, so the excess gets **shed instead of throttled**.
 both valves and the bypass return live inside the tank, so nothing extra passes through the lid. the
 returning bypass flow also stirs the tank, which helps keep nutrients mixed.
 
-**tuning.** the yf-s201 sits on the supply line after the bypass, so it reads what actually climbs the
-tower rather than raw pump output. open the bypass first, trim with the ball valve, and watch the
-dashboard until flow settles in the 1 to 4 L/min band. check it once against a jug and 30 seconds to
-confirm the sensor agrees with reality.
+**tuning.** no flow meter, so set it once at commissioning. disconnect the supply pipe above the lid,
+run into a jug for 30 seconds, and adjust until you collect 0.5 to 2 L. open the bypass first, trim
+with the ball valve, then leave them alone.
 
 **wrap the mpt in ptfe tape and don't overtighten.** npt is tapered and the pump housing is plastic.
 
@@ -284,7 +283,7 @@ confirm the sensor agrees with reality.
 nothing can stop the main pump automatically. that's deliberate. it runs continuously while the lights
 are on, so there's nothing to switch, and a relay on the mains side would add a 120 v subsystem to
 guard a failure mode that doesn't exist. the dosing pumps are the opposite case: 12 v, driven directly
-by the esp32, and a stuck-on doser will happily empty a bottle of ph down into the tank. dose in short
+by the pi, and a stuck-on doser will happily empty a bottle of ph down into the tank. dose in short
 timed bursts with a hard cap on total runtime per hour, enforced in firmware.
 
 | layer | works if software is broken? |
@@ -293,7 +292,6 @@ timed bursts with a hard cap on total runtime per hour, enforced in firmware.
 | drip tray under the whole assembly | **yes**, passive |
 | level sensor → low water phone alert | no |
 | dosing runtime cap per hour | no |
-| float switch per concentrate bottle | no |
 | mqtt heartbeat → missed → phone alert | no |
 | water temp out of range → phone alert | no |
 
@@ -310,21 +308,23 @@ sensor already fitted.
 24 V full spectrum led strip in **aluminium channel** clipped to the four ribs. the thermal path isn't
 optional.
 
-about 60 W total for 16 leafy plants. 14 to 16 hours a day, esp32 timed, pwm dimmable. the channel is
+about 60 W total for 16 leafy plants. 14 to 16 hours a day, pi timed, pwm dimmable. the channel is
 bought, printed clips hold it on.
 
 ---
 
 ## software
 
-### firmware — `firmware/`
+### control service, `pi/control/`
 
-platformio, arduino framework.
+python, runs as a systemd service. talks to the hat over i2c, 1-wire, uart and gpio. no separate
+firmware, because there's no separate microcontroller.
 
 - sensor drivers behind one interface, each publishing `{value, unit, timestamp, valid}`
-- non blocking main loop, no `delay()` in the control path
-- ota updates, you'll reflash this a lot
-- watchdog enabled
+- non blocking loop. dosing and pwm run on their own timers
+- systemd restarts it on crash, the pi hardware watchdog is the backstop
+- **dosing runtime capped per hour, enforced here.** a stuck doser is the one fault that can wreck a
+  whole tank of solution
 
 **never publish a reading without `valid`.** a failed probe reads as a plausible number, and a
 plausible wrong number is worse than a gap.
@@ -333,9 +333,11 @@ mqtt topics:
 
 ```
 hydro/sensor/water/level      hydro/sensor/water/temp
+hydro/sensor/water/ph         hydro/sensor/water/ec
 hydro/sensor/air/temp         hydro/sensor/air/humidity
-hydro/state/lights            hydro/state/fault
-hydro/cmd/lights
+hydro/state/lights            hydro/state/dosing
+hydro/state/fault             hydro/cmd/lights
+hydro/cmd/dose
 ```
 
 alerts to implement: level too low, **level rose unexpectedly** (probable pump failure), water temp
@@ -348,7 +350,6 @@ out of range, missed heartbeat.
 - `db/` schema and migrations. sqlite for now. written so postgres is a swap not a rewrite
 - `web/` dashboard, live tiles and history
 - `alerts/` phone notifications
-- `cv/` camera to plant measurements
 
 ```sql
 CREATE TABLE reading (

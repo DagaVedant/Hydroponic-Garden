@@ -52,8 +52,7 @@ the pump only does one job: get water to the top. after that it's all shape.
 | pump | 550 gph, 2.2m lift, throttled to 1-4 L/min with a bypass |
 | sensors | water level, water temp, air temp + humidity, ph, ec, flow |
 | dosing | 3 peristaltic pumps, nutrient a/b and ph down |
-| camera | pi camera module 3 wide, growth timelapse |
-| control | esp32 → mqtt → raspberry pi → sqlite + dashboard |
+| control | raspberry pi 4b + custom hat → mqtt → sqlite + dashboard |
 | scaling | `MODULE_COUNT = 6` gives 24 plants, no redesign |
 
 ## repo
@@ -63,5 +62,4 @@ the pump only does one job: get water to the top. after that it's all shape.
 | [spec.md](spec.md) | the design. structure, water path, electronics, software |
 | [parameters.md](parameters.md) | every dimension, straight from the onshape variable studio |
 | [CAD/](CAD/) | step exports and the part list |
-| `PCB/` | esp32 sensor carrier board, not started |
-| `firmware/` | esp32, platformio, not started |
+| `PCB/` | raspberry pi hat, not started |
