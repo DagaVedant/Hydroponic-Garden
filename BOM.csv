@@ -1,14 +1,14 @@
 Item,Description,Qty,Unit Price USD,Total USD,Item link,Why I need it,Supplier,Status,Notes
 ALREADY OWN,no cost. these are on hand,,,,,,,,
-5 gal bucket,Nutrient tank. 302mm OD x 368mm tall / 18.9 L,1,0.00,0.00,,Holds the 18.9 L the tower recirculates. No reservoir means no loop,Home Depot,OWNED,Standard Homer Bucket
-GROWNEER SML-630 submersible pump,550 GPH / 2.2m max lift / 30W / 120V AC,1,0.00,0.00,,The only thing in the build that moves water. Everything after it is gravity,Amazon,OWNED,1/2in NPT female outlet
-1/2in PVC Schedule 40 pipe 10ft,Supply pipe up the tower. 21.34mm OD,1,0.00,0.00,,Carries water from the pump to the top of the tower in one unbroken run,Home Depot,OWNED,One continuous length. about 1.05m cut from the 10ft stock
-Raspberry Pi 4B,MQTT broker / SQLite / web dashboard,1,0.00,0.00,,Runs everything. Broker control loop database dashboard and alerts,Amazon,OWNED,Already have it
+5 gal bucket,Nutrient tank. 302mm OD x 368mm tall / 18.9 L,1,0.00,0.00,N/A,Holds the 18.9 L the tower recirculates. No reservoir means no loop,N/A,OWNED,Already have it
+GROWNEER SML-630 submersible pump,550 GPH / 2.2m max lift / 30W / 120V AC,1,0.00,0.00,N/A,The only thing in the build that moves water. Everything after it is gravity,N/A,OWNED,Already have it
+1/2in PVC Schedule 40 pipe 10ft,Supply pipe up the tower. 21.34mm OD,1,0.00,0.00,N/A,Carries water from the pump to the top of the tower in one unbroken run,N/A,OWNED,Already have it
+Raspberry Pi 4B,MQTT broker / SQLite / web dashboard,1,0.00,0.00,N/A,Runs everything. Broker control loop database dashboard and alerts,N/A,OWNED,Already have it
 ,SUBTOTAL,,,0.00,,,,,
 ,,,,,,,,,
 SELF FUNDED,not part of the funding ask,,,,,,,,
-PLA and PETG filament,Overture 2kg combo. 1kg pla plus 1kg petg per pack,2,30.00,60.00,,Petg for anything that lives in water. Pla for prototypes and the grates which are consumable,Amazon,SELF-FUNDED,2 packs is 2kg of each. A 4 module tower is roughly 3kg so expect to buy more petg. Self funded. Price estimate
-,SUBTOTAL,,,60.00,,,,,
+PLA and PETG filament,need around 2-3kg of filament (no funding because idk exactly how much i would need),2,0.00,0.00,N/A,Petg for anything that lives in water. Pla for prototypes and the grates which are consumable,N/A,SELF-FUNDED,Self funded.
+,SUBTOTAL,,,0.00,,,,,
 ,,,,,,,,,
 PARTS I STILL NEED,the funding request,,,,,,,,
 2in slotted mesh net pots (60-pack),Plant holders. Lip 52.8mm / base 30.5mm / height 50.3mm measured,1,13.00,13.00,,Every socket in the tower is cut to this pot's taper. Change the pot and all 4 modules need a respin,Walmart,TO BUY,Same model i already measured so the socket taper stays valid. Walmart blocks automated fetching so i need to paste the link myself. Price estimate
