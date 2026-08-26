@@ -1,16 +1,18 @@
+ALREADY OWN,table 1 of 3,,,,,,,,
 Item,Description,Qty,Unit Price USD,Total USD,Item link,Why I need it,Supplier,Status,Notes
-ALREADY OWN,no cost. these are on hand,,,,,,,,
 5 gal bucket,Nutrient tank. 302mm OD x 368mm tall / 18.9 L,1,0.00,0.00,,Holds the 18.9 L the tower recirculates. No reservoir means no loop,Home Depot,OWNED,Standard Homer Bucket
 GROWNEER SML-630 submersible pump,550 GPH / 2.2m max lift / 30W / 120V AC,1,0.00,0.00,,The only thing in the build that moves water. Everything after it is gravity,Amazon,OWNED,1/2in NPT female outlet
 1/2in PVC Schedule 40 pipe 10ft,Supply pipe up the tower. 21.34mm OD,1,0.00,0.00,,Carries water from the pump to the top of the tower in one unbroken run,Home Depot,OWNED,One continuous length. about 1.05m cut from the 10ft stock
 Raspberry Pi 4B,MQTT broker / SQLite / web dashboard,1,0.00,0.00,,Runs everything. Broker control loop database dashboard and alerts,Amazon,OWNED,Already have it
-,SUBTOTAL,,,0.00,,,,,
+SUBTOTAL,,,,0.00,,,,,
 ,,,,,,,,,
-SELF FUNDED,not part of the funding ask,,,,,,,,
+SELF FUNDED,table 2 of 3,,,,,,,,
+Item,Description,Qty,Unit Price USD,Total USD,Item link,Why I need it,Supplier,Status,Notes
 PLA and PETG filament,Overture 2kg combo. 1kg pla plus 1kg petg per pack,2,30.00,60.00,,Petg for anything that lives in water. Pla for prototypes and the grates which are consumable,Amazon,SELF-FUNDED,2 packs is 2kg of each. A 4 module tower is roughly 3kg so expect to buy more petg. Self funded. Price estimate
-,SUBTOTAL,,,60.00,,,,,
+SUBTOTAL,,,,60.00,,,,,
 ,,,,,,,,,
-PARTS I STILL NEED,the funding request,,,,,,,,
+PARTS I STILL NEED,table 3 of 3,,,,,,,,
+Item,Description,Qty,Unit Price USD,Total USD,Item link,Why I need it,Supplier,Status,Notes
 2in slotted mesh net pots (60-pack),Plant holders. Lip 52.8mm / base 30.5mm / height 50.3mm measured,1,13.00,13.00,,Every socket in the tower is cut to this pot's taper. Change the pot and all 4 modules need a respin,Walmart,TO BUY,Same model i already measured so the socket taper stays valid. Walmart blocks automated fetching so i need to paste the link myself. Price estimate
 1/2in PVC MPT x Slip adapter,Pump outlet to PVC,1,0.59,0.59,,Pump outlet is threaded and the pipe is slip. Nothing connects without it,Home Depot,TO BUY,Charlotte PVC021090600HD. Lost the original
 PVC bypass tee / ball valve / fittings,Sheds excess pump flow back to the tank,1,12.00,12.00,,The pump makes roughly 10x the flow the tower wants. Without the bypass it pushes against a closed line and cooks itself,Home Depot,TO BUY,No union. the pipe stays glued to the pump and comes out with it
@@ -37,4 +39,4 @@ GFCI adapter,Yellow Jacket 2762. 120V 15A single outlet gfci with manual reset,1
 PCB fabrication,Custom raspberry pi hat. 2 layer,1,0.00,0.00,,Everything between the pi and the tower lives on this board. The adc and every mosfet are on it,JLCPCB,TBD,idk yet. fill this in once the board is finished and i have a real quote
 M5 threaded rod 1m,18-8 stainless fully threaded DIN 975. one per corner,4,9.00,36.00,,Clamps the whole stack in compression. Replaces 16 heat set inserts and 16 bolts,Amazon,TO BUY,Cut each to about 890mm. Stainless because the tower sits in a humid room. Price estimate
 M5 nyloc nuts and washers,8 nyloc nuts and 8 washers. 2 per rod,1,10.00,10.00,,Holds the rods in tension. Nyloc because a tower next to a pump will vibrate plain nuts loose,Amazon,TO BUY,No link yet. Washers matter here since the clearance hole is deliberately oversized. Price estimate
-,TOTAL FUNDING REQUEST,,,527.59,,,,,
+TOTAL FUNDING REQUEST,,,,527.59,,,,,
