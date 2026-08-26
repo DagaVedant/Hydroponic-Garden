@@ -96,9 +96,9 @@ i broke it up into sections here so its easier to see what values for what part 
 | `ROD_DIA` | Length | `5 mm` |
 | `ROD_COUNT` | Number | `4` |
 | `ROD_CLEARANCE_DIA` | Length | `6.5 mm` |
-| `ROD_CIRCLE_DIA` | Length | `#MODULE_DIA + #ROD_BOSS_DIA / 2` |
 | `ROD_BOSS_DIA` | Length | `16 mm` |
 | `ROD_BOSS_HEIGHT` | Length | `20 mm` |
+| `ROD_CIRCLE_DIA` | Length | `#MODULE_DIA + #ROD_BOSS_DIA / 2` |
 | `ROD_LENGTH` | Length | `#TOWER_HEIGHT + 90 mm` |
 | `PIN_DIA` | Length | `5 mm` |
 | `PIN_COUNT` | Number | `2` |
