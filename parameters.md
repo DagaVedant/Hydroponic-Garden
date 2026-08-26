@@ -116,3 +116,8 @@ i broke it up into sections here so its easier to see what values for what part 
 | `BUCKET_DIA` | Length | `302 mm` |
 | `BUCKET_HEIGHT` | Length | `368 mm` |
 | `TANK_PLATE_DIA` | Length | `235 mm` |
+| `MAX_FILL_DEPTH` | Length | `250 mm` |
+| `SENSOR_RISER_HEIGHT` | Length | `150 mm` |
+| `SENSOR_RISER_OFFSET` | Length | `60 mm` |
+| `SENSOR_PROBE_DIA` | Length | `22 mm` |
+| `SENSOR_MOUNT_DIA` | Length | `#SENSOR_PROBE_DIA + 1 mm` |

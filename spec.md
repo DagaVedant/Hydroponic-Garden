@@ -63,7 +63,8 @@ is what makes the tower scale.
 | **tie rod** | m5 stainless rod running the full tower height. clamps the whole stack in compression |
 | **rod boss** | ⌀16 pad at each end of every rib that a tie rod passes through |
 | **drain base** | bottom part. sends the last module's water back to the tank |
-| **tank lid plate** | printed disc in the gamma seal lid. carries the pipe, level sensor, temp probe |
+| **tank lid plate** | printed disc in the gamma seal lid. carries the pipe, sensor riser, temp probe |
+| **sensor riser** | 150mm post on the tank plate that holds the level sensor above its blind zone |
 | **corner rail** | clip on channel for the led strip and cables |
 | **supply pipe** | 1/2" pvc from the pump to the tower lid. bought, not printed |
 | **tank** | 5 gal bucket, 18.9 L |
@@ -251,7 +252,7 @@ all, it runs continuously while the lights are on.
    ├── web dashboard
    ├── phone alerts
    └── custom hat on the 40 pin header
-       ├── water level    jsn-sr04t ultrasonic, uart mode, in the tank lid plate
+       ├── water level    jsn-sr04t ultrasonic, uart mode, on a 150mm riser
        ├── water temp     ds18b20 waterproof probe, 1-wire
        ├── air temp + rh  sht31 / sht41, i2c
        ├── ph             analog probe ──► ads1115 16 bit adc, i2c
@@ -311,6 +312,46 @@ until you collect 0.5 to 2 L. then leave it alone.
 
 **wrap the mpt in ptfe tape and don't overtighten.** npt is tapered and the pump housing is plastic.
 
+### level sensor riser
+
+the jsn-sr04t has a **200mm blind zone**. it cannot report anything closer than that. mounted flush
+in the tank plate it would be useless exactly when the tank is full, which is the reading that
+matters most.
+
+the bucket is 368 tall with a bore near ⌀290. that's about 66 cm² of surface, so:
+
+| fill | depth | air gap above water |
+|---|---|---|
+| 18.9 L brim full | 286mm | **82mm** |
+| 16.5 L | 250mm | 118mm |
+| 15 L | 227mm | 141mm |
+
+every one of those is inside the blind zone. so the sensor goes on a **150mm riser** and the tank
+gets a **250mm fill line** rather than being filled to the brim:
+
+```
+   sensor ─────────────────────  518mm above the bucket floor
+     │
+     │  268mm  ← full tank reading. 68mm clear of the blind zone
+     │
+   ══╪══════════════════════════  250mm max fill line, about 16.5 L
+     │
+     │  518mm  ← empty tank reading
+   ──┴──────────────────────────  0mm, bucket floor
+```
+
+usable span is 268 to 518mm, which maps the whole working range of the tank.
+
+**it sits 60mm off the tank axis**, as close to centre as the pipe bulkhead allows. dead centre is
+where the supply pipe goes.
+
+**open bracket, not a tube.** the beam angle is 75°, so a narrow stilling well would just echo off
+its own walls. in open air the water surface is the nearest and flattest reflector, so its echo
+returns first and strongest. the pipe and the bucket wall return later and weaker.
+
+**filter it in software anyway.** take a median of several readings and reject anything outside the
+268 to 518 band. a cheap ultrasonic in a narrow bucket will throw the occasional false echo.
+
 ### safety
 
 nothing can stop the main pump automatically. that's deliberate. it runs continuously while the lights
@@ -344,11 +385,17 @@ slipped tube and a dead pump too, which a float switch never would.
 
 ### lighting
 
-12 V full spectrum led strip in **aluminium channel** clipped to the four ribs. the thermal path isn't
-optional.
+12 V white led strip in **aluminium channel** clipped to the four ribs. the thermal path isn't
+optional, and it's the reason the strip is **not** an ip65 one. a silicone jacket sits between the
+pcb and the aluminium and insulates it. at 17 W/m that heat has to go somewhere, so a bare strip in a
+capped channel is both cooler and better protected than waterproof tape lying exposed.
 
-about 60 W total for 16 leafy plants. 14 to 16 hours a day, pi timed, pwm dimmable. the channel is
-bought, printed clips hold it on.
+**17 W/m**, so the 3.2m across four rails draws about **54 W**. 14 to 16 hours a day, pi timed, pwm
+dimmable. the channel is bought, printed clips hold it on.
+
+**buy on watts per metre, never on led count.** the first strip i picked advertised 1200 leds and
+turned out to be 29 W for the whole 5m reel, which is 5.8 W/m. that's 24 milliwatts per led. it would
+have delivered 19 W across 16 plants and grown pale leggy lettuce.
 
 **12 v, not 24.** grow strips are almost all 12 v, and the dosing pumps are 12 v too, so the whole
 build runs off one rail. no buck converter, and one 4 channel mosfet board drives the lights and all
