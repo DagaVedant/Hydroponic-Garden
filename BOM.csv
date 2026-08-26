@@ -1,9 +1,18 @@
 Item,Description,Qty,Unit Price USD,Total USD,Item link,Why I need it,Supplier,Status,Notes
-2in slotted mesh net pots (60-pack),Plant holders. Lip 52.8mm / base 30.5mm / height 50.3mm measured,1,13.00,13.00,,Every socket in the tower is cut to this pot's taper. Change the pot and all 4 modules need a respin,Walmart,TO BUY,Same model i already measured so the socket taper stays valid. Walmart blocks automated fetching so i need to paste the link myself. Price estimate
+ALREADY OWN,no cost. these are on hand,,,,,,,,
 5 gal bucket,Nutrient tank. 302mm OD x 368mm tall / 18.9 L,1,0.00,0.00,,Holds the 18.9 L the tower recirculates. No reservoir means no loop,Home Depot,OWNED,Standard Homer Bucket
 GROWNEER SML-630 submersible pump,550 GPH / 2.2m max lift / 30W / 120V AC,1,0.00,0.00,,The only thing in the build that moves water. Everything after it is gravity,Amazon,OWNED,1/2in NPT female outlet
-1/2in PVC MPT x Slip adapter,Pump outlet to PVC,1,0.59,0.59,,Pump outlet is threaded and the pipe is slip. Nothing connects without it,Home Depot,TO BUY,Charlotte PVC021090600HD. Lost the original
 1/2in PVC Schedule 40 pipe 10ft,Supply pipe up the tower. 21.34mm OD,1,0.00,0.00,,Carries water from the pump to the top of the tower in one unbroken run,Home Depot,OWNED,One continuous length. about 1.05m cut from the 10ft stock
+Raspberry Pi 4B,MQTT broker / SQLite / web dashboard,1,0.00,0.00,,Runs everything. Broker control loop database dashboard and alerts,Amazon,OWNED,Already have it
+,SUBTOTAL,,,0.00,,,,,
+,,,,,,,,,
+SELF FUNDED,not part of the funding ask,,,,,,,,
+PLA and PETG filament,Overture 2kg combo. 1kg pla plus 1kg petg per pack,2,30.00,60.00,,Petg for anything that lives in water. Pla for prototypes and the grates which are consumable,Amazon,SELF-FUNDED,2 packs is 2kg of each. A 4 module tower is roughly 3kg so expect to buy more petg. Self funded. Price estimate
+,SUBTOTAL,,,60.00,,,,,
+,,,,,,,,,
+PARTS I STILL NEED,the funding request,,,,,,,,
+2in slotted mesh net pots (60-pack),Plant holders. Lip 52.8mm / base 30.5mm / height 50.3mm measured,1,13.00,13.00,,Every socket in the tower is cut to this pot's taper. Change the pot and all 4 modules need a respin,Walmart,TO BUY,Same model i already measured so the socket taper stays valid. Walmart blocks automated fetching so i need to paste the link myself. Price estimate
+1/2in PVC MPT x Slip adapter,Pump outlet to PVC,1,0.59,0.59,,Pump outlet is threaded and the pipe is slip. Nothing connects without it,Home Depot,TO BUY,Charlotte PVC021090600HD. Lost the original
 PVC bypass tee / ball valve / fittings,Sheds excess pump flow back to the tank,1,12.00,12.00,,The pump makes roughly 10x the flow the tower wants. Without the bypass it pushes against a closed line and cooks itself,Home Depot,TO BUY,No union. the pipe stays glued to the pump and comes out with it
 1/2in bulkhead fitting,SC Aquariums 1/2in bulkhead kit. sch 40 pvc with gaskets,1,10.00,10.00,,Watertight pass-through where the pipe crosses the tank lid. Otherwise the tank is open around the pipe,Hardware,TO BUY,Goes through the printed tank lid plate which is flat so no curved surface problem. Price estimate
 Gamma Seal lid,Gamma2 seal lid. fits 3.5 to 7 gal buckets,1,11.00,11.00,,Gives the bucket a screw-on lid that the printed tank plate can mount into,Home Depot,TO BUY,Needs a rubber mallet to seat the threaded ring. Measure the centre opening against TANK_PLATE_DIA 235mm on arrival. Price estimate
@@ -24,9 +33,8 @@ ADS1115 16-bit I2C ADC,Clean analog reads for the pH and EC boards,1,10.00,10.00
 12V peristaltic dosing pump,ALAMSCN 12V peristaltic pump 100mL/min. 2 per pack with L bracket,2,28.00,56.00,,Doses nutrient a nutrient b and ph down without me standing there with a measuring cup,Amazon,TO BUY,2 packs gives 4 pumps. 3 used plus 1 spare. Each pack ships 16ft of 3mm ID tubing so 32ft total and no separate spare tubing line needed. Price estimate
 4-channel MOSFET driver board,4 channel mosfet pwm driver. optocoupler isolated. 10A per channel,1,14.00,14.00,,Drives all four loads: the led strip and the three dosing pumps. The pi cannot switch 12V itself,Amazon,TO BUY,One board for everything now that led and dosers share a 12V rail. Optocoupler isolation protects the pi. Price estimate
 1L HDPE bottles with caps,LUERFLEX 1L narrow mouth hdpe reagent bottles. 4 per pack,1,16.00,16.00,,Holds each concentrate. The cap carries the pump intake tube and a vent hole,Amazon,TO BUY,4 per pack and i need 3 so one spare. Drill each cap for the intake tube and a vent. Price estimate
-Raspberry Pi 4B,MQTT broker / SQLite / web dashboard,1,0.00,0.00,,Runs everything. Broker control loop database dashboard and alerts,Amazon,OWNED,Already have it
 GFCI adapter,Yellow Jacket 2762. 120V 15A single outlet gfci with manual reset,1,18.00,18.00,,A 120 V pump sits in an open tank of water. This is the only thing between that and a shock,Hardware,TO BUY,Manual reset on purpose. Auto reset would re-energise a pump sitting in water without anyone looking at it. Price estimate
-PLA and PETG filament,Overture 2kg combo. 1kg pla plus 1kg petg per pack,2,30.00,60.00,,Petg for anything that lives in water. Pla for prototypes and the grates which are consumable,Amazon,SELF-FUNDED,2 packs is 2kg of each. A 4 module tower is roughly 3kg so expect to buy more petg. Self funded. Price estimate
 PCB fabrication,Custom raspberry pi hat. 2 layer,1,0.00,0.00,,Everything between the pi and the tower lives on this board. The adc and every mosfet are on it,JLCPCB,TBD,idk yet. fill this in once the board is finished and i have a real quote
 M5 threaded rod 1m,18-8 stainless fully threaded DIN 975. one per corner,4,9.00,36.00,,Clamps the whole stack in compression. Replaces 16 heat set inserts and 16 bolts,Amazon,TO BUY,Cut each to about 890mm. Stainless because the tower sits in a humid room. Price estimate
 M5 nyloc nuts and washers,8 nyloc nuts and 8 washers. 2 per rod,1,10.00,10.00,,Holds the rods in tension. Nyloc because a tower next to a pump will vibrate plain nuts loose,Amazon,TO BUY,No link yet. Washers matter here since the clearance hole is deliberately oversized. Price estimate
+,TOTAL FUNDING REQUEST,,,527.59,,,,,
