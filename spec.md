@@ -60,6 +60,8 @@ is what makes the tower scale.
 | **gutter** | ring channel where the two cones meet. collects everything |
 | **drip holes** | eight ⌀8 holes in the gutter that feed the next module's spreader |
 | **joint lip** | step and recess rim where modules stack. catches splash, not a pressure seal |
+| **tie rod** | m5 stainless rod running the full tower height. clamps the whole stack in compression |
+| **rod boss** | ⌀16 pad at each end of every rib that a tie rod passes through |
 | **drain base** | bottom part. sends the last module's water back to the tank |
 | **tank lid plate** | printed disc in the gamma seal lid. carries the pipe, level sensor, temp probe |
 | **corner rail** | clip on channel for the led strip and cables |
@@ -80,16 +82,31 @@ diameter, never a radius.
 
 **pipe tunnel** runs up the middle. ⌀29 outside, ⌀23 bore, full height. the pvc pipe slides through
 it and **water never touches the inside**, so there's no pipe-through-water seal to get right
-anywhere in the design. the stacked tunnels are also the tower's compression column.
+anywhere in the design. the stacked tunnels also stiffen the tower against bending.
 
 **four ribs** run up the outside at 45° between the sockets. 14 wide, 8 thick. they take bending,
-carry the module-to-module bolts and alignment pins, and hold the led channel and cable rail.
+carry the tie rods, hold the alignment pins, and mount the led channel and cable rail.
+
+each rib has a **⌀16 boss at its top and bottom end**, 20 tall, with a ⌀6.5 hole through it. that's
+the only place a rod passes through plastic. in between it runs in open air alongside the rib. a rod
+in tension can't buckle, so it needs no support along its length, and 20mm of hole prints straight
+where 200mm would wander off axis.
 
 ### how modules stack
 
-- 4 × m4 bolts into brass heat set inserts, one per rib
+- **4 × m5 tie rods** run the full height of the tower, drain base to tower lid, nyloc nuts and
+  washers at both ends. tighten the top nuts and the whole stack goes into compression
+- rods sit on a ⌀198 circle at 45°, clear of every socket and outside the wet chamber
 - circular lip self centres them, 2 × ⌀5 pins set the rotation
 - 2.5mm step and recess joint lip, 0.3mm clearance
+
+**no bolts and no heat set inserts.** bolted joints load plastic in pull-out, which is the direction
+it's worst at, and petg creeps under sustained load so they work loose over months. rods load the
+whole column in compression instead. 4 rods and 8 nuts replace 32 pieces, there's no soldering iron
+in the build, and nothing is melted into a part i might want to recycle later.
+
+**the clearance hole is ⌀6.5 on a ⌀5 rod on purpose.** a rod crosses four modules over 800mm and
+printed hole positions won't agree that closely. the washers cover the slop.
 
 **no o-rings.** the cascade isn't pressurised. the lip catches splash and that's all it needs to do.
 
@@ -239,8 +256,8 @@ all, it runs continuously while the lights are on.
        ├── air temp + rh  sht31 / sht41, i2c
        ├── ph             analog probe ──► ads1115 16 bit adc, i2c
        ├── ec             analog probe ──► ads1115 16 bit adc, i2c
-       ├── led control    mosfet on 24 V, pwm and photoperiod timer
-       └── dosing         3 peristaltic pumps on 12 V, 4 channel mosfet board
+       ├── led control    ch1 of the 4 channel mosfet board, pwm and photoperiod
+       └── dosing         3 peristaltic pumps on ch2 3 and 4
 
    pump ──► straight into a gfci outlet. nothing switches it.
 ```
@@ -327,11 +344,15 @@ slipped tube and a dead pump too, which a float switch never would.
 
 ### lighting
 
-24 V full spectrum led strip in **aluminium channel** clipped to the four ribs. the thermal path isn't
+12 V full spectrum led strip in **aluminium channel** clipped to the four ribs. the thermal path isn't
 optional.
 
 about 60 W total for 16 leafy plants. 14 to 16 hours a day, pi timed, pwm dimmable. the channel is
 bought, printed clips hold it on.
+
+**12 v, not 24.** grow strips are almost all 12 v, and the dosing pumps are 12 v too, so the whole
+build runs off one rail. no buck converter, and one 4 channel mosfet board drives the lights and all
+three dosers. the cost is 5 a instead of 2.5 a, which only matters if the runs get long. they don't.
 
 ---
 

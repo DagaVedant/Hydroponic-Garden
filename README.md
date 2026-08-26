@@ -39,23 +39,25 @@ the pump only does one job: get water to the top. after that it's all shape.
 | **net pots sit on a taper, not their lip** | the lip gives ~1.5mm of ledge, less than the error in the vendor's own spec sheet |
 | **the supply pipe has no joints at all** | one continuous length from the pump to the top, running in a dry tunnel through every module. nothing to seal, nothing to weep |
 | **no o-rings between modules** | nothing is pressurised. a step and recess lip catches splash and that's all it needs to do |
+| **four tie rods, no bolts** | m5 rods clamp the whole stack in compression. plastic is far better in compression than in pull-out, and nothing gets melted into a part i might want to recycle |
 | **every overhang is exactly 45°** | sockets, both floor cones, the grate ledge. nothing needs support material |
 
 ## how it's wired
 
 ```
 120 V AC wall
-  └── GFCI outlet
+  └── GFCI outlet, manual reset
         ├── pump, 30 W ................. always on, nothing switches it
-        ├── 24 V 100 W PSU
-        │     ├── LED strip, 4 x 800mm .. parallel, switched by a mosfet on the hat
-        │     └── 24 -> 12 V buck
-        │           └── 3 dosing pumps ... switched by the 4 channel mosfet board
+        ├── 12 V 100 W PSU  ............ one rail for everything
+        │     ├── LED strip, 4 x 800mm .. wired in parallel, 5 A total
+        │     └── 3 dosing pumps ........ 12 V
+        │           both switched by the 4 channel mosfet board on the hat
         └── Pi 5 V supply
               └── raspberry pi 4b
 ```
 
-the 24 v never touches the pi. both mosfets are low side, so the pi only ever drives a gate.
+led strip and dosers share one 12 v rail, so there's no buck converter and no second mosfet
+board. the 12 v never touches the pi. switching is low side, so the pi only ever drives a gate.
 
 ```
 raspberry pi 4b
@@ -69,9 +71,9 @@ raspberry pi 4b
               ├── 1-wire ──── ds18b20 ............ water temp, 4.7k pull-up
               ├── uart ────── jsn-sr04t .......... tank level
               │
-              ├── gpio18 pwm ── mosfet ........... led strip
               ├── gpio x2 ───── mosfets .......... ph and ec probe power
-              └── gpio x3 ───── 4-ch board ....... dosing pumps 1 2 3
+              └── gpio x4 ───── 4-ch board ──┬── ch1 pwm ... led strip
+                                             └── ch2 3 4 ... dosing pumps
 ```
 
 the ads1115 is a hard dependency. the pi has no analog input, so ph and ec reach it only through that
