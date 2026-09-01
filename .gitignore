@@ -1,9 +1,7 @@
-# stays local, never push
 journal/
 pi/
 PCB/*
 
-# windows junk
 Thumbs.db
 desktop.ini
 ~$*
