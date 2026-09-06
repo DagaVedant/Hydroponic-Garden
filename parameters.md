@@ -41,7 +41,7 @@ i broke it up into sections here so its easier to see what values for what part 
 | `SOCKET_COUNT` | Number | `4` |
 | `SOCKET_ANGLE` | Angle | `45 deg` |
 | `SOCKET_HEIGHT` | Length | `125 mm` |
-| `SOCKET_FACE_OFFSET` | Length | `8 mm` |
+| `SOCKET_FACE_OFFSET` | Length | `26 mm` |
 | `SOCKET_TUBE_LENGTH` | Length | `22 mm` |
 | `SOCKET_TUBE_WALL` | Length | `3 mm` |
 | `SOCKET_TOP_DIA` | Length | `50.6 mm` |
@@ -74,8 +74,8 @@ i broke it up into sections here so its easier to see what values for what part 
 | `FLOOR_SLOPE` | Angle | `45 deg` |
 | `FLOOR_HEIGHT_AT_WALL` | Length | `#GUTTER_LIP_HEIGHT + (#CHAMBER_RADIUS - #GUTTER_OUTER_DIA / 2)` |
 | `FLOOR_PEAK_HEIGHT` | Length | `#GUTTER_LIP_HEIGHT + (#GUTTER_INNER_DIA / 2 - #PIPE_TUNNEL_RADIUS)` |
-| `DRIP_HOLE_DIA` | Length | `8 mm` |
-| `DRIP_HOLE_COUNT` | Number | `8` |
+| `DRIP_HOLE_DIA` | Length | `10 mm` |
+| `DRIP_HOLE_COUNT` | Number | `4` |
 | `DRIP_HOLE_CIRCLE_DIA` | Length | `#GUTTER_RADIUS * 2` |
 
 ## grate
@@ -93,7 +93,7 @@ i broke it up into sections here so its easier to see what values for what part 
 
 | name | type | value |
 |---|---|---|
-| `ROD_DIA` | Length | `5 mm` |
+| `ROD_DIA` | Length | `4.83 mm` |
 | `ROD_COUNT` | Number | `4` |
 | `ROD_CLEARANCE_DIA` | Length | `6.5 mm` |
 | `ROD_BOSS_DIA` | Length | `16 mm` |

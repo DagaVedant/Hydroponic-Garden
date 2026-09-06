@@ -18,7 +18,7 @@ the pump only does one job: get water to the top. after that it's all shape.
             ┌─────────────────────────────▼─────────────┐
             │  spreader ──► 4 spouts ──► walls          │  repeats,
             │  roots ──► grate ──► sloped floor         │  identically,
-            │  gutter ──► 8 drip holes ────────────────►│  every module
+            │  gutter ──► 4 drip holes ────────────────►│  every module
             └───────────────────────────────────────────┘
                               ▼
                          back to the tank
@@ -28,7 +28,7 @@ the pump only does one job: get water to the top. after that it's all shape.
 2. the ring lands on a **spreader**, a cone with four spouts aimed at the four plant sockets
 3. water runs down the walls, past the hanging roots, through a **grate**
 4. the floor is **two 45° cones meeting at a ring gutter**. everything collects there and drops
-   through 8 holes onto the next module's spreader
+   through 4 holes, one under each socket, onto the next module's spreader
 5. because every module re-collects and re-distributes, **module 4 gets watered like module 1**
 
 ## design decisions worth knowing
@@ -39,8 +39,8 @@ the pump only does one job: get water to the top. after that it's all shape.
 | **net pots sit on a taper, not their lip** | the lip gives ~1.5mm of ledge, less than the error in the vendor's own spec sheet |
 | **the supply pipe has no joints at all** | one continuous length from the pump to the top, running in a dry tunnel through every module. nothing to seal, nothing to weep |
 | **no o-rings between modules** | nothing is pressurised. a step and recess lip catches splash and that's all it needs to do |
-| **four tie rods, no bolts** | m5 rods clamp the whole stack in compression. plastic is far better in compression than in pull-out, and nothing gets melted into a part i might want to recycle |
-| **every overhang is exactly 45°** | sockets, both floor cones, the grate ledge. nothing needs support material |
+| **four tie rods, no bolts** | #10-24 rods clamp the whole stack in compression. plastic is far better in compression than in pull-out, and nothing gets melted into a part i might want to recycle |
+| **every overhang is exactly 45°** | sockets, both floor cones, the grate ledge. measured on the solid, nothing at all falls between 46° and 89°, so it prints with supports off |
 
 ## how it's wired
 
@@ -85,10 +85,10 @@ swap. then both off.
 | | |
 |---|---|
 | plants | 16, four modules of four |
-| module | ⌀190 × 200mm, pla/petg |
+| module | ⌀190 × 200mm, pla/petg. prints turned 45° on the bed, 214 × 214 × 202 |
 | tower | ~800mm, ~1.35m with the tank |
 | tank | 5 gal, 18.9 L |
-| pump | 550 gph, 2.2m lift, throttled to 1-4 L/min with a bypass |
+| pump | 550 gph, 2.2m lift, throttled to 1-3.5 L/min with a bypass |
 | sensors | water level, water temp, air temp + humidity, ph, ec |
 | dosing | 3 peristaltic pumps, nutrient a/b and ph down |
 | control | raspberry pi 4b + custom hat → mqtt → sqlite + dashboard |

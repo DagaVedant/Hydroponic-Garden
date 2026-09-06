@@ -32,7 +32,7 @@ one pump lifts water to the top. from there the shape of each part does the work
               ┌───────────────────────────────────▼───────────────┐
               │  water spreader ──► 4 spouts ──► walls            │
               │  roots ──► root grate ──► sloped floor            │  every
-              │  gutter ──► 8 drip holes ────────────────────────►│  module
+              │  gutter ──► 4 drip holes ────────────────────────►│  module
               └───────────────────────────────────────────────────┘
                                     ▼
                               back to the tank
@@ -58,9 +58,9 @@ is what makes the tower scale.
 | **pipe tunnel** | dry vertical tube up the middle. the supply pipe runs inside it. also the main structural column |
 | **sloped floor** | the two 45° cones that make up each module's floor |
 | **gutter** | ring channel where the two cones meet. collects everything |
-| **drip holes** | eight ⌀8 holes in the gutter that feed the next module's spreader |
+| **drip holes** | four ⌀10 holes in the gutter, one under each socket, feeding the next module's spreader |
 | **joint lip** | step and recess rim where modules stack. catches splash, not a pressure seal |
-| **tie rod** | m5 stainless rod running the full tower height. clamps the whole stack in compression |
+| **tie rod** | #10-24 zinc rod running the full tower height. clamps the whole stack in compression |
 | **rod boss** | ⌀16 pad at each end of every rib that a tie rod passes through |
 | **drain base** | bottom part. sends the last module's water back to the tank |
 | **tank lid plate** | printed disc in the gamma seal lid. carries the pipe, sensor riser, temp probe |
@@ -95,7 +95,7 @@ where 200mm would wander off axis.
 
 ### how modules stack
 
-- **4 × m5 tie rods** run the full height of the tower, drain base to tower lid, nyloc nuts and
+- **4 × #10-24 tie rods** run the full height of the tower, drain base to tower lid, nyloc nuts and
   washers at both ends. tighten the top nuts and the whole stack goes into compression
 - rods sit on a ⌀198 circle at 45°, clear of every socket and outside the wet chamber
 - circular lip self centres them, 2 × ⌀5 pins set the rotation
@@ -106,7 +106,7 @@ it's worst at, and petg creeps under sustained load so they work loose over mont
 whole column in compression instead. 4 rods and 8 nuts replace 32 pieces, there's no soldering iron
 in the build, and nothing is melted into a part i might want to recycle later.
 
-**the clearance hole is ⌀6.5 on a ⌀5 rod on purpose.** a rod crosses four modules over 800mm and
+**the clearance hole is ⌀6.5 on a ⌀4.83 rod on purpose.** a rod crosses four modules over 800mm and
 printed hole positions won't agree that closely. the washers cover the slop.
 
 **no o-rings.** the cascade isn't pressurised. the lip catches splash and that's all it needs to do.
@@ -116,8 +116,24 @@ printed hole positions won't agree that closely. the washers cover the slop.
 everything prints upright, gutter flat on the plate, **no supports**. socket angle and both floor
 cones are 45° for exactly this reason. if a part needs supports the geometry is wrong.
 
-bed footprint is ⌀241.4, which is `MODULE_DIA` plus 25.7mm of socket tube reaching past each wall.
-that's why the module is 190 and not 200.
+**print the module turned 45° about the vertical axis.** it stands upright either way, gutter flat on
+the plate; turning it only changes which way the sockets point, so not one overhang changes.
+
+the part is four socket lobes at 0/90/180/270 with the ribs at 45°, not a disc, so a circumscribed
+circle badly overstates what it needs:
+
+| orientation | bounding box |
+|---|---|
+| sockets facing the bed edges | 266.7 × 266.7, **will not fit a 256 bed** |
+| turned 45°, sockets at the corners | **214.0 × 214.0**, 21mm clear all round |
+
+height is 202.2 either way, `MODULE_HEIGHT` plus the 2.2mm joint spigot. anything from 20° to 70°
+fits; 45° is the natural place to land. turned, the widest thing is not the sockets but the rod
+bosses at r = 107, and the sockets have room out to r = 151 before they matter again.
+
+measured on the solid: 1272mm² of downward-facing surface is flat, out of 72000mm², and **nothing
+falls between 46° and 89°** — no true overhangs at all. the two flat patches are a 1.8mm bridge over
+the joint recess and a 4mm ledge under the upper rod boss, both of which bridge unsupported.
 
 ---
 
@@ -153,12 +169,12 @@ four per module, at 0 / 90 / 180 / 270°, angled 45° up and out.
 | | |
 |---|---|
 | axis height | z = 125 |
-| socket face | ⌀50.6, 8mm outboard along the axis |
+| socket face | ⌀50.6, 26mm outboard along the axis |
 | socket base | ⌀43.9 at 15mm depth |
 | taper | 0.443 mm per mm, 25° included |
 | clearance bore | ⌀44.9 past the seat |
-| tube | ⌀56.6 outside, 3mm wall, 22mm long |
-| hole in the wall | 45 × 63.6 oval, z = 93 to 157 |
+| tube | ⌀56.6 outside, 3mm wall, 52mm long, from along -26 to +26 |
+| hole in the wall | 43.5 × 66.9 oval, z = 94 to 160 |
 
 **the pot sits on the taper, not on its lip.** the lip is ⌀52.8 and the body just under it is barely
 narrower, which leaves about 1.5mm of ledge. that is not a seat, it's a part that falls through.
@@ -167,9 +183,18 @@ pot and socket share the same taper, so they meet in **full conical contact**. t
 and its lip finishes 5mm proud as a grab handle. a pot 1mm oversize just seats 2mm shallower and still
 grips, which matters because the vendor's stated dimensions were wrong by 2.2mm.
 
-**it's a tube through the wall, not a collar on it.** tilted 45°, the lower rim projects about 25.7mm
-outboard while the upper rim sits inside the wall. keep `SOCKET_FACE_OFFSET` at 8. bigger and the pot
-tip stops short of the chamber, leaving the root ball outside the wet zone.
+**it's a tube through the wall, not a collar on it.** tilted 45°, the lower rim projects 38.4mm
+outboard, to r = 133.4.
+
+`SOCKET_FACE_OFFSET` is **26, not 8**, and it is the one number the socket lives or dies on. a 45°
+collar's upper rim sits at r = 74.99 + 0.707 × offset, so it only clears the ⌀184 chamber once the
+offset passes 24.06. below that the chamber trim shaves the collar's top off and the socket comes out
+as an arc rather than a circle — at 8 it was 250° of 360. at 26 the ring closes.
+
+the cost is real and it is the thing to watch. pushing the socket out drags the pot out with it, so
+**the root ball now sits 10.7mm inside the chamber wall instead of 23.4mm.** still in the water film,
+but with less than half the margin. if the crown dries out, this is why, and the fix is a shorter net
+pot rather than winding the offset back.
 
 ### root grate
 
@@ -202,7 +227,7 @@ two 45° cones meeting at a ring gutter.
 | gutter | ⌀108 inner, ⌀132 outer, walls up to z = 8 |
 | outer cone | (r 66, z 8) to (r 92, z 34) |
 | inner cone | (r 54, z 8) to (r 14.5, z 47.5) |
-| drip holes | 8 × ⌀8 on a ⌀120 circle |
+| drip holes | 4 × ⌀10 on a ⌀120 circle, one on each socket bearing |
 
 the inner cone prints as a **roof**, each layer smaller than the one below, so it self supports as
 easily as the outer one.
@@ -210,6 +235,10 @@ easily as the outer one.
 the drip holes land on the next spreader at r = 60, near its rim rather than its apex, so water only
 travels 60 to 85mm across the cone instead of the full chamber width. drop between modules is about
 27mm, so splash stays low.
+
+**each hole sits on a socket bearing**, so it drops straight onto one of the spreader's four spouts
+instead of between two of them. four ⌀10 replaced eight ⌀8: near enough the same open area, half as
+many holes, aligned. the gutter is a sump with no other way out, so this is what sets the flow ceiling.
 
 ### supply pipe
 
@@ -234,7 +263,9 @@ tower, pipe, lid and pump out of the bucket as one unit. nothing separates, and 
 
 ### flow
 
-target **1 to 4 L/min**, continuous while the lights are on.
+target **1 to 3.5 L/min**, continuous while the lights are on. the ceiling is set by the gutter,
+not the pump: the four ⌀10 drip holes pass 3.7 L/min with the channel brim full, and 3.5 needs
+4.6mm of head in a 5mm channel. run it harder and the gutter backs up over the cones.
 
 ---
 
@@ -279,7 +310,7 @@ it plugs into a **gfci outlet**. mains, standing water, indoor floor. not option
 
 ### bypass
 
-at 1.3m of lift this pump still puts out roughly 900 to 1100 L/h against a target of 60 to 240 L/h.
+at 1.3m of lift this pump still puts out roughly 900 to 1100 L/h against a target of 60 to 210 L/h.
 that's 5 to 15 times too much. choking it with a valve alone makes a small centrifugal pump run hot
 and cavitate, so the excess gets **shed instead of throttled**.
 
@@ -308,7 +339,7 @@ a two minute job i'd rather do than own that joint.
 
 **tuning.** no flow meter, so set it once at commissioning. lift the tower off the bucket so the pipe
 end is exposed and pointing up, run it into a jug for 30 seconds, and open or close the bypass valve
-until you collect 0.5 to 2 L. then leave it alone.
+until you collect 0.5 to 1.75 L. then leave it alone.
 
 **wrap the mpt in ptfe tape and don't overtighten.** npt is tapered and the pump housing is plastic.
 
