@@ -82,12 +82,15 @@ i broke it up into sections here so its easier to see what values for what part 
 
 | name | type | value |
 |---|---|---|
-| `GRATE_HEIGHT` | Length | `#FLOOR_HEIGHT_AT_WALL` |
+| `GRATE_HEIGHT` | Length | `30 mm` |
 | `GRATE_DIA` | Length | `#CHAMBER_DIA - 4 mm` |
 | `GRATE_THICKNESS` | Length | `4 mm` |
-| `GRATE_CUTOUT_DIA` | Length | `52 mm` |
+| `GRATE_CUTOUT_DIA` | Length | `60 mm` |
 | `GRATE_GAP` | Length | `8 mm` |
 | `GRATE_RIB` | Length | `3 mm` |
+| `GRATE_RIM` | Length | `5 mm` |
+| `GRATE_CHAMFER` | Length | `2 mm` |
+| `GRATE_FINGER_DIA` | Length | `18 mm` |
 
 ## joints and ribs
 
