@@ -90,7 +90,6 @@ i broke it up into sections here so its easier to see what values for what part 
 | `GRATE_RIB` | Length | `3 mm` |
 | `GRATE_RIM` | Length | `5 mm` |
 | `GRATE_CHAMFER` | Length | `2 mm` |
-| `GRATE_FINGER_DIA` | Length | `18 mm` |
 
 ## joints and ribs
 
