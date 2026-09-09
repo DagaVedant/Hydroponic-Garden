@@ -1,0 +1,4 @@
+# cad exports are machine written, dont let git rewrite line endings in them
+*.step binary
+*.STEP binary
+*.stl binary
