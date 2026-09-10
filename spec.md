@@ -63,8 +63,8 @@ is what makes the tower scale.
 | **tie rod** | #10-24 zinc rod running the full tower height. clamps the whole stack in compression |
 | **rod boss** | ⌀16 pad at each end of every rib that a tie rod passes through |
 | **drain base** | bottom part. sends the last module's water back to the tank |
-| **tank lid plate** | printed disc in the gamma seal lid. carries the pipe, sensor riser, temp probe |
-| **sensor riser** | 150mm post on the tank plate that holds the level sensor above its blind zone |
+| **tank lid plate** | printed ring in the gamma seal lid. carries the pipe, the level sensor and the temp probe |
+| **sensor pod** | socket moulded into the tank lid plate, 50mm off the tank axis, that holds the level sensor |
 | **corner rail** | clip on channel for the led strip and cables |
 | **supply pipe** | 1/2" pvc from the pump to the tower lid. bought, not printed |
 | **tank** | 5 gal bucket, 18.9 L |
@@ -283,7 +283,7 @@ all, it runs continuously while the lights are on.
    ├── web dashboard
    ├── phone alerts
    └── custom hat on the 40 pin header
-       ├── water level    jsn-sr04t ultrasonic, uart mode, on a 150mm riser
+       ├── water level    jsn-sr04t ultrasonic, uart mode, flush in the tank lid plate
        ├── water temp     ds18b20 waterproof probe, 1-wire
        ├── air temp + rh  sht31 / sht41, i2c
        ├── ph             analog probe ──► ads1115 16 bit adc, i2c
@@ -321,10 +321,15 @@ and cavitate, so the excess gets **shed instead of throttled**.
        └── short pvc stub
        └── tee
              └── ball valve ──► open pipe pointing down into the water
-       ↓ through the bulkhead in the tank lid plate
+       ↑ up through the middle of the tank lid plate
    above the lid
        └── supply pipe up the tower
 ```
+
+**there is no bulkhead.** the tank lid plate is a ring with a ⌀172 opening, and the pipe simply
+stands up through it in a ⌀23 collar carried on four ribs. the same opening is how water gets back
+down to the tank, so it is deliberately open and there is nothing there to seal. the plate sits well
+above the water line in every state.
 
 the valve and the bypass return live inside the tank, so nothing extra passes through the lid. the
 returning bypass flow also stirs the tank, which helps keep nutrients mixed.
@@ -343,45 +348,63 @@ until you collect 0.5 to 1.75 L. then leave it alone.
 
 **wrap the mpt in ptfe tape and don't overtighten.** npt is tapered and the pump housing is plastic.
 
-### level sensor riser
+### level sensor
 
 the jsn-sr04t has a **200mm blind zone**. it cannot report anything closer than that. mounted flush
 in the tank plate it would be useless exactly when the tank is full, which is the reading that
 matters most.
 
-the bucket is 368 tall with a bore near ⌀290. that's about 66 cm² of surface, so:
+the bucket is 368 tall with a bore near ⌀290. that's about 660 cm² of surface, so:
 
 | fill | depth | air gap above water |
 |---|---|---|
 | 18.9 L brim full | 286mm | **82mm** |
 | 16.5 L | 250mm | 118mm |
-| 15 L | 227mm | 141mm |
+| 10.9 L | 165mm | **203mm** |
 
-every one of those is inside the blind zone. so the sensor goes on a **150mm riser** and the tank
-gets a **250mm fill line** rather than being filled to the brim:
+the first two are inside the blind zone. the third is not, and that is the whole design.
+
+**there is no riser.** the original plan was a 150mm post. it does not fit. the plate is the tank
+lid, so a post on it rises into the tower, and the best clear run anywhere inside the tower is 63mm
+before module 1's floor cone is in the way. the sensor needs 82mm of rise to clear the blind zone at
+a 250mm fill line. 82mm of post will not go into 63mm of space, and a shorter post does not help.
+
+so the fill line moved instead of the sensor. **MAX_FILL_DEPTH is 165mm** and the sensor sits flush
+in a pod in the tank lid plate:
 
 ```
-   sensor ─────────────────────  518mm above the bucket floor
+   sensor ─────────────────────  368mm above the bucket floor, flush in the plate
      │
-     │  268mm  ← full tank reading. 68mm clear of the blind zone
+     │  203mm  ← full tank reading. only 3mm clear of a 200mm blind zone
      │
-   ══╪══════════════════════════  250mm max fill line, about 16.5 L
+   ══╪══════════════════════════  165mm max fill line, about 10.9 L
      │
-     │  518mm  ← empty tank reading
+     │  368mm  ← empty tank reading
    ──┴──────────────────────────  0mm, bucket floor
 ```
 
-usable span is 268 to 518mm, which maps the whole working range of the tank.
+usable span is 203 to 368mm, which maps the whole working range of the tank. the cost is volume:
+10.9 L of usable tank instead of 16.5.
 
-**it sits 60mm off the tank axis**, as close to centre as the pipe bulkhead allows. dead centre is
+**3mm of margin is thin and the blind zone number is not settled.** spec, part-links and
+next-session all say 200mm, but build-log has it at 25 cm off the datasheet and plenty of jsn-sr04t
+listings say 25 cm too. if it is really 250mm then the fill line has to come down to 118mm at the
+absolute best, 7.8 L, and less than that for any margin. measure the real blind zone on the bench
+before committing the fill line.
+
+**overfilling reads as empty.** closer than the blind zone does not give a short reading, it gives
+garbage, and garbage can look like a far wall. the control service has to treat out of band as a
+fault rather than as a level.
+
+**it sits 50mm off the tank axis**, as close to centre as the pipe collar allows. dead centre is
 where the supply pipe goes.
 
-**open bracket, not a tube.** the beam angle is 75°, so a narrow stilling well would just echo off
+**open pod, not a tube.** the beam angle is 75°, so a narrow stilling well would just echo off
 its own walls. in open air the water surface is the nearest and flattest reflector, so its echo
 returns first and strongest. the pipe and the bucket wall return later and weaker.
 
 **filter it in software anyway.** take a median of several readings and reject anything outside the
-268 to 518 band. a cheap ultrasonic in a narrow bucket will throw the occasional false echo.
+203 to 368 band. a cheap ultrasonic in a narrow bucket will throw the occasional false echo.
 
 ### safety
 
