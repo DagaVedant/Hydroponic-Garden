@@ -12,8 +12,8 @@ i modelled everything on onshape and have the .STEP export here
 | 03 | water spreader | done | `Water Spreader.step` |
 | 04 | tower lid | done | `Tower Lid.step` |
 | 05 | lid cap | done | `Lid Cap.step` |
-| 06 | drain base | next | |
-| 07 | tank lid plate | todo | |
+| 06 | drain base | done | `Drain Base.step` |
+| 07 | tank lid plate | next | |
 | 08 | corner rail | later | |
 | 09 | control box | after the pcb | |
 
@@ -29,5 +29,6 @@ distributing and 05 is just a cap now.
 | water spreader | 36.72 cm3 | ~30 g |
 | tower lid | 247.22 cm3 | ~100 g |
 | lid cap | 80.57 cm3 | ~79 g |
+| drain base | 121.43 cm3 | ~92 g |
 
-one tower is 4 modules, 4 grates, 4 spreaders, 1 lid, 1 cap.
+one tower is 4 modules, 4 grates, 4 spreaders, 1 lid, 1 cap, 1 drain base.
