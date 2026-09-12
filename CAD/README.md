@@ -36,24 +36,6 @@ one tower is 4 modules, 4 grates, 4 spreaders, and one of everything else.
 
 ## assembly
 
-z = 0 is module 1's underside.
-
-| part | z |
-|---|---|
-| grow module x4 | 0..202.2, then every 200 |
-| root grate x4 | 30..34, then every 200 |
-| water spreader x4 | 44.8..190, then every 200 |
-| tower lid | 800..819 |
-| lid cap | 816..831 |
-| drain base | -25..2.2 |
-| tank lid plate | -31..-3, ribs to 2 |
-| tank ring | -34.2..-7 |
-| bucket rim | -23, floor at -391 |
-
-854 mm from the bucket rim to the top of the cap. rod holes are D6.5 at r99 on
-45 / 135 / 225 / 315 through the modules, lid, cap and base. the grate wedges on
-the module's funnel cone at r90, z 32, there is no ledge.
-
 ![tower assembly](../images/tower-assembly.png)
 
 ![cap](../images/tank-cap.png)
