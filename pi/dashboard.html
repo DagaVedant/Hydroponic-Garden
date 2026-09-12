@@ -5,310 +5,353 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Tower</title>
 <style>
-body { font-family: sans-serif; max-width: 960px; margin: 2em auto; padding: 0 1em; line-height: 1.4; color: #222; }
-h1 { font-size: 1.5em; margin: 0 0 .2em; }
-h2 { font-size: 1.1em; margin: 2em 0 .6em; border-bottom: 1px solid #ccc; padding-bottom: .2em; }
-p { margin: .4em 0; }
-table { border-collapse: collapse; margin: .4em 0; }
-th, td { border: 1px solid #ccc; padding: 4px 10px; text-align: left; vertical-align: middle; }
-th { background: #f2f2f2; font-weight: normal; }
-td.num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
-.warn { color: #a65f00; }
-.bad { color: #c00000; }
-.muted { color: #666; }
-#status { padding: .6em .8em; border: 1px solid #ccc; margin: 1em 0; }
-#status.warn { border-color: #a65f00; background: #fff6e5; }
-#status.bad { border-color: #c00000; background: #fdecec; }
-.row { display: flex; gap: 2em; flex-wrap: wrap; align-items: flex-start; }
-#tower { width: 240px; height: auto; }
-svg.spark { width: 120px; height: 24px; vertical-align: middle; }
-button { font: inherit; margin-right: .3em; }
-button[aria-pressed="true"] { font-weight: bold; }
-#link { float: right; color: #666; }
-#link.down { color: #c00000; }
+:root {
+  --bg: #eeeeeb; --card: #ffffff; --card-2: #f6f6f3; --line: #e2e2dd; --ink: #151515; --ink-2: #5f6062; --ink-3: #8f9093;
+  --accent: #0e7c6b; --accent-2: #d7ede8; --water: #3b82c4; --lit: #d99a2b; --warn: #b96d09; --warn-2: #fbeed6; --bad: #c33b2f; --bad-2: #fbe4e1;
+  --sans: -apple-system, "SF Pro Text", ui-sans-serif, system-ui, "Segoe UI", Roboto, sans-serif;
+}
+* { box-sizing: border-box; }
+html { background: var(--bg); }
+body { margin: 0; font: 15px/1.45 var(--sans); color: var(--ink); background: var(--bg); -webkit-font-smoothing: antialiased; }
+.num { font-variant-numeric: tabular-nums; letter-spacing: -.01em; }
+.app { max-width: 1120px; margin: 0 auto; padding: 20px 20px 48px; }
+.bar { display: flex; align-items: center; gap: 12px; padding: 4px 4px 16px; }
+.bar h1 { font-size: 22px; font-weight: 600; margin: 0; letter-spacing: -.02em; }
+.bar .sub { color: var(--ink-3); font-size: 14px; }
+.bar .link { margin-left: auto; font-size: 13px; color: var(--ink-3); }
+.bar .link.down { color: var(--bad); }
+.banner { display: flex; align-items: center; gap: 12px; padding: 12px 16px; border-radius: 14px; background: var(--card); margin-bottom: 16px; font-size: 15px; }
+.banner .ico { width: 28px; height: 28px; border-radius: 50%; background: var(--accent-2); color: var(--accent); display: grid; place-items: center; flex: none; font-weight: 600; font-size: 14px; }
+.banner.warn .ico { background: var(--warn-2); color: var(--warn); } .banner.bad .ico { background: var(--bad-2); color: var(--bad); }
+.banner > span { flex: 1 1 200px; min-width: 0; }
+.banner b { font-weight: 600; }
+.banner .d { color: var(--ink-2); }
+.banner .w { margin-left: auto; color: var(--ink-3); font-size: 13px; white-space: nowrap; }
+.grid { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); gap: 16px; align-items: start; }
+.card { background: var(--card); border-radius: 18px; padding: 18px 20px; }
+.card h2 { font-size: 13px; font-weight: 600; color: var(--ink-3); text-transform: uppercase; letter-spacing: .06em; margin: 0 0 14px; }
+.hero { display: grid; grid-template-columns: 150px minmax(0, 1fr); gap: 18px; align-items: center; }
+.hero svg.tower { display: block; width: 150px; height: 300px; }
+.gauges { display: grid; gap: 10px; }
+.gauge { display: grid; grid-template-columns: 76px 1fr; gap: 12px; align-items: center; padding: 8px 10px; border-radius: 12px; background: var(--card-2); }
+.gauge svg { width: 76px; height: 46px; display: block; }
+.gauge .arc { fill: none; stroke: var(--line); stroke-width: 7; stroke-linecap: round; }
+.gauge .band { fill: none; stroke: #cfd9d6; stroke-width: 7; }
+.gauge .val { fill: none; stroke: var(--accent); stroke-width: 7; stroke-linecap: round; }
+.gauge.warn .val { stroke: var(--warn); } .gauge.bad .val { stroke: var(--bad); }
+.gauge .l { font-size: 13px; color: var(--ink-2); }
+.gauge .v { font-size: 22px; font-weight: 600; line-height: 1.1; }
+.gauge .v small { font-size: 12px; font-weight: 500; color: var(--ink-3); margin-left: 3px; }
+.gauge .r { font-size: 12px; color: var(--ink-3); }
+.gauge.warn .v { color: var(--warn); } .gauge.bad .v { color: var(--bad); }
+.chips { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.chip { padding: 12px 14px; border-radius: 14px; background: var(--card-2); }
+.chip .l { font-size: 12px; color: var(--ink-3); }
+.chip .v { font-size: 17px; font-weight: 600; margin-top: 2px; }
+.chip .v.bad { color: var(--bad); }
+.chip .s { font-size: 12px; color: var(--ink-2); margin-top: 2px; }
+.trend { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; }
+.tcard { padding: 12px 14px; border-radius: 14px; background: var(--card-2); min-width: 0; }
+.tcard .l { display: flex; justify-content: space-between; font-size: 12px; color: var(--ink-3); }
+.tcard .l .tag { color: var(--warn); font-weight: 600; } .tcard .l .tag.bad { color: var(--bad); }
+.tcard .v { font-size: 22px; font-weight: 600; line-height: 1.2; margin: 2px 0 6px; }
+.tcard .v small { font-size: 12px; font-weight: 500; color: var(--ink-3); margin-left: 3px; }
+.tcard.warn .v { color: var(--warn); } .tcard.bad .v { color: var(--bad); }
+.tcard svg { display: block; width: 100%; height: 36px; }
+.tcard .f { display: flex; justify-content: space-between; font-size: 11px; color: var(--ink-3); margin-top: 4px; }
+.row { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-top: 1px solid var(--line); flex-wrap: wrap; }
+.row:first-of-type { border-top: 0; padding-top: 0; }
+.row .l { width: 72px; font-weight: 500; }
+.pills { display: inline-flex; background: var(--card-2); border-radius: 999px; padding: 3px; }
+.pills button { font: 14px var(--sans); font-weight: 500; color: var(--ink-2); background: transparent; border: 0; border-radius: 999px; padding: 0 14px; min-height: 36px; cursor: pointer; }
+.pills button[aria-pressed="true"] { background: var(--ink); color: #fff; }
+.pills button:disabled { color: var(--ink-3); cursor: not-allowed; }
+button.plain { font: 14px var(--sans); font-weight: 500; color: var(--ink); background: var(--card-2); border: 0; border-radius: 999px; padding: 0 14px; min-height: 42px; cursor: pointer; }
+button.plain:disabled { color: var(--ink-3); cursor: not-allowed; }
+button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.row .n { color: var(--ink-3); font-size: 13px; flex: 1 1 100%; padding-left: 84px; }
+.sched { margin-top: 6px; }
+.sched svg { display: block; width: 100%; height: 34px; }
+.sched .t { display: flex; justify-content: space-between; font-size: 11px; color: var(--ink-3); }
+.feed .ev { display: grid; grid-template-columns: 72px 1fr; gap: 12px; padding: 9px 0; border-top: 1px solid var(--line); font-size: 14px; }
+.feed .ev:first-child { border-top: 0; padding-top: 0; }
+.feed .t { color: var(--ink-3); font-size: 13px; }
+.feed .ev em { font-style: normal; color: var(--ink-3); }
+.feed .ev.fault .w { color: var(--bad); }
+.feed .day { font-size: 12px; color: var(--ink-3); font-weight: 600; padding: 12px 0 6px; }
+.bottles { display: grid; gap: 8px; margin-top: 6px; }
+.bottle { display: grid; grid-template-columns: 86px 1fr 40px; gap: 10px; align-items: center; font-size: 13px; }
+.bottle .bar { height: 8px; border-radius: 4px; background: var(--card-2); overflow: hidden; }
+.bottle .bar i { display: block; height: 100%; background: var(--accent); border-radius: 4px; }
+.bottle.low .bar i { background: var(--warn); }
+.bottle .p { text-align: right; color: var(--ink-2); }
+.stack { display: grid; gap: 16px; }
+@media (max-width: 860px) { .grid { grid-template-columns: 1fr; } .hero { grid-template-columns: 120px 1fr; } .hero svg.tower { width: 120px; height: 240px; } }
+@media (max-width: 480px) { .app { padding: 14px 12px 40px; } .hero { grid-template-columns: 1fr; justify-items: center; } .hero .gauges { width: 100%; } .banner { flex-wrap: wrap; } .banner .w { flex: 1 1 100%; margin: 0; padding-left: 40px; } }
+@media (prefers-reduced-motion: no-preference) { .pills button { transition: background-color .15s ease, color .15s ease; } .gauge .val, .tower .water { transition: stroke-dashoffset .4s ease, height .4s ease, y .4s ease; } }
 </style>
 </head>
 <body>
+<div class="app">
+  <header class="bar">
+    <h1>Tower</h1>
+    <span class="sub">16 plants</span>
+    <span class="link" id="link">connecting</span>
+  </header>
 
-<span id="link">connecting</span>
-<h1>Vertical hydroponic tower</h1>
-<p class="muted">16 plants, 4 modules, one bucket. <a href="#activity">activity</a></p>
+  <div class="banner" id="banner"><div class="ico" id="banner-ico">i</div><span><b id="banner-head">Loading</b> <span class="d" id="banner-detail"></span></span><span class="w" id="banner-when"></span></div>
 
-<p id="status"><b id="status-head">loading</b> <span id="status-detail"></span> <span class="muted" id="status-when"></span></p>
+  <div class="grid">
+    <div class="stack">
+      <section class="card">
+        <h2>Water</h2>
+        <div class="hero">
+          <svg class="tower" viewBox="0 0 150 300" role="img" aria-label="the tower and its tank">
+            <defs>
+              <linearGradient id="body" x1="0" x2="1"><stop offset="0" stop-color="#cfd3d6"/><stop offset=".45" stop-color="#f3f4f5"/><stop offset="1" stop-color="#b9bec3"/></linearGradient>
+              <linearGradient id="cap" x1="0" x2="1"><stop offset="0" stop-color="#8a9096"/><stop offset=".5" stop-color="#c8ccd0"/><stop offset="1" stop-color="#7f858b"/></linearGradient>
+              <linearGradient id="bucket" x1="0" x2="1"><stop offset="0" stop-color="#2f3a45"/><stop offset=".5" stop-color="#55626f"/><stop offset="1" stop-color="#26303a"/></linearGradient>
+              <clipPath id="tankclip"><rect x="24" y="214" width="102" height="72" rx="6"/></clipPath>
+            </defs>
+            <ellipse cx="75" cy="286" rx="52" ry="8" fill="#000" opacity=".08"/>
+            <rect x="24" y="214" width="102" height="72" rx="6" fill="url(#bucket)"/>
+            <g clip-path="url(#tankclip)"><rect id="water" class="water" x="24" y="286" width="102" height="0" fill="#3b82c4" opacity=".85"/><rect id="water-top" x="24" y="286" width="102" height="2" fill="#9cc6ea"/></g>
+            <rect x="20" y="208" width="110" height="10" rx="3" fill="#3a4550"/>
+            <rect x="48" y="200" width="54" height="10" rx="2" fill="#8a9096"/>
+            <g id="modules">
+              <rect x="47" y="30" width="56" height="42" fill="url(#body)"/><rect x="47" y="30" width="56" height="2" fill="#a9aeb3"/>
+              <rect x="47" y="72" width="56" height="42" fill="url(#body)"/><rect x="47" y="72" width="56" height="2" fill="#a9aeb3"/>
+              <rect x="47" y="114" width="56" height="42" fill="url(#body)"/><rect x="47" y="114" width="56" height="2" fill="#a9aeb3"/>
+              <rect x="47" y="156" width="56" height="44" fill="url(#body)"/><rect x="47" y="156" width="56" height="2" fill="#a9aeb3"/>
+              <g fill="#7f858b" stroke="#5c6268" stroke-width="1"><ellipse cx="46" cy="52" rx="8" ry="5"/><ellipse cx="104" cy="60" rx="8" ry="5"/><ellipse cx="46" cy="94" rx="8" ry="5"/><ellipse cx="104" cy="102" rx="8" ry="5"/><ellipse cx="46" cy="136" rx="8" ry="5"/><ellipse cx="104" cy="144" rx="8" ry="5"/><ellipse cx="46" cy="178" rx="8" ry="5"/><ellipse cx="104" cy="186" rx="8" ry="5"/></g>
+              <g id="leaves" fill="#4f8a3a"><path d="M40 50c-8-6-16-4-20 2 6 3 14 3 20-2z"/><path d="M110 58c8-6 16-4 20 2-6 3-14 3-20-2z"/><path d="M40 92c-8-6-16-4-20 2 6 3 14 3 20-2z"/><path d="M110 100c8-6 16-4 20 2-6 3-14 3-20-2z"/><path d="M40 134c-8-6-16-4-20 2 6 3 14 3 20-2z"/><path d="M110 142c8-6 16-4 20 2-6 3-14 3-20-2z"/><path d="M40 176c-8-6-16-4-20 2 6 3 14 3 20-2z"/><path d="M110 184c8-6 16-4 20 2-6 3-14 3-20-2z"/></g>
+            </g>
+            <ellipse cx="75" cy="30" rx="28" ry="7" fill="url(#cap)"/>
+            <rect x="47" y="18" width="56" height="12" fill="url(#cap)"/><ellipse cx="75" cy="18" rx="28" ry="7" fill="#d5d8db"/>
+            <g id="rails"><rect x="42" y="16" width="3" height="190" rx="1.5" fill="#9aa0a5"/><rect x="105" y="16" width="3" height="190" rx="1.5" fill="#9aa0a5"/></g>
+          </svg>
+          <div class="gauges" id="gauges"></div>
+        </div>
+      </section>
 
-<h2>Now</h2>
-<div class="row">
-  <img id="tower" src="tower.png" alt="the tower, from the onshape assembly">
-  <div>
-    <table id="readings">
-      <tr><th>sensor</th><th>value</th><th>target</th><th></th></tr>
-    </table>
-    <table id="state">
-      <tr><th>lights</th><td id="st-lights"></td></tr>
-      <tr><th>dosing</th><td id="st-dosing"></td></tr>
-      <tr><th>circulation pump</th><td id="st-pump"></td></tr>
-      <tr><th>control loop</th><td id="st-online"></td></tr>
-    </table>
+      <section class="card">
+        <h2>System</h2>
+        <div class="chips" id="chips"></div>
+      </section>
+
+      <section class="card">
+        <h2>Controls</h2>
+        <div class="row"><span class="l">Lights</span>
+          <div class="pills"><button data-cmd="lights" data-body='{"auto":true}' data-mode="schedule">Schedule</button><button data-cmd="lights" data-body='{"on":true}' data-mode="on">On</button><button data-cmd="lights" data-body='{"on":false}' data-mode="off">Off</button></div>
+          <span class="n" id="lights-note"></span>
+        </div>
+        <div class="sched"><svg viewBox="0 0 400 34" preserveAspectRatio="none" aria-hidden="true"><rect x="0" y="10" width="400" height="14" rx="7" fill="var(--card-2)"/><rect id="lit1" x="0" y="10" width="0" height="14" rx="7" fill="var(--lit)"/><rect id="lit2" x="0" y="10" width="0" height="14" rx="7" fill="var(--lit)"/><rect id="now" x="0" y="6" width="2" height="22" fill="var(--ink)"/></svg><div class="t"><span>00:00</span><span>06:00</span><span>12:00</span><span>18:00</span><span>24:00</span></div></div>
+        <div class="row"><span class="l">Dosing</span>
+          <div class="pills"><button data-cmd="dose" data-body='{"enabled":true}' data-dose="on">Enabled</button><button data-cmd="dose" data-body='{"enabled":false}' data-dose="off">Paused</button></div>
+          <button class="plain" id="clear-fault" data-cmd="dose" data-body='{"clear_fault":true}' data-confirm="Clear the dosing fault? Check the bottle, the tube and the pump first, or the next dose fails the same way.">Clear fault</button>
+          <span class="n" id="dose-note"></span>
+        </div>
+        <div class="row"><span class="l">Pump</span><button class="plain" disabled>Stop pump</button><span class="n">Runs continuously from its own outlet. Not switchable, by design.</span></div>
+      </section>
+    </div>
+
+    <div class="stack">
+      <section class="card">
+        <h2>Last 24 hours</h2>
+        <div class="trend" id="trend"></div>
+      </section>
+      <section class="card">
+        <h2>Concentrate</h2>
+        <div class="bottles" id="bottles"></div>
+      </section>
+      <section class="card">
+        <h2>Activity <span id="act-sum" style="text-transform:none;letter-spacing:0;font-weight:500"></span></h2>
+        <div class="feed" id="feed"></div>
+      </section>
+    </div>
   </div>
 </div>
 
-<h2>Last 24 hours</h2>
-<table id="trends">
-  <tr><th>sensor</th><th>now</th><th>change</th><th></th><th>target</th></tr>
-</table>
-
-<h2>Controls</h2>
-<p>Lights:
-  <button data-cmd="lights" data-body='{"auto":true}' data-mode="schedule">schedule</button>
-  <button data-cmd="lights" data-body='{"on":true}' data-mode="on">force on</button>
-  <button data-cmd="lights" data-body='{"on":false}' data-mode="off">force off</button>
-  <span class="muted" id="lights-note"></span>
-</p>
-<p>Dosing:
-  <button data-cmd="dose" data-body='{"enabled":true}' data-dose="on">enabled</button>
-  <button data-cmd="dose" data-body='{"enabled":false}' data-dose="off">paused</button>
-  <button id="clear-fault" data-cmd="dose" data-body='{"clear_fault":true}'
-          data-confirm="Clear the dosing fault? A dose that did not register usually means an empty bottle, a slipped tube or a dead pump. Check the hardware first or the next dose fails the same way.">clear fault</button>
-  <span class="muted" id="dose-note"></span>
-</p>
-<p>Pump: <button disabled>stop pump</button> <span class="muted">plugged straight into a gfci outlet, nothing in software can stop it</span></p>
-<p class="muted" id="sched-note"></p>
-
-<h2 id="activity">Activity</h2>
-<p id="counters"></p>
-<table id="bottles">
-  <tr><th>bottle</th><th>used</th><th>left</th></tr>
-</table>
-<p class="muted">bottle levels are arithmetic on what was dosed, not a measurement. reset on a refill.</p>
-<p>
-  <button data-filter="all" aria-pressed="true">all</button>
-  <button data-filter="dose" aria-pressed="false">doses</button>
-  <button data-filter="light" aria-pressed="false">lights</button>
-  <button data-filter="fault" aria-pressed="false">faults</button>
-</p>
-<table id="events">
-  <tr><th>when</th><th>what</th></tr>
-</table>
-
 <script>
-const LINK = document.getElementById('link');
-const STALE_AFTER_S = 300;
-const LABELS = { dose: 'dose', light: 'lights', fault: 'fault' };
-let allEvents = [];
-let filter = 'all';
-let refreshSnapshot = () => {};
+const $ = (id) => document.getElementById(id);
+const ORDER = ['water/level', 'water/ph', 'water/ec', 'water/temp', 'air/temp', 'air/humidity'];
+const NAME = { 'water/level': 'Water level', 'water/ph': 'pH', 'water/ec': 'Conductivity', 'water/temp': 'Water temp', 'air/temp': 'Air temp', 'air/humidity': 'Humidity' };
+let refresh = () => {};
 
-function setLink(ok, note) {
-  LINK.textContent = note;
-  LINK.classList.toggle('down', !ok);
+function fmt(v, k) {
+  if (v == null) return '-';
+  if (k === 'water/ec') return Math.round(v).toLocaleString();
+  if (k === 'air/humidity') return Math.round(v).toString();
+  return (+v).toFixed(2).replace(/\.?0+$/, '');
 }
-
-function ago(seconds) {
-  if (seconds == null) return 'never';
-  if (seconds < 60) return 'just now';
-  if (seconds < 5400) return Math.round(seconds / 60) + ' min ago';
-  if (seconds < 172800) return Math.round(seconds / 3600) + ' h ago';
-  return Math.round(seconds / 86400) + ' d ago';
+function ago(s) {
+  if (s == null) return 'never';
+  if (s < 60) return 'just now';
+  if (s < 5400) return Math.round(s / 60) + ' min ago';
+  if (s < 172800) return Math.round(s / 3600) + ' h ago';
+  return Math.round(s / 86400) + ' d ago';
 }
+function hhmm(ts) { return new Date(ts * 1000).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }); }
+function esc(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;'); }
+function cls(s) { return !s.valid ? 'bad' : (s.status === 'warn' ? 'warn' : ''); }
 
-function fmt(value, sensor) {
-  if (value == null) return '-';
-  if (sensor === 'water/ec') return Math.round(value).toLocaleString();
-  if (sensor === 'air/humidity') return Math.round(value).toString();
-  return value.toFixed(2).replace(/\.?0+$/, '');
-}
-
-function when(ts) {
-  const d = new Date(ts * 1000);
-  const today = new Date().toDateString();
-  const time = d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-  if (d.toDateString() === today) return time;
-  return d.toLocaleDateString([], { month: 'short', day: 'numeric' }) + ' ' + time;
-}
-
-function esc(s) {
-  return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;');
-}
-
-function sparkline(points, lo, hi) {
-  const W = 120, H = 24;
-  if (!points || points.length < 2) return '';
-  let min = Math.min(...points, lo == null ? Infinity : lo);
-  let max = Math.max(...points, hi == null ? -Infinity : hi);
-  const span = (max - min) || 1;
-  const y = (v) => 2 + (H - 4) * (1 - (v - min) / span);
-  const step = W / (points.length - 1);
-  let band = '';
-  if (lo != null && hi != null) {
-    band = `<rect x="0" y="${y(hi).toFixed(1)}" width="${W}" height="${Math.max(1, y(lo) - y(hi)).toFixed(1)}" fill="#ddd"/>`;
-  }
-  const d = points.map((v, i) => `${(i * step).toFixed(1)},${y(v).toFixed(1)}`).join(' ');
-  return `<svg class="spark" viewBox="0 0 ${W} ${H}">${band}<polyline fill="none" stroke="#333" stroke-width="1" points="${d}"/></svg>`;
-}
-
-function setStatus(data) {
-  const box = document.getElementById('status');
+function setBanner(d) {
   const problems = [];
   let worst = 'ok';
-  if (!data.online) { problems.push('control loop is not reporting'); worst = 'bad'; }
-  data.sensors.forEach((s) => {
-    if (!s.valid) { problems.push(s.label + ' sensor failing'); worst = 'bad'; }
-    else if (s.status === 'warn') { problems.push(s.label + ' outside target'); if (worst === 'ok') worst = 'warn'; }
+  if (!d.online) { problems.push('the control loop is not reporting'); worst = 'bad'; }
+  d.sensors.forEach((s) => {
+    if (!s.valid) { problems.push(NAME[s.sensor] + ' sensor is failing'); worst = 'bad'; }
+    else if (s.status === 'warn') { problems.push(NAME[s.sensor] + ' is outside its range'); if (worst === 'ok') worst = 'warn'; }
   });
-  const dosing = data.dosing || {};
-  if (dosing.state === 'fault') { problems.push('dosing halted on a fault'); worst = 'bad'; }
-  (data.alerts || []).forEach((a) => {
-    if (a.key === 'dosing_fault' || (a.key || '').startsWith('fail:')) return;
-    problems.push(a.text);
-    worst = 'bad';
-  });
-  box.className = worst;
-  document.getElementById('status-head').textContent = problems.length ? 'needs attention:' : 'all fine.';
-  document.getElementById('status-detail').textContent = problems.length ? problems.join('. ')
-    : (dosing.calibrated === false ? 'dosing pumps are not calibrated, so no dose will run.' : '');
-  document.getElementById('status-when').textContent = data.last_seen ? 'last reading ' + ago(data.now - data.last_seen) : '';
+  const ds = d.dosing || {};
+  if (ds.state === 'fault') { problems.push('dosing halted on a fault'); worst = 'bad'; }
+  (d.alerts || []).forEach((a) => { if (!/^(fail:|dosing_fault)/.test(a.key || '')) { problems.push(a.text); worst = 'bad'; } });
+  $('banner').className = 'banner ' + worst;
+  $('banner-ico').textContent = worst === 'ok' ? '✓' : '!';
+  $('banner-head').textContent = problems.length ? 'Needs attention' : 'Everything is fine';
+  $('banner-detail').textContent = problems.length ? problems.join('. ') + '.' : (ds.calibrated === false ? 'Dosing pumps are not calibrated, so no dose will run.' : '');
+  $('banner-when').textContent = 'Updated ' + ago(d.now - d.last_seen);
 }
 
-function cls(s) {
-  return !s.valid ? 'bad' : (s.status === 'warn' ? 'warn' : '');
+function arc(frac, band) {
+  const cx = 38, cy = 40, r = 30;
+  const pt = (f) => { const a = Math.PI * (1 - f); return [cx + r * Math.cos(a), cy - r * Math.sin(a)]; };
+  const seg = (a, b, klass) => {
+    const [x1, y1] = pt(a), [x2, y2] = pt(b);
+    return `<path class="${klass}" d="M${x1.toFixed(1)} ${y1.toFixed(1)} A${r} ${r} 0 0 1 ${x2.toFixed(1)} ${y2.toFixed(1)}"/>`;
+  };
+  let out = `<svg viewBox="0 0 76 46" aria-hidden="true">${seg(0, 1, 'arc')}`;
+  if (band) out += seg(band[0], band[1], 'band');
+  const f = Math.max(0.01, Math.min(1, frac));
+  const [x, y] = pt(f);
+  out += seg(0, f, 'val') + `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="4.5" fill="#fff" stroke="currentColor" stroke-width="2"/></svg>`;
+  return out;
 }
 
-function renderNow(data) {
-  const rows = data.sensors.map((s) => {
-    const stale = s.age != null && s.age > STALE_AFTER_S;
-    const value = s.valid ? fmt(s.value, s.sensor) + ' ' + s.unit : 'no reading';
-    const note = !s.valid ? s.note : (stale ? 'stale, ' + ago(s.age) : '');
-    return `<tr><td>${s.label}</td><td class="num ${cls(s)}">${value}</td>` +
-      `<td class="num muted">${s.lo != null ? s.lo + ' to ' + s.hi : ''}</td><td class="muted">${esc(note)}</td></tr>`;
+function renderWater(d) {
+  const lvl = d.sensors.find((s) => s.sensor === 'water/level');
+  const full = d.tank_full_l || 10.6;
+  const H = 72, bottom = 286;
+  if (lvl && lvl.valid) {
+    const frac = Math.max(0, Math.min(1, lvl.value / full));
+    $('water').setAttribute('height', (H * frac).toFixed(1));
+    $('water').setAttribute('y', (bottom - H * frac).toFixed(1));
+    $('water-top').setAttribute('y', (bottom - H * frac).toFixed(1));
+  } else { $('water').setAttribute('height', '0'); }
+  const rows = [['water/level', 0, full], ['water/ph', 4, 8], ['water/ec', 0, 2000], ['water/temp', 10, 30]];
+  $('gauges').innerHTML = rows.map(([k, a, b]) => {
+    const s = d.sensors.find((x) => x.sensor === k);
+    if (!s) return '';
+    const frac = s.valid ? (s.value - a) / (b - a) : 0;
+    const band = s.lo != null ? [(s.lo - a) / (b - a), (s.hi - a) / (b - a)] : null;
+    const c = cls(s);
+    return `<div class="gauge ${c}" style="color:${c === 'bad' ? 'var(--bad)' : (c === 'warn' ? 'var(--warn)' : 'var(--accent)')}">${arc(frac, band)}<div><div class="l">${NAME[k]}</div><div class="v num">${s.valid ? fmt(s.value, k) + '<small>' + s.unit + '</small>' : 'No reading'}</div><div class="r">${!s.valid ? esc(s.note) : (s.lo != null ? 'Target ' + s.lo + ' to ' + s.hi : '')}</div></div></div>`;
   }).join('');
-  document.getElementById('readings').innerHTML = '<tr><th>sensor</th><th>value</th><th>target</th><th></th></tr>' + rows;
-
-  const lights = data.lights || {};
-  const dosing = data.dosing || {};
-  document.getElementById('st-lights').textContent = lights.on
-    ? Math.round((lights.duty || 0) * 100) + '%' + (lights.mode === 'manual' ? ', forced' : '') : 'off';
-  const dl = document.getElementById('st-dosing');
-  dl.textContent = dosing.state ? dosing.state + (dosing.fault ? ': ' + dosing.fault : '') : '-';
-  dl.className = dosing.state === 'fault' ? 'bad' : '';
-  document.getElementById('st-pump').textContent = data.online ? 'running' : 'unknown';
-  const ol = document.getElementById('st-online');
-  ol.textContent = data.online ? 'online' : 'offline';
-  ol.className = data.online ? '' : 'bad';
 }
 
-function renderTrends(data) {
-  const rows = data.sensors.map((s) => {
-    const change = s.delta == null ? '' : (s.delta > 0 ? '+' : '') + s.delta;
-    return `<tr><td>${s.label}</td><td class="num ${cls(s)}">${s.valid ? fmt(s.value, s.sensor) : '-'} ${s.unit}</td>` +
-      `<td class="num">${change}</td><td>${sparkline(s.series, s.lo, s.hi)}</td>` +
-      `<td class="num muted">${s.lo != null ? s.lo + ' to ' + s.hi : ''}</td></tr>`;
+function renderChips(d) {
+  const li = d.lights || {}, ds = d.dosing || {};
+  const air = d.sensors.find((s) => s.sensor === 'air/temp'), rh = d.sensors.find((s) => s.sensor === 'air/humidity');
+  const airOk = air && air.valid && rh && rh.valid;
+  const pad = (h) => String(h).padStart(2, '0') + ':00';
+  $('chips').innerHTML = [
+    ['Lights', li.on ? Math.round((li.duty || 0) * 100) + '%' : 'Off', li.on_hour != null ? pad(li.on_hour) + ' to ' + pad(li.off_hour) + (li.mode === 'manual' ? ', forced' : '') : ''],
+    ['Dosing', (ds.state || '-').replace(/^./, (c) => c.toUpperCase()), ds.state === 'fault' ? ds.fault : (ds.calibrated === false ? 'Not calibrated' : 'Verified after every dose'), ds.state === 'fault'],
+    ['Air', airOk ? fmt(air.value, 'air/temp') + ' C, ' + fmt(rh.value, 'air/humidity') + '%' : 'No reading', 'Around the tower'],
+    ['Pump', d.online ? 'Running' : 'Unknown', d.online ? 'Control loop online' : 'Control loop offline', !d.online],
+  ].map(([l, v, s, bad]) => `<div class="chip"><div class="l">${l}</div><div class="v ${bad ? 'bad' : ''}">${esc(v)}</div><div class="s">${esc(s)}</div></div>`).join('');
+}
+
+function spark(s) {
+  const W = 200, H = 36, pts = s.series || [];
+  if (pts.length < 2) return `<svg viewBox="0 0 ${W} ${H}"></svg>`;
+  const vals = pts.concat(s.lo != null ? [s.lo, s.hi] : []);
+  const min = Math.min(...vals), max = Math.max(...vals), span = (max - min) || 1;
+  const y = (v) => 3 + (H - 6) * (1 - (v - min) / span);
+  const x = (i) => (W * i / (pts.length - 1));
+  const c = cls(s);
+  const stroke = c === 'bad' ? 'var(--bad)' : (c === 'warn' ? 'var(--warn)' : 'var(--accent)');
+  let out = `<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" aria-hidden="true">`;
+  if (s.lo != null) out += `<rect x="0" y="${y(s.hi).toFixed(1)}" width="${W}" height="${Math.max(1, y(s.lo) - y(s.hi)).toFixed(1)}" fill="var(--line)" opacity=".7"/>`;
+  const d = pts.map((v, i) => (i ? 'L' : 'M') + x(i).toFixed(1) + ' ' + y(v).toFixed(1)).join(' ');
+  out += `<path d="${d} L${W} ${H} L0 ${H} Z" fill="${stroke}" opacity=".08"/><path d="${d}" fill="none" stroke="${stroke}" stroke-width="1.75" stroke-linejoin="round" vector-effect="non-scaling-stroke"/></svg>`;
+  return out;
+}
+
+function renderTrend(d) {
+  $('trend').innerHTML = ORDER.map((k) => d.sensors.find((s) => s.sensor === k)).filter(Boolean).map((s) => {
+    const c = cls(s);
+    const tag = !s.valid ? '<span class="tag bad">Fault</span>' : (c === 'warn' ? '<span class="tag">Out of range</span>' : '');
+    const delta = s.delta == null ? '' : (s.delta > 0 ? '+' : '') + fmt(s.delta, s.sensor) + ' today';
+    return `<div class="tcard ${c}"><div class="l"><span>${NAME[s.sensor]}</span>${tag}</div><div class="v num">${s.valid ? fmt(s.value, s.sensor) : '--'}<small>${s.unit}</small></div>${spark(s)}<div class="f"><span>${s.valid ? delta : esc(s.note)}</span><span>${s.lo != null ? s.lo + '-' + s.hi : ''}</span></div></div>`;
   }).join('');
-  document.getElementById('trends').innerHTML = '<tr><th>sensor</th><th>now</th><th>change</th><th></th><th>target</th></tr>' + rows;
 }
 
-function renderControls(data) {
-  const lights = data.lights || {};
-  const mode = lights.mode === 'manual' ? (lights.on ? 'on' : 'off') : 'schedule';
+function renderControls(d) {
+  const li = d.lights || {}, ds = d.dosing || {};
+  const mode = li.mode === 'manual' ? (li.on ? 'on' : 'off') : 'schedule';
   document.querySelectorAll('[data-mode]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.mode === mode)));
   const pad = (h) => String(h).padStart(2, '0') + ':00';
-  document.getElementById('lights-note').textContent = lights.on_hour != null
-    ? pad(lights.on_hour) + ' to ' + pad(lights.off_hour) + ', currently ' + Math.round((lights.duty || 0) * 100) + '%'
-    : 'no state yet';
-
-  const dosing = data.dosing || {};
-  document.querySelectorAll('[data-dose]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.dose === (dosing.enabled ? 'on' : 'off'))));
-  document.getElementById('clear-fault').disabled = dosing.state !== 'fault';
-  const note = document.getElementById('dose-note');
-  if (dosing.state === 'fault') note.textContent = 'halted: ' + (dosing.fault || '');
-  else if (dosing.calibrated === false) note.textContent = 'not calibrated, pumps will not run';
-  else note.textContent = (dosing.runtime_last_hour_s || 0) + 's of ' + (dosing.cap_s || 0) + 's hourly limit used';
-
-  if (lights.on_hour != null) {
-    const on = lights.on_hour, off = lights.off_hour;
-    const hours = on <= off ? off - on : (24 - on) + off;
-    document.getElementById('sched-note').textContent = 'photoperiod: ' + hours + ' hours a day, ' + pad(on) + ' to ' + pad(off) + ', with a 10 minute ramp at each end.';
+  $('lights-note').textContent = li.on_hour != null ? pad(li.on_hour) + ' to ' + pad(li.off_hour) + ', now ' + Math.round((li.duty || 0) * 100) + '%. Fades in and out over 10 minutes.' : 'No state yet';
+  document.querySelectorAll('[data-dose]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.dose === (ds.enabled ? 'on' : 'off'))));
+  $('clear-fault').disabled = ds.state !== 'fault';
+  $('dose-note').textContent = ds.state === 'fault' ? 'Halted: ' + ds.fault : (ds.calibrated === false ? 'Not calibrated. Pumps will not run until the flow rates are measured.' : (ds.runtime_last_hour_s || 0) + ' s of the ' + (ds.cap_s || 0) + ' s hourly limit used.');
+  if (li.on_hour != null) {
+    const W = 400, x = (h) => (h / 24) * W, on = li.on_hour, off = li.off_hour;
+    if (on <= off) { $('lit1').setAttribute('x', x(on)); $('lit1').setAttribute('width', x(off) - x(on)); $('lit2').setAttribute('width', 0); }
+    else { $('lit1').setAttribute('x', x(on)); $('lit1').setAttribute('width', W - x(on)); $('lit2').setAttribute('x', 0); $('lit2').setAttribute('width', x(off)); }
+    const n = new Date(); $('now').setAttribute('x', x(n.getHours() + n.getMinutes() / 60) - 1);
   }
 }
 
-function renderOverview(data) {
-  setStatus(data);
-  renderNow(data);
-  renderTrends(data);
-  renderControls(data);
+function renderOverview(d) { setBanner(d); renderWater(d); renderChips(d); renderTrend(d); renderControls(d); }
+
+function renderTimeline(d) {
+  const sum = d.summary, ev = d.events || [];
+  $('act-sum').textContent = sum.doses_24h + ' doses, ' + sum.faults_24h + ' faults today';
+  $('bottles').innerHTML = sum.bottles.map((b) => `<div class="bottle ${b.remaining_pct <= 20 ? 'low' : ''}"><span>${b.label}</span><div class="bar"><i style="width:${b.remaining_pct}%"></i></div><span class="p num">${b.remaining_pct}%</span></div>`).join('') + '<div style="font-size:12px;color:var(--ink-3);margin-top:4px">Estimated from what was dosed. Reset on a refill.</div>';
+  let lastDay = null, out = '';
+  ev.slice(0, 30).forEach((e) => {
+    const dt = new Date(e.ts * 1000), day = dt.toDateString();
+    if (day !== lastDay) { out += `<div class="day">${day === new Date().toDateString() ? 'Today' : dt.toLocaleDateString([], { weekday: 'long', month: 'short', day: 'numeric' })}</div>`; lastDay = day; }
+    const i = e.text.indexOf(', ');
+    const text = (i < 0 ? esc(e.text) : esc(e.text.slice(0, i)) + ' <em>' + esc(e.text.slice(i + 2)) + '</em>').replace(/^./, (c) => c.toUpperCase());
+    out += `<div class="ev ${e.kind}"><span class="t num">${hhmm(e.ts)}</span><span class="w">${text}</span></div>`;
+  });
+  $('feed').innerHTML = out || '<div style="color:var(--ink-3)">Nothing yet.</div>';
 }
 
-function renderLog() {
-  const events = filter === 'all' ? allEvents : allEvents.filter((e) => e.kind === filter);
-  const rows = events.map((e) => {
-    const k = LABELS[e.kind] || e.kind;
-    const c = e.kind === 'fault' ? ' class="bad"' : '';
-    return `<tr><td class="num muted">${when(e.ts)}</td><td${c}>${k}: ${esc(e.text)}</td></tr>`;
-  }).join('');
-  document.getElementById('events').innerHTML = '<tr><th>when</th><th>what</th></tr>' +
-    (rows || '<tr><td colspan="2" class="muted">nothing yet</td></tr>');
-}
-
-function renderTimeline(data) {
-  allEvents = data.events || [];
-  const sum = data.summary;
-  document.getElementById('counters').textContent =
-    sum.doses_24h + ' doses and ' + sum.faults_24h + ' faults in the last 24 hours.';
-  document.getElementById('bottles').innerHTML = '<tr><th>bottle</th><th>used</th><th>left</th></tr>' +
-    sum.bottles.map((b) => `<tr><td>${b.label}</td><td class="num">${b.used_ml} mL</td>` +
-      `<td class="num ${b.remaining_pct <= 20 ? 'warn' : ''}">${b.remaining_pct}%</td></tr>`).join('');
-  renderLog();
-}
-
-function poll(url, onData, intervalMs) {
-  let timer = null;
-  let failures = 0;
+function poll(url, fn, ms) {
+  let timer = null, failures = 0;
   async function tick() {
     try {
-      const res = await fetch(url, { cache: 'no-store' });
-      if (!res.ok) throw new Error(res.status);
-      onData(await res.json());
+      const r = await fetch(url, { cache: 'no-store' });
+      if (!r.ok) throw new Error(r.status);
+      fn(await r.json());
       failures = 0;
-      setLink(true, 'live');
-    } catch (err) {
-      failures += 1;
-      if (failures > 1) setLink(false, 'reconnecting');
+      $('link').textContent = 'Live'; $('link').classList.remove('down');
+    } catch (e) {
+      if (++failures > 1) { $('link').textContent = 'Reconnecting'; $('link').classList.add('down'); }
     }
   }
-  function start() { if (!timer) { tick(); timer = setInterval(tick, intervalMs); } }
-  function stop() { clearInterval(timer); timer = null; }
-  document.addEventListener('visibilitychange', () => (document.hidden ? stop() : start()));
+  const start = () => { if (!timer) { tick(); timer = setInterval(tick, ms); } };
+  document.addEventListener('visibilitychange', () => document.hidden ? (clearInterval(timer), timer = null) : start());
   start();
   return tick;
 }
 
-document.querySelectorAll('[data-cmd]').forEach((btn) => {
-  btn.addEventListener('click', async () => {
-    if (btn.dataset.confirm && !window.confirm(btn.dataset.confirm)) return;
-    btn.disabled = true;
-    try {
-      const res = await fetch('/api/cmd/' + btn.dataset.cmd, {
-        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: btn.dataset.body,
-      });
-      const body = await res.json();
-      if (!body.ok) setLink(false, body.error === 'no broker' ? 'no broker' : 'command failed');
-    } catch (err) {
-      setLink(false, 'command failed');
-    } finally {
-      btn.disabled = false;
-      setTimeout(refreshSnapshot, 500);
-    }
-  });
-});
+document.querySelectorAll('[data-cmd]').forEach((btn) => btn.addEventListener('click', async () => {
+  if (btn.dataset.confirm && !window.confirm(btn.dataset.confirm)) return;
+  btn.disabled = true;
+  try {
+    const r = await fetch('/api/cmd/' + btn.dataset.cmd, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: btn.dataset.body });
+    const b = await r.json();
+    if (!b.ok) { $('link').textContent = b.error === 'no broker' ? 'No broker' : 'Command failed'; $('link').classList.add('down'); }
+  } catch (e) { $('link').textContent = 'Command failed'; $('link').classList.add('down'); }
+  finally { btn.disabled = false; setTimeout(refresh, 500); }
+}));
 
-document.querySelectorAll('[data-filter]').forEach((btn) => {
-  btn.addEventListener('click', () => {
-    filter = btn.dataset.filter;
-    document.querySelectorAll('[data-filter]').forEach((b) => b.setAttribute('aria-pressed', String(b === btn)));
-    renderLog();
-  });
-});
-
-refreshSnapshot = poll('/api/snapshot', renderOverview, 10000);
+refresh = poll('/api/snapshot', renderOverview, 10000);
 poll('/api/timeline', renderTimeline, 20000);
 </script>
 </body>

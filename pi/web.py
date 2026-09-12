@@ -221,7 +221,7 @@ def activity_summary(events: List[dict]) -> dict:
 
 @app.route("/")
 def page():
-    return send_file(PAGE, max_age=0)
+    return send_file(app.config.get("page", PAGE), max_age=0)
 
 
 @app.route("/tower.png")
@@ -532,6 +532,7 @@ def main() -> int:
     global commands
     ap = argparse.ArgumentParser(description="hydroponic dashboard and alerts")
     ap.add_argument("--db", default=DB_PATH)
+    ap.add_argument("--page", default=PAGE, help="a different frontend file")
     ap.add_argument("--host", default="0.0.0.0")
     ap.add_argument("--port", type=int, default=8080)
     ap.add_argument("--broker", default=MQTT_HOST)
@@ -573,6 +574,7 @@ def main() -> int:
         print(f"demo: seeded {seed_demo(args.db)} readings into {args.db}")
 
     app.config["db_path"] = args.db
+    app.config["page"] = os.path.abspath(args.page)
     s = Store(args.db)
     s.migrate(verbose=False)
     rows = s.count()
