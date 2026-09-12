@@ -5,31 +5,28 @@ box at the tower with the hat on its 40 pin header. there is no microcontroller 
 
 spec: [spec.md](../spec.md) · board: [PCB/README.md](../PCB/README.md)
 
-## components
+## five files
 
-| path | role |
+| file | role |
 |---|---|
-| — | mosquitto mqtt broker, system service, not in this repo |
-| `control/` | reads the hat, drives lights and dosing, publishes readings |
-| `ingest/` | mqtt subscriber, validates, writes to the db |
-| `db/` | schema and migrations |
-| `web/` | dashboard, live tiles + history + fault log |
-| `alerts/` | phone notifications through ntfy |
-| `systemd/` | the four unit files and an installer |
+| `config.py` | the numbers you might change. short on purpose |
+| `control.py` | reads the hat, drives lights and dosing, writes csv, publishes readings |
+| `store.py` | the sqlite schema, the mqtt subscriber that fills it, csv backfill, a report |
+| `web.py` | the dashboard server, and the alerts watcher |
+| `dashboard.html` | the whole frontend: markup, style and script in one file |
+
+plus `systemd/`, three unit files and an installer, and `requirements.txt`. mosquitto is a
+system service, not in this repo.
 
 mqtt is local only, but it stays. it keeps the control loop, the database, and the dashboard from
 knowing about each other.
 
-## the two config files
-
-`control/config.py` is short and is the only file that should need editing: broker host, the two
-tank numbers, probe calibration, photoperiod, dosing constants and targets, the healthy bands the
-dashboard colours by and the alerts fire on, and the ntfy topic. lines marked MEASURE are guesses
-until they are measured.
-
-`control/hardware.py` is everything the hat fixes: pin map, i2c addresses, uart and 1-wire paths,
-the level sensor's blind zone, the "sensor is broken" ranges, mqtt topic names. it should agree
-with [PCB/README.md](../PCB/README.md) and should not need touching.
+`config.py` is the only file that should need editing: broker host, the two tank numbers, probe
+calibration, photoperiod, dosing constants and targets, the healthy bands the dashboard colours by
+and the alerts fire on, and the ntfy topic. lines marked MEASURE are guesses until they are
+measured. everything the hat fixes, the pin map, i2c addresses, uart and 1-wire paths, the level
+sensor's blind zone, the "sensor is broken" ranges, mqtt topic names, is the block at the top of
+`control.py`. it should agree with [PCB/README.md](../PCB/README.md) and should not need touching.
 
 ## control service
 
@@ -46,30 +43,21 @@ python, systemd. talks to the hat over i2c, 1-wire, uart and gpio.
 
 ```
 cd pi
-python -m control.main --simulate --once      one sweep of fake data
-python -m control.main --simulate             loop, no hardware needed
-python -m control.main                        real sensors, on the pi
-python -m control.main --interval 10          override the 60s period
+python control.py --simulate --once      one sweep of fake data
+python control.py --simulate             loop, no hardware needed
+python control.py                        real sensors, on the pi
+python control.py --interval 10          override the 60s period
 ```
 
-on the pi first: `pip install -r control/requirements.txt`. on a laptop don't, just
-use `--simulate`. hardware mode fails with a clear message instead of a stack trace
-if the libraries aren't there.
+on the pi first: `pip install -r requirements.txt`. on a laptop just `flask` and
+`paho-mqtt`, and use `--simulate`. hardware mode fails with a clear message instead
+of a stack trace if the libraries aren't there.
 
-```
-control/
-  config.py          the tunables. calibration, targets, photoperiod, bands, alerts
-  hardware.py        the fixed things. pin map, i2c addresses, ranges, topics
-  reading.py         the Reading type. value + unit + ts + valid + note
-  csv_log.py         daily csv, same columns as the sqlite table
-  main.py            the loop
-  sensors/
-    base.py          Sensor interface, range checking, sensirion crc
-    water_temp.py    ds18b20 over 1-wire
-    air.py           sht31 over i2c
-    level.py         jsn-sr04t over uart, median of 5
-    probes.py        ph and ec through the ads1115, power switched
-```
+`control.py` top to bottom: the hat constants, the `Reading` type (value + unit + ts +
+valid + note), the four drivers (ds18b20 over 1-wire, sht31 over i2c, jsn-sr04t over
+uart with a median of 5, ph and ec through the ads1115 with the supply switched), the
+three outputs (a pwm channel, the lights schedule, the dosing state machine), the daily
+csv, the mqtt publisher, the loop.
 
 ### read order is not arbitrary
 
@@ -106,9 +94,9 @@ paho isn't installed, publishing fails quietly and the loop carries on. a monito
 transport that can take down the thing it monitors is worse than no transport.
 
 ```
-python -m control.main --simulate            publishes to localhost
-python -m control.main --no-mqtt             csv only
-python -m control.main --broker 10.0.0.5     somewhere else
+python control.py --simulate            publishes to localhost
+python control.py --no-mqtt             csv only
+python control.py --broker 10.0.0.5     somewhere else
 ```
 
 **everything is retained.** a dashboard that connects at 3pm should see the current
@@ -209,14 +197,16 @@ properly.
 ## alerts
 
 ```
-python -m alerts.main                 run it
-python -m alerts.main --dry-run       print what would be sent, send nothing
-python -m alerts.main --test          send one test notification and exit
+python web.py                         the dashboard runs the watcher too
+python web.py --alerts-only           just the watcher
+python web.py --dry-run               print what would be sent, send nothing
+python web.py --test-alert            send one test notification and exit
 ```
 
-notifications go to a phone through [ntfy](https://ntfy.sh): install the app, subscribe to a
-topic name nobody would guess, put it in `ALERT_NTFY_TOPIC`. no account, no key, one http post.
-with no topic set it prints to the journal instead.
+the watcher is a thread in `web.py`, because the dashboard and the phone are the two ways the
+system talks to a human and one process for both is enough. notifications go through
+[ntfy](https://ntfy.sh): install the app, subscribe to a topic name nobody would guess, put it in
+`ALERT_NTFY_TOPIC`. no account, no key, one http post. with no topic set it prints to the journal.
 
 | condition | key | meaning |
 |---|---|---|
@@ -266,12 +256,12 @@ an invalid reading that doesn't say why is only half a fault report.
 ## ingest
 
 ```
-python -m ingest.main                      subscribe and write
-python -m ingest.main --verbose            print every row
-python -m ingest.backfill data/            load the csv files
-python -m db.report                        what is in there
-python -m db.report --faults               what has been failing
-python -m db.report --history water/temp --hours 24
+python store.py ingest                     subscribe and write
+python store.py ingest --verbose           print every row
+python store.py backfill data/             load the csv files
+python store.py report                     what is in there
+python store.py report --faults            what has been failing
+python store.py report --history water/temp --hours 24
 ```
 
 runs as its own process, not inside the control service. that separation is the
@@ -293,26 +283,28 @@ the table that is supposed to be the record.
 
 ### backfill
 
-`ingest/backfill.py` loads the control service's csv straight into the table. the
-csv columns were picked to match the schema, so it is a load and not a
-transformation. safe to run twice.
+`store.py backfill` loads the control loop's csv straight into the table. the csv
+columns were picked to match the schema, so it is a load and not a transformation.
+safe to run twice.
 
 ## dashboard
 
 ```
-python -m web.app                      http://0.0.0.0:8080
-python -m web.app --port 8099 --db db/hydro.sqlite
+python web.py                          http://0.0.0.0:8080
+python web.py --demo                   a fake day to look at, no tower needed
+python web.py --port 8099 --db somewhere.sqlite
 ```
 
-two pages.
+`dashboard.html` is the whole frontend, one file, served as is: two views switched on
+the url hash, the status header shared between them.
 
-**`/` overview** is the tower drawn as the machine: four modules with their sockets,
+**overview** is the tower drawn as the machine: four modules with their sockets,
 the corner rails lit when the strip is on, the supply pipe running through, and the
 tank filled to its real level with a waterline. every reading sits where it is
 actually measured. under it, six trend cards with a 24h sparkline each, because the
 question is usually "is it drifting", not "what is it right now".
 
-**`/timeline`** is what the system has been doing, and it answers its own question
+**activity** is what the system has been doing, and it answers its own question
 before the log is read: **is anything running out, and is dosing healthy.**
 
 - doses and faults in the last 24 h as counters
@@ -332,13 +324,13 @@ never have to be read to find out. it aggregates every sensor being out of band 
 failing, the dosing state, and whether the control service is reporting at all, then
 says either **all systems nominal** or **n issues need attention** with the list.
 
-one snapshot poll feeds it on every page. the shared layout owns the request and
-broadcasts the payload to whichever page script is loaded, rather than each page
-issuing its own.
+one snapshot poll feeds it and the overview; the activity log polls on its own,
+slower. both pause while the tab is hidden so a phone left on the dashboard does not
+keep waking the pi.
 
 ### design
 
-everything comes from tokens at the top of `style.css`: one colour set redefined for
+everything comes from tokens at the top of `dashboard.html`: one colour set redefined for
 dark, a 6 step type scale, a 4px spacing scale. nothing below that block hardcodes a
 value, so the whole app retints from one place.
 
@@ -382,8 +374,8 @@ fails for ten minutes buries everything else.
 sqlite. schema written so postgres is a swap and not a rewrite. no sqlite specific types, no implicit
 `rowid` dependence.
 
-migrations live in `db/migrations/`, applied in order and recorded in
-`schema_version`. `store.migrate()` runs on every startup and does nothing if there
+migrations are the `SCHEMA` list in `store.py`, applied in order and recorded in
+`schema_version`. `Store.migrate()` runs on every startup and does nothing if there
 is nothing new.
 
 ```sql
@@ -430,15 +422,14 @@ sudo usermod -aG gpio,i2c,dialout $USER      # then log out and in
 
 cd pi
 python3 -m venv .venv
-.venv/bin/pip install -r control/requirements.txt -r ingest/requirements.txt \
-                      -r alerts/requirements.txt -r web/requirements.txt
+.venv/bin/pip install -r requirements.txt
 sudo systemd/install.sh
 ```
 
-the installer writes the four units with the repo path and your user filled in, enables them and
-starts them. `journalctl -u hydro-control -f` to watch. the control unit stops with SIGINT and a
-15 s grace so the pumps are switched off in the `finally` on the way down; the loop sleeps in half
-second slices for the same reason.
+the installer writes three units, `hydro-control`, `hydro-store` and `hydro-web`, with the repo
+path and your user filled in, enables them and starts them. `journalctl -u hydro-control -f` to
+watch. the control unit stops with SIGINT and a 15 s grace so the pumps are switched off in the
+`finally` on the way down; the loop sleeps in half second slices for the same reason.
 
 then, in this order:
 
@@ -449,4 +440,4 @@ then, in this order:
    them in config.py
 4. run each pump 60 s into a cylinder, dose 5 mL and read the delta, fill in the three MEASURE
    blocks, flip `DOSING_CALIBRATED`
-5. set the ntfy topic, `python -m alerts.main --test`
+5. set the ntfy topic, `python web.py --test-alert`
