@@ -1,0 +1,18 @@
+# installed by systemd/install.sh, which fills in the two @ fields
+[Unit]
+Description=hydro control loop: sensors, lights, dosing
+After=network-online.target mosquitto.service
+Wants=mosquitto.service
+
+[Service]
+User=@USER@
+WorkingDirectory=@PI_DIR@
+ExecStart=@PI_DIR@/.venv/bin/python -m control.main
+Restart=always
+RestartSec=5
+# the pumps are switched off in a finally block on the way down. give it time
+KillSignal=SIGINT
+TimeoutStopSec=15
+
+[Install]
+WantedBy=multi-user.target

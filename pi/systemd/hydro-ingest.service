@@ -1,0 +1,16 @@
+# installed by systemd/install.sh, which fills in the two @ fields
+[Unit]
+Description=hydro ingest: mqtt to sqlite
+After=network-online.target mosquitto.service
+Wants=mosquitto.service
+
+[Service]
+User=@USER@
+WorkingDirectory=@PI_DIR@
+ExecStart=@PI_DIR@/.venv/bin/python -m ingest.main
+Restart=always
+RestartSec=5KillSignal=SIGINT
+TimeoutStopSec=10
+
+[Install]
+WantedBy=multi-user.target

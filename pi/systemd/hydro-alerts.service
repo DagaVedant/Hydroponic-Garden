@@ -1,0 +1,15 @@
+# installed by systemd/install.sh, which fills in the two @ fields
+[Unit]
+Description=hydro alerts: phone notifications
+After=network-online.target mosquitto.service
+Wants=mosquitto.service
+
+[Service]
+User=@USER@
+WorkingDirectory=@PI_DIR@
+ExecStart=@PI_DIR@/.venv/bin/python -m alerts.main
+Restart=always
+RestartSec=5KillSignal=SIGINT
+
+[Install]
+WantedBy=multi-user.target
