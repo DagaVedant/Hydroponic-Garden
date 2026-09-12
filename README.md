@@ -31,17 +31,6 @@ the pump only does one job: get water to the top. after that it's all shape.
    through 4 holes, one under each socket, onto the next module's spreader
 5. because every module re-collects and re-distributes, **module 4 gets watered like module 1**
 
-## design decisions worth knowing
-
-| | |
-|---|---|
-| **a spreader in every module** | one cone at the top becomes wall film by module 2. |
-| **net pots sit on a taper, not their lip** | the lip gives ~1.5mm of ledge, less than the error in the vendor's own spec sheet |
-| **the supply pipe has no joints at all** | one continuous length from the pump to the top, running in a dry tunnel through every module. nothing to seal, nothing to weep |
-| **no o-rings between modules** | nothing is pressurised. a step and recess lip catches splash and that's all it needs to do |
-| **four tie rods, no bolts** | #10-24 rods clamp the whole stack in compression. plastic is far better in compression than in pull-out, and nothing gets melted into a part i might want to recycle |
-| **every overhang is exactly 45°** | sockets, both floor cones, the grate ledge. measured on the solid, nothing at all falls between 46° and 89°, so it prints with supports off |
-
 ## how it's wired
 
 ```
