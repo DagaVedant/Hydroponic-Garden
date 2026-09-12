@@ -1,0 +1,131 @@
+{% extends "base.html" %}
+{% block title %}Overview &middot; Tower{% endblock %}
+
+{% block content %}
+
+<section class="sec">
+  <div class="panel">
+    <div class="hero">
+      <svg viewBox="0 0 250 214" role="img" aria-labelledby="sch-t" aria-describedby="sch-d">
+        <title id="sch-t">Tower schematic</title>
+        <desc id="sch-d">Four grow modules on a nutrient tank. Corner rails show whether the
+          lights are on, and the tank is drawn to its current fill level.</desc>
+
+        <rect id="rail-l" x="34" y="16" width="5" height="132" rx="2.5" fill="var(--line-mid)"/>
+        <rect id="rail-r" x="186" y="16" width="5" height="132" rx="2.5" fill="var(--line-mid)"/>
+
+        <g fill="none" stroke="var(--line-mid)" stroke-width="1">
+          <rect x="43" y="18" width="139" height="29" rx="3"/>
+          <rect x="43" y="50" width="139" height="29" rx="3"/>
+          <rect x="43" y="82" width="139" height="29" rx="3"/>
+          <rect x="43" y="114" width="139" height="29" rx="3"/>
+        </g>
+        <g fill="var(--bg)" stroke="var(--line-mid)" stroke-width="1">
+          <circle cx="43" cy="32.5" r="4.5"/><circle cx="182" cy="32.5" r="4.5"/>
+          <circle cx="43" cy="64.5" r="4.5"/><circle cx="182" cy="64.5" r="4.5"/>
+          <circle cx="43" cy="96.5" r="4.5"/><circle cx="182" cy="96.5" r="4.5"/>
+          <circle cx="43" cy="128.5" r="4.5"/><circle cx="182" cy="128.5" r="4.5"/>
+        </g>
+        <g font-size="9" fill="var(--text-3)">
+          <text x="54" y="36">4</text><text x="54" y="68">3</text>
+          <text x="54" y="100">2</text><text x="54" y="132">1</text>
+        </g>
+
+        <!-- supply pipe, one continuous length, jet splitter at the top -->
+        <rect x="111.5" y="14" width="1.5" height="138" fill="var(--text-3)" opacity="0.4"/>
+        <circle cx="112.2" cy="13" r="3" fill="none" stroke="var(--text-3)"
+                stroke-width="1" opacity="0.55"/>
+
+        <!-- tank -->
+        <rect x="61" y="156" width="103" height="42" rx="4" fill="none" stroke="var(--line-mid)"/>
+        <rect id="tank-fill" x="62.5" y="160" width="100" height="36.5" fill="var(--water)"/>
+        <line id="tank-line" x1="62.5" y1="160" x2="162.5" y2="160"
+              stroke="var(--accent)" stroke-width="1.5"/>
+        <text id="tank-label" x="172" y="181" font-size="11" font-weight="500"
+              fill="var(--text-2)">&nbsp;</text>
+      </svg>
+
+      <dl class="readout" id="readout">
+        <div class="ro"><dt>pH</dt><dd id="ro-water-ph">&nbsp;</dd></div>
+        <div class="ro"><dt>Conductivity</dt><dd id="ro-water-ec">&nbsp;</dd></div>
+        <div class="ro"><dt>Water temperature</dt><dd id="ro-water-temp">&nbsp;</dd></div>
+        <div class="ro"><dt>Tank volume</dt><dd id="ro-water-level">&nbsp;</dd></div>
+        <div class="ro"><dt>Air</dt><dd id="ro-air">&nbsp;</dd></div>
+        <div class="ro"><dt>Circulation pump</dt><dd id="ro-pump">&nbsp;</dd></div>
+        <div class="ro"><dt>Dosing</dt><dd id="ro-dosing">&nbsp;</dd></div>
+        <div class="ro"><dt>Lighting</dt><dd id="ro-lights">&nbsp;</dd></div>
+      </dl>
+    </div>
+  </div>
+</section>
+
+<section class="sec">
+  <div class="sec-head">
+    <h2>Trends</h2>
+    <span class="aside">Last 24 hours. Shaded band is the target range.</span>
+  </div>
+  <div class="cards" id="cards"></div>
+</section>
+
+<section class="sec">
+  <div class="sec-head"><h2>Controls</h2></div>
+  <div class="panel">
+    <dl class="ctl">
+      <dt id="lab-lights">Lighting</dt>
+      <dd>
+        <div class="seg" role="group" aria-labelledby="lab-lights">
+          <button type="button" data-cmd="lights" data-body='{"auto":true}' data-mode="schedule">Schedule</button>
+          <button type="button" data-cmd="lights" data-body='{"on":true}'   data-mode="on">Force on</button>
+          <button type="button" data-cmd="lights" data-body='{"on":false}'  data-mode="off">Force off</button>
+        </div>
+        <span class="meta" id="lights-note">&nbsp;</span>
+      </dd>
+    </dl>
+    <dl class="ctl">
+      <dt id="lab-dose">Dosing</dt>
+      <dd>
+        <div class="seg" role="group" aria-labelledby="lab-dose">
+          <button type="button" data-cmd="dose" data-body='{"enabled":true}'  data-dose="on">Enabled</button>
+          <button type="button" data-cmd="dose" data-body='{"enabled":false}' data-dose="off">Paused</button>
+        </div>
+        <button type="button" id="clear-fault" data-cmd="dose" data-body='{"clear_fault":true}'
+                data-confirm="Clear the dosing fault?&#10;&#10;A dose that did not register usually means an empty bottle, a slipped tube or a dead pump. Check the hardware before clearing, or the next dose fails the same way.">Clear fault</button>
+        <span class="meta" id="dose-note">&nbsp;</span>
+      </dd>
+    </dl>
+    <dl class="ctl">
+      <dt>Circulation</dt>
+      <dd>
+        <button type="button" disabled aria-describedby="pump-note">Stop pump</button>
+        <span class="meta" id="pump-meta">&nbsp;</span>
+      </dd>
+    </dl>
+    <p class="note" id="pump-note">The circulation pump is wired directly to a GFCI outlet with
+      no relay on any GPIO, so no software path can stop it. This is deliberate: switching mains
+      beside an open reservoir to guard a failure mode that does not exist would add risk rather
+      than remove it. The control shows as unavailable rather than being hidden or faked.</p>
+  </div>
+</section>
+
+<section class="sec">
+  <div class="sec-head">
+    <h2>Photoperiod</h2>
+    <span class="aside" id="sched-note">&nbsp;</span>
+  </div>
+  <div class="panel tight sched">
+    <svg viewBox="0 0 620 46" role="img" aria-label="Lighting schedule across 24 hours">
+      <rect x="0" y="6" width="620" height="20" rx="4" fill="var(--raised)"/>
+      <rect id="sched-lit" x="0" y="6" width="0" height="20" fill="var(--lit)" opacity="0.5"/>
+      <rect id="sched-lit2" x="0" y="6" width="0" height="20" fill="var(--lit)" opacity="0.5"/>
+      <line id="sched-now" x1="0" y1="2" x2="0" y2="30" stroke="var(--text)" stroke-width="1.5"/>
+      <g font-size="10" fill="var(--text-3)">
+        <text x="0" y="42">00:00</text><text x="145" y="42">06:00</text>
+        <text x="300" y="42">12:00</text><text x="455" y="42">18:00</text>
+        <text x="588" y="42">24:00</text>
+      </g>
+    </svg>
+  </div>
+</section>
+{% endblock %}
+
+{% block script %}<script src="{{ url_for('static', filename='overview.js') }}"></script>{% endblock %}

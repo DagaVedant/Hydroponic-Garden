@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% block title %}Activity &middot; Tower{% endblock %}
+
+{% block content %}
+
+<section class="sec">
+  <div class="panel">
+    <div class="hero activity">
+      <dl class="readout counters" id="counters">
+        <div class="ro"><dt>Doses, last 24 h</dt><dd id="c-doses">&nbsp;</dd></div>
+        <div class="ro"><dt>Faults, last 24 h</dt><dd id="c-faults">&nbsp;</dd></div>
+      </dl>
+
+      <div class="bottles">
+        <div class="sub">
+          <h3>Concentrate remaining</h3>
+          <span class="aside">Estimated from what was dosed</span>
+        </div>
+        <div id="bottles"></div>
+      </div>
+    </div>
+    <p class="note" id="bottle-note">There is no level sensor in the bottles. Dose verification
+      catches an empty one along with a slipped tube and a dead pump, which a float switch cannot,
+      so these figures are arithmetic on what was dosed rather than a measurement. Reset them on a
+      refill.</p>
+  </div>
+</section>
+
+<section class="sec">
+  <div class="sec-head">
+    <h2>Activity</h2>
+    <div class="seg" role="group" aria-label="Filter activity" id="filters">
+      <button type="button" data-filter="all" aria-pressed="true">All</button>
+      <button type="button" data-filter="dose" aria-pressed="false">Doses</button>
+      <button type="button" data-filter="light" aria-pressed="false">Lighting</button>
+      <button type="button" data-filter="fault" aria-pressed="false">Faults</button>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="strip" id="strip-wrap">
+      <svg viewBox="0 0 620 34" role="img" aria-label="When events happened over the last 24 hours">
+        <line x1="0" y1="17" x2="620" y2="17" stroke="var(--line)" stroke-width="1"/>
+        <g id="strip-marks"></g>
+        <g font-size="10" fill="var(--text-3)">
+          <text x="0" y="32">24 h ago</text>
+          <text x="288" y="32">12 h</text>
+          <text x="596" y="32">now</text>
+        </g>
+      </svg>
+    </div>
+    <div id="events"><p class="empty">Loading activity&hellip;</p></div>
+  </div>
+
+  <p class="note">Every dose records whether the reading actually moved afterwards. A dose that
+    does not register is treated as a fault and halts dosing rather than retrying, because the
+    cause is an empty bottle, a slipped tube or a dead pump, and none of those are fixed by
+    dosing again.</p>
+</section>
+{% endblock %}
+
+{% block script %}<script src="{{ url_for('static', filename='timeline.js') }}"></script>{% endblock %}
