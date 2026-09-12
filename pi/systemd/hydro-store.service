@@ -7,9 +7,10 @@ Wants=mosquitto.service
 [Service]
 User=@USER@
 WorkingDirectory=@PI_DIR@
-ExecStart=@PI_DIR@/.venv/bin/python -m ingest.main
+ExecStart=@PI_DIR@/.venv/bin/python store.py ingest
 Restart=always
-RestartSec=5KillSignal=SIGINT
+RestartSec=5
+KillSignal=SIGINT
 TimeoutStopSec=10
 
 [Install]

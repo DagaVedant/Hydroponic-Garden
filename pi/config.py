@@ -1,7 +1,8 @@
 """The numbers you might have to change.
 
-Everything fixed by the hat, the wiring or the bucket is in hardware.py and should
-not need touching. Everything here is a measurement, a target or a preference.
+Everything fixed by the hat, the wiring or the bucket is at the top of control.py
+and should not need touching. Everything here is a measurement, a target or a
+preference.
 
 Lines marked MEASURE are guesses until they are measured on the bench, and the
 dosing ones are refused on hardware until DOSING_CALIBRATED is flipped.
@@ -84,7 +85,7 @@ DOSE_VERIFY_MAX_FRACTION = 4.0      # and no more than this, or the pump did not
 # ---------------------------------------------------------------- healthy bands
 
 # Where each reading should sit. The dashboard colours by these and the alerts
-# fire on them. Outside these is "the plants are unhappy"; hardware.py has the
+# fire on them. Outside these is "the plants are unhappy"; control.py has the
 # much wider "the sensor is broken" limits.
 BANDS = {
     "water/level":  (6.0,  11.0),     # litres. full is the fill line

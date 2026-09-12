@@ -1,1 +1,0 @@
-paho-mqtt>=2.0         # subscribing to the local broker. ntfy needs nothing, it is plain http

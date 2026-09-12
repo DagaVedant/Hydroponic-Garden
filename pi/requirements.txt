@@ -1,0 +1,9 @@
+# on the pi: pip install -r requirements.txt
+# on a laptop only flask and paho-mqtt are needed: control.py --simulate, store.py
+# and web.py run without the hardware libraries, and lgpio does not build off a pi
+flask>=3.0             # web.py, the dashboard
+paho-mqtt>=2.0         # everything talks to the local broker
+smbus2>=0.4.3          # i2c, for the ads1115 and the sht31
+pyserial>=3.5          # uart, for the jsn-sr04t
+gpiozero>=2.0          # the mosfets
+lgpio>=0.2.2.0         # gpiozero backend, kernel timed pwm

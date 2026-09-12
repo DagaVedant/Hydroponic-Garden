@@ -1,13 +1,13 @@
 # installed by systemd/install.sh, which fills in the two @ fields
 [Unit]
-Description=hydro dashboard on port 8080
+Description=hydro dashboard on port 8080, and the alerts
 After=network-online.target mosquitto.service
 Wants=mosquitto.service
 
 [Service]
 User=@USER@
 WorkingDirectory=@PI_DIR@
-ExecStart=@PI_DIR@/.venv/bin/python -m web.app
+ExecStart=@PI_DIR@/.venv/bin/python web.py
 Restart=always
 RestartSec=5
 

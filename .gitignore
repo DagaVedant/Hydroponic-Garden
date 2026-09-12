@@ -1,6 +1,6 @@
 journal/
 pi/data/
-pi/db/*.sqlite*
+pi/*.sqlite*
 pi/.venv/
 pi/tests/
 __pycache__/

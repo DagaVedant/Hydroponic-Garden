@@ -7,7 +7,7 @@ Wants=mosquitto.service
 [Service]
 User=@USER@
 WorkingDirectory=@PI_DIR@
-ExecStart=@PI_DIR@/.venv/bin/python -m control.main
+ExecStart=@PI_DIR@/.venv/bin/python control.py
 Restart=always
 RestartSec=5
 # the pumps are switched off in a finally block on the way down. give it time
