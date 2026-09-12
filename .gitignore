@@ -2,6 +2,7 @@ journal/
 pi/data/
 pi/db/*.sqlite*
 pi/.venv/
+pi/tests/
 __pycache__/
 PCB/*
 
