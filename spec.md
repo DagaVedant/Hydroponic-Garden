@@ -342,7 +342,9 @@ on a support ring, which is what makes the fingers long enough to flex. both hal
 ours, so nothing has to be measured on a gamma seal, and the gamma seal is off the bom. the bucket
 numbers came from a model of the home depot bucket (thingiverse thing 3688345): rim bead ⌀304.8,
 7.2mm tall, wall ⌀291.9 under it; check the bead on the real bucket, the fingers carry a millimetre of
-margin each way. the cap's plate top, and so the sensor face, sits 14mm above the bucket rim.
+margin each way. the cap's plate sits 8mm below the bucket rim, so the level sensor's face, on
+the pod lip 2mm up from the plate's underside, is 6mm below the rim: SENSOR_HEIGHT_MM is 362 on
+a 368 bucket. measure it with the ring and cap on.
 
 **the tower is held, not just parked.** four hooks stand on the plate between the rod bosses, each a
 post with a toe pointing inward. the drain base has four slots up from its bottom edge and a 20°
@@ -375,13 +377,14 @@ the jsn-sr04t has a **200mm blind zone**. it cannot report anything closer than 
 in the tank plate it would be useless exactly when the tank is full, which is the reading that
 matters most.
 
-the bucket is 368 tall with a bore near ⌀290. that's about 660 cm² of surface, so:
+the bucket is 368 tall with a bore near ⌀290, and the sensor face sits 6mm below the rim, 362
+above the floor. that's about 660 cm² of surface, so:
 
 | fill | depth | air gap above water |
 |---|---|---|
-| 18.9 L brim full | 286mm | **82mm** |
-| 16.5 L | 250mm | 118mm |
-| 10.9 L | 165mm | **203mm** |
+| 18.9 L brim full | 286mm | **76mm** |
+| 16.5 L | 250mm | 112mm |
+| 10.6 L | 160mm | **202mm** |
 
 the first two are inside the blind zone. the third is not, and that is the whole design.
 
@@ -390,27 +393,28 @@ lid, so a post on it rises into the tower, and the best clear run anywhere insid
 before module 1's floor cone is in the way. the sensor needs 82mm of rise to clear the blind zone at
 a 250mm fill line. 82mm of post will not go into 63mm of space, and a shorter post does not help.
 
-so the fill line moved instead of the sensor. **MAX_FILL_DEPTH is 165mm** and the sensor sits flush
-in a pod in the tank lid plate:
+so the fill line moved instead of the sensor. **MAX_FILL_DEPTH is 160mm** and the sensor sits in
+a pod in the tank lid plate, 6mm below the rim:
 
 ```
-   sensor ─────────────────────  368mm above the bucket floor, flush in the plate
+   sensor ─────────────────────  362mm above the bucket floor, on the pod lip in the plate
      │
-     │  203mm  ← full tank reading. only 3mm clear of a 200mm blind zone
+     │  202mm  ← full tank reading. only 2mm clear of a 200mm blind zone
      │
-   ══╪══════════════════════════  165mm max fill line, about 10.9 L
+   ══╪══════════════════════════  160mm max fill line, about 10.6 L
      │
-     │  368mm  ← empty tank reading
+     │  362mm  ← empty tank reading
    ──┴──────────────────────────  0mm, bucket floor
 ```
 
-usable span is 203 to 368mm, which maps the whole working range of the tank. the cost is volume:
-10.9 L of usable tank instead of 16.5.
+usable span is 202 to 362mm, which maps the whole working range of the tank. the cost is volume:
+10.6 L of usable tank instead of 16.5. it was 165mm and 10.9 L when the sensor was going to sit at
+the rim; the cap's plate hangs below the rim, so the fill line came down with it.
 
-**3mm of margin is thin and the blind zone number is not settled.** spec, part-links and
+**2mm of margin is thin and the blind zone number is not settled.** spec, part-links and
 next-session all say 200mm, but build-log has it at 25 cm off the datasheet and plenty of jsn-sr04t
-listings say 25 cm too. if it is really 250mm then the fill line has to come down to 118mm at the
-absolute best, 7.8 L, and less than that for any margin. measure the real blind zone on the bench
+listings say 25 cm too. if it is really 250mm then the fill line has to come down to 112mm at the
+absolute best, 7.4 L, and less than that for any margin. measure the real blind zone on the bench
 before committing the fill line.
 
 **overfilling reads as empty.** closer than the blind zone does not give a short reading, it gives
@@ -425,7 +429,7 @@ its own walls. in open air the water surface is the nearest and flattest reflect
 returns first and strongest. the pipe and the bucket wall return later and weaker.
 
 **filter it in software anyway.** take a median of several readings and reject anything outside the
-203 to 368 band. a cheap ultrasonic in a narrow bucket will throw the occasional false echo.
+202 to 382 band. a cheap ultrasonic in a narrow bucket will throw the occasional false echo.
 
 ### safety
 
