@@ -1,28 +1,3 @@
-"""The control loop. Reads the hat, logs, publishes, drives the lights and dosing.
-
-    python control.py --simulate            no hardware, fake but plausible
-    python control.py                       real hardware on the pi
-    python control.py --once                one sweep and exit
-    python control.py --interval 10         override the sample period
-    python control.py --no-outputs          sense only, drive nothing
-    python control.py --no-mqtt             csv only, do not publish
-
-One file, top to bottom: the constants the hat fixes, the Reading type, the four
-sensor drivers, the three outputs, the csv log, the mqtt publisher, the loop.
-Everything you might want to change is in config.py, not here.
-
-Order inside a sweep is deliberate:
-
-    read -> csv -> publish -> lights -> dosing -> state
-
-The csv is written before anything else can go wrong, the lights are cheap and
-never fail, and dosing runs last because it is the only thing here that can do
-damage and it wants the freshest possible readings to decide on.
-
-**The pump is not in this list.** It runs continuously off its own gfci outlet and
-no code path can stop it.
-"""
-
 from __future__ import annotations
 
 import argparse
@@ -53,83 +28,65 @@ from config import (CSV_DIR, DOSE_EC_DEADBAND, DOSE_EC_TARGET, DOSE_FLOW_ML_PER_
                     PROBE_SETTLE_S, SAMPLE_INTERVAL_S, SENSOR_HEIGHT_MM, TDS_TEMP_COEFF,
                     TDS_TO_EC)
 
-# =============================================================================
-# what the hat fixes. nothing here is a preference: the pin map is soldered, the
-# addresses are strapped on the boards, the blind zone is physics. PCB/README.md
-# is the other copy of the pin map and the two must agree.
-# =============================================================================
 
-I2C_BUS = 1                 # /dev/i2c-1 on a pi 4b
-ADS1115_ADDR = 0x48         # addr pin to gnd. ph on a0, ec on a1
-SHT3X_ADDR = 0x44           # sht31, addr low
+I2C_BUS = 1
+ADS1115_ADDR = 0x48
+SHT3X_ADDR = 0x44
 ADS_CH_PH, ADS_CH_EC = 0, 1
-ADS_FSR_VOLTS = 4.096       # pga setting, +/- 4.096 V
+ADS_FSR_VOLTS = 4.096
 
-PIN_PH_POWER = 23           # pulls the ph board's high side switch on
-PIN_EC_POWER = 24           # same for the ec board. only one is ever on
-PIN_LIGHTS = 18             # led mosfet, hardware pwm0
-PIN_DOSE_MICRO = 17         # dosing ch2, FloraMicro
-PIN_DOSE_GRO = 27           # dosing ch3, FloraGro
-PIN_DOSE_PH_DOWN = 22       # dosing ch4, pH Down
+PIN_PH_POWER = 23
+PIN_EC_POWER = 24
+PIN_LIGHTS = 18
+PIN_DOSE_MICRO = 17
+PIN_DOSE_GRO = 27
+PIN_DOSE_PH_DOWN = 22
 LIGHT_PWM_HZ = 1000
 
 LEVEL_PORT = "/dev/serial0"
 LEVEL_BAUD = 9600
 LEVEL_TIMEOUT_S = 0.5
-LEVEL_SAMPLES = 5           # median of N. a cheap ultrasonic in a narrow bucket
-                            # throws the occasional false echo off the pipe or wall
-LEVEL_BLIND_ZONE_MM = 200.0 # closer than this the JSN-SR04T reports garbage, not a distance
+LEVEL_SAMPLES = 5
+LEVEL_BLIND_ZONE_MM = 200.0
 LEVEL_MAX_RANGE_MM = 6000.0
-BUCKET_BORE_MM = 290.0      # inner diameter
-# plausible window for this tank, from the two numbers in config.py. full is only
-# just past the blind zone: overfilling reads as "too close", which is invalid
+BUCKET_BORE_MM = 290.0
 LEVEL_MIN_VALID_MM = SENSOR_HEIGHT_MM - MAX_FILL_DEPTH_MM
 LEVEL_MAX_VALID_MM = SENSOR_HEIGHT_MM + 20.0
 
 W1_DIR = "/sys/bus/w1/devices"
-W1_PREFIX = "28-"           # ds18b20 family code
+W1_PREFIX = "28-"
 
 PH_CAL_7, PH_CAL_4 = 7.00, 4.00
 
-# outside these a reading is marked invalid. these are "the sensor is broken or
-# unplugged" bounds. the "plants are unhappy" bounds are BANDS in config.py
 RANGES = {
-    "water/level":  (0.0, 20.0),      # litres
-    "water/temp":   (0.0, 45.0),      # degrees C
+    "water/level":  (0.0, 20.0),
+    "water/temp":   (0.0, 45.0),
     "water/ph":     (0.0, 14.0),
-    "water/ec":     (0.0, 5000.0),    # uS/cm
+    "water/ec":     (0.0, 5000.0),
     "air/temp":     (-10.0, 60.0),
     "air/humidity": (0.0, 100.0),
 }
 
 MQTT_PORT = 1883
-MQTT_KEEPALIVE_S = 60       # the broker fires our last will about 1.5x this after we die
+MQTT_KEEPALIVE_S = 60
 MQTT_CLIENT_ID = "hydro-control"
 MQTT_TOPIC_PREFIX = "hydro"
-MQTT_QOS = 1                # at least once. cheap over loopback
+MQTT_QOS = 1
 
 CSV_HEADER = ["ts", "iso", "sensor", "value", "unit", "valid", "note"]
 
 
-# =============================================================================
-# one reading. every sensor returns this shape and nothing else. a reading is
-# never handed on without `valid`, because a failed probe reads as a plausible
-# number and a plausible wrong number is worse than a gap.
-# =============================================================================
-
 @dataclass(frozen=True)
 class Reading:
-    sensor: str          # matches the mqtt topic suffix, e.g. "water/temp"
-    value: float         # always populated, even when invalid, so the failure is inspectable
+    sensor: str
+    value: float
     unit: str
     valid: bool
-    ts: float = field(default_factory=time.time)   # unix epoch seconds, utc
-    note: str = ""       # why it is invalid, blank when it is fine
+    ts: float = field(default_factory=time.time)
+    note: str = ""
 
     @classmethod
     def bad(cls, sensor: str, unit: str, note: str, value: float = float("nan")) -> "Reading":
-        """A reading that failed. Recorded, not dropped: a gap in the data looks the
-        same as 'the pi was off', an explicit valid=0 row says the probe was failing."""
         return cls(sensor=sensor, value=value, unit=unit, valid=False, note=note)
 
     def __str__(self) -> str:
@@ -139,10 +96,8 @@ class Reading:
 
 
 def checked(sensor: str, value: float, unit: str, note: str = "") -> Reading:
-    """Build a Reading, invalid if it falls outside the plausible range. Catches an
-    unplugged probe on a floating pin, or an adc returning rail voltage."""
     lo, hi = RANGES[sensor]
-    if value != value:                      # nan
+    if value != value:
         return Reading.bad(sensor, unit, "nan")
     if not (lo <= value <= hi):
         return Reading(sensor=sensor, value=value, unit=unit, valid=False,
@@ -151,8 +106,6 @@ def checked(sensor: str, value: float, unit: str, note: str = "") -> Reading:
 
 
 def crc8_sensirion(data: bytes) -> int:
-    """CRC-8, polynomial 0x31, init 0xFF. Without it a corrupted i2c read produces
-    a temperature that looks fine."""
     crc = 0xFF
     for byte in data:
         crc ^= byte
@@ -162,9 +115,6 @@ def crc8_sensirion(data: bytes) -> int:
 
 
 class Sensor:
-    """One interface for all of them. read() returns a list because the sht31
-    hands back temperature and humidity from a single transaction."""
-
     name = "unnamed"
 
     def __init__(self, simulate: bool = False) -> None:
@@ -176,13 +126,6 @@ class Sensor:
     def close(self) -> None:
         pass
 
-
-# =============================================================================
-# ds18b20 water temperature over 1-wire. the kernel does the bus work: enable
-# `dtoverlay=w1-gpio`, and each probe is a directory under /sys/bus/w1/devices
-# with a w1_slave file whose first line ends YES when the crc passed and whose
-# second carries t=<millidegrees>.
-# =============================================================================
 
 class WaterTemp(Sensor):
     name = "water/temp"
@@ -201,12 +144,12 @@ class WaterTemp(Sensor):
 
     def read(self) -> List[Reading]:
         if self.simulate:
-            self._sim_c += random.uniform(-0.08, 0.08)      # tracks room temp, slowly
+            self._sim_c += random.uniform(-0.08, 0.08)
             self._sim_c = max(18.0, min(26.0, self._sim_c))
             return [checked(self.name, round(self._sim_c, 2), "C")]
 
         if self._path is None:
-            self._path = self._find_probe()                 # plugged in since startup?
+            self._path = self._find_probe()
             if self._path is None:
                 return [Reading.bad(self.name, "C", "no 1-wire device found")]
         try:
@@ -223,19 +166,9 @@ class WaterTemp(Sensor):
             return [Reading.bad(self.name, "C", "no t= field")]
         milli = int(lines[1][marker + 2:])
         if milli == 85000:
-            # the power-on default. the conversion did not run, usually a parasitic
-            # power or pull-up problem. it is not a reading
             return [Reading.bad(self.name, "C", "85C power-on default, conversion did not run", 85.0)]
         return [checked(self.name, milli / 1000.0, "C")]
 
-
-# =============================================================================
-# sht31 air temperature and humidity, i2c at 0x44. 0x24 0x00 is the high
-# repeatability measurement without clock stretching, ready after 15 ms; the
-# response is T_msb T_lsb T_crc RH_msb RH_lsb RH_crc. it is an sht31, not the
-# sht41 the bom once named: an sht4x takes a one byte 0xFD and offsets RH, and
-# sending that to an sht31 returns nothing rather than failing loudly.
-# =============================================================================
 
 CMD_MEASURE_HIGH_REPEATABILITY = (0x24, 0x00)
 MEASURE_DELAY_S = 0.016
@@ -294,17 +227,6 @@ class AirSensor(Sensor):
             self._bus.close()
 
 
-# =============================================================================
-# jsn-sr04t tank level, uart mode (mode 1, the 47k at R27), not trigger/echo:
-# timing an echo pulse in microseconds needs a real time system and linux is
-# not one. write 0x55, read 0xFF hi lo sum; distance_mm = hi << 8 | lo.
-#
-# geometry, from the bucket floor, numbers in config.py: the sensor face is
-# SENSOR_HEIGHT_MM up (362 as drawn: on the pod lip in the cap, 6 below the
-# rim), a full tank is MAX_FILL_DEPTH_MM of water (160) so it reads 202, and
-# empty reads 362. the 200 mm blind zone is why the fill line is that low.
-# =============================================================================
-
 BORE_AREA_MM2 = math.pi * (BUCKET_BORE_MM / 2.0) ** 2
 CMD_TRIGGER = b"\x55"
 
@@ -325,7 +247,6 @@ class TankLevel(Sensor):
         return depth_mm * BORE_AREA_MM2 / 1_000_000.0
 
     def _one_sample(self) -> Optional[float]:
-        """One distance in mm, or None if the frame was bad."""
         try:
             self._port.reset_input_buffer()
             self._port.write(CMD_TRIGGER)
@@ -340,15 +261,12 @@ class TankLevel(Sensor):
 
     def read(self) -> List[Reading]:
         if self.simulate:
-            self._sim_depth -= random.uniform(0.0, 1.2)      # evaporation and uptake
+            self._sim_depth -= random.uniform(0.0, 1.2)
             if self._sim_depth < 60:
-                self._sim_depth = MAX_FILL_DEPTH_MM           # someone topped it up
+                self._sim_depth = MAX_FILL_DEPTH_MM
             return [checked(self.name, round(self.depth_to_litres(self._sim_depth), 2),
                             "L", note=f"distance {SENSOR_HEIGHT_MM - self._sim_depth:.0f}mm")]
 
-        # median of N. the beam is 75 degrees wide in a 290 mm bucket, so it clips
-        # the pipe and the wall. the water surface is the nearest and flattest
-        # reflector so its echo normally wins, but not every single time
         samples = [s for s in (self._one_sample() for _ in range(LEVEL_SAMPLES)) if s is not None]
         if not samples:
             return [Reading.bad(self.name, "L", "no valid frames from sensor")]
@@ -371,45 +289,27 @@ class TankLevel(Sensor):
             self._port.close()
 
 
-# =============================================================================
-# ph and ec, both analog, both through the ads1115 at 0x48. the pi has no
-# analog input at all. the important part is the power switching: two powered
-# electrodes in the same tank leak current through the solution and corrupt
-# each other, so the hat has a mosfet on each probe's supply and the loop is
-# ph on -> settle -> sample a0 -> ph off, then the same for ec, then both off.
-# =============================================================================
-
 REG_CONVERSION, REG_CONFIG = 0x00, 0x01
 _MUX = {0: 0b100, 1: 0b101, 2: 0b110, 3: 0b111}
 _PGA_4V096, _DR_128SPS = 0b001, 0b100
 
 
 def _config_word(channel: int) -> int:
-    """single shot, +/-4.096 V, 128 sps, comparator off"""
     return (0x8000 | (_MUX[channel] << 12) | (_PGA_4V096 << 9) | (1 << 8)
             | (_DR_128SPS << 5) | 0x03)
 
 
 def ph_from_volts(v: float) -> float:
-    """Two point calibration through the 4.00 and 7.00 buffers. a glass electrode
-    is linear in millivolts against ph, and the slope is negative on most boards,
-    which is why it is derived rather than assumed."""
     slope = (PH_CAL_7 - PH_CAL_4) / (PH_CAL_V7 - PH_CAL_V4)
     return PH_CAL_7 + (v - PH_CAL_V7) * slope
 
 
 def tds_from_volts(v: float, water_temp_c: float) -> float:
-    """DFRobot Gravity TDS, ppm. a dc excitation probe reads higher in warm water,
-    so the voltage is normalised back to 25 C before the cubic is applied."""
     comp = v / (1.0 + TDS_TEMP_COEFF * (water_temp_c - 25.0))
     return (133.42 * comp ** 3 - 255.86 * comp ** 2 + 857.39 * comp) * 0.5
 
 
 class ProbePair(Sensor):
-    """Both probes, one at a time. set `water_temp_c` before read(): ec without
-    temperature compensation is not a measurement, so if it is missing the ec
-    reading is marked invalid rather than silently wrong."""
-
     name = "probes"
 
     def __init__(self, simulate: bool = False) -> None:
@@ -421,7 +321,6 @@ class ProbePair(Sensor):
             import smbus2
             from gpiozero import DigitalOutputDevice
             self._bus = smbus2.SMBus(I2C_BUS)
-            # initial_value False so both probes come up unpowered
             self._ph_power = DigitalOutputDevice(PIN_PH_POWER, initial_value=False)
             self._ec_power = DigitalOutputDevice(PIN_EC_POWER, initial_value=False)
 
@@ -429,12 +328,12 @@ class ProbePair(Sensor):
         cfg = _config_word(channel)
         try:
             self._bus.write_i2c_block_data(ADS1115_ADDR, REG_CONFIG, [(cfg >> 8) & 0xFF, cfg & 0xFF])
-            time.sleep(1.0 / 128 + 0.002)          # one conversion at 128 sps
+            time.sleep(1.0 / 128 + 0.002)
             raw = self._bus.read_i2c_block_data(ADS1115_ADDR, REG_CONVERSION, 2)
         except OSError:
             return None
         counts = (raw[0] << 8) | raw[1]
-        if counts > 0x7FFF:                        # 16 bit two's complement
+        if counts > 0x7FFF:
             counts -= 0x10000
         return counts * ADS_FSR_VOLTS / 32768.0
 
@@ -447,8 +346,6 @@ class ProbePair(Sensor):
             power.off()
 
     def simulate_dose(self, channel: str, ml: float) -> None:
-        """Move the fake tank the way a real dose would, so the dosing state machine
-        can be watched converging instead of dosing into a void."""
         if not self.simulate:
             return
         if channel in EC_PER_ML:
@@ -458,8 +355,8 @@ class ProbePair(Sensor):
 
     def read(self) -> List[Reading]:
         if self.simulate:
-            self._sim_ph += random.uniform(-0.04, 0.06)     # drifts up as plants feed
-            self._sim_ec -= random.uniform(0.0, 4.0)        # drops as they eat
+            self._sim_ph += random.uniform(-0.04, 0.06)
+            self._sim_ec -= random.uniform(0.0, 4.0)
             self._sim_ph = max(5.2, min(7.6, self._sim_ph))
             self._sim_ec = max(600.0, min(2200.0, self._sim_ec))
             return [checked("water/ph", round(self._sim_ph, 2), "pH"),
@@ -492,13 +389,6 @@ class ProbePair(Sensor):
             self._bus.close()
 
 
-# =============================================================================
-# one switched channel, one of the four load mosfets on the hat. all four hang
-# off the 12 V rail: the strip on gpio 18 with pwm, the pumps on 17 / 27 / 22 as
-# plain on/off. low side switched, so `on` pulls the load's negative to ground.
-# gpiozero's lgpio backend times the pwm in the kernel, so 1 kHz is steady.
-# =============================================================================
-
 class Channel:
     def __init__(self, pin: int, name: str, frequency: int = 1000, simulate: bool = False) -> None:
         self.pin, self.name, self.simulate = pin, name, simulate
@@ -506,8 +396,6 @@ class Channel:
         self._dev = None
         if not simulate:
             from gpiozero import PWMOutputDevice
-            # initial_value 0 so nothing is energised at import time. a board that
-            # comes up with the pumps running is a board that empties a bottle
             self._dev = PWMOutputDevice(pin, frequency=frequency, initial_value=0.0)
 
     @property
@@ -527,8 +415,6 @@ class Channel:
         self.set(0.0)
 
     def pulse(self, seconds: float) -> float:
-        """Full on for a fixed time, then off. the `finally` matters more than
-        anything else in this file: interrupted mid pulse, the pump still stops."""
         if seconds <= 0:
             return 0.0
         started = time.time()
@@ -548,12 +434,6 @@ class Channel:
         return f"{self.name}={self._duty:.0%}"
 
 
-# =============================================================================
-# photoperiod and dimming for the strip. on at LIGHT_ON_HOUR, off at
-# LIGHT_OFF_HOUR (the window may cross midnight), a ramp at each end so 54 W of
-# led does not snap on at 6am, and a manual override over hydro/cmd/lights.
-# =============================================================================
-
 def _minutes(t: dt.datetime) -> float:
     return t.hour * 60 + t.minute + t.second / 60.0
 
@@ -561,20 +441,18 @@ def _minutes(t: dt.datetime) -> float:
 class Lights:
     def __init__(self, channel: Channel) -> None:
         self.ch = channel
-        self.override: Optional[float] = None      # None means follow the schedule
+        self.override: Optional[float] = None
 
     @staticmethod
     def scheduled_duty(now: dt.datetime, on_hour: float = LIGHT_ON_HOUR,
                        off_hour: float = LIGHT_OFF_HOUR, brightness: float = LIGHT_BRIGHTNESS,
                        ramp_minutes: float = LIGHT_RAMP_MINUTES) -> float:
-        """What the duty should be right now, 0.0 to 1.0. a pure function of the
-        clock so it can be tested at any hour without waiting for it."""
         on_m, off_m = on_hour * 60.0, off_hour * 60.0
         now_m, day = _minutes(now), 24 * 60.0
         if on_m <= off_m:
             lit = on_m <= now_m < off_m
             since_on, until_off = now_m - on_m, off_m - now_m
-        else:                                       # wraps midnight, e.g. on 20:00 off 12:00
+        else:
             lit = now_m >= on_m or now_m < off_m
             since_on = now_m - on_m if now_m >= on_m else now_m + (day - on_m)
             until_off = off_m - now_m if now_m < off_m else off_m + (day - now_m)
@@ -582,8 +460,6 @@ class Lights:
             return 0.0
         if ramp_minutes <= 0:
             return brightness
-        # linear fade at each end, clamped so a short photoperiod cannot produce a
-        # ramp longer than the window itself
         rise = min(1.0, since_on / ramp_minutes) if since_on >= 0 else 0.0
         fall = min(1.0, until_off / ramp_minutes) if until_off >= 0 else 0.0
         return brightness * min(rise, fall)
@@ -595,7 +471,6 @@ class Lights:
         return duty
 
     def set_override(self, duty: Optional[float]) -> None:
-        """duty of None hands control back to the schedule."""
         self.override = None if duty is None else max(0.0, min(1.0, float(duty)))
 
     def state(self) -> dict:
@@ -607,23 +482,6 @@ class Lights:
         self.ch.close()
 
 
-# =============================================================================
-# nutrient and ph dosing. the only code in the project that can destroy a tank:
-# a stuck pump empties a bottle of ph down into 10 L of solution in an
-# afternoon. so it will not dose real chemicals using guessed numbers
-# (DOSING_CALIBRATED gates the hardware), it never runs two channels in one
-# event (micro and gro together precipitate calcium phosphate), it fixes ec
-# before ph (nutrients move ph), and every dose is verified:
-#
-#     IDLE --(out of band)--> DOSING --> MIXING --> VERIFYING --> IDLE
-#                                                       |
-#                                        (did not move, or moved too far) --> FAULT
-#
-# FAULT is sticky and needs a human. a dose that does not show up means an empty
-# bottle, a slipped tube or a dead pump, and the response is to stop, not to
-# dose harder. this is what replaced the float switches.
-# =============================================================================
-
 IDLE, DOSING, MIXING, VERIFYING, FAULT = "idle", "dosing", "mixing", "verifying", "fault"
 MICRO, GRO, PH_DOWN = "micro", "gro", "ph_down"
 
@@ -633,13 +491,13 @@ class Doser:
                  on_dose: Optional[Callable[[str, float], None]] = None) -> None:
         self.ch = channels
         self.simulate = simulate
-        self.on_dose = on_dose                 # lets the simulated tank respond
+        self.on_dose = on_dose
         self.state = IDLE
         self.fault_reason = ""
         self.enabled = DOSING_ENABLED
-        self._runtime: Deque[Tuple[float, float]] = collections.deque()   # (ts, secs)
+        self._runtime: Deque[Tuple[float, float]] = collections.deque()
         self._last_dose_ts = 0.0
-        self._pending: Optional[dict] = None   # what we are waiting to verify
+        self._pending: Optional[dict] = None
         self._mix_until = 0.0
         self._totals: Dict[str, float] = {MICRO: 0.0, GRO: 0.0, PH_DOWN: 0.0}
 
@@ -650,7 +508,6 @@ class Doser:
         return sum(s for _, s in self._runtime)
 
     def interlocks(self, ec, ph, level, water_temp) -> Optional[str]:
-        """Every reason not to dose. the first one, or None to proceed."""
         if not self.enabled:
             return "dosing disabled"
         if self.state == FAULT:
@@ -675,20 +532,17 @@ class Doser:
         return None
 
     def _next_nutrient(self) -> str:
-        """Which nutrient part is furthest behind its ratio. micro goes in first."""
         micro, gro = self._totals[MICRO], self._totals[GRO]
         if micro <= 0:
             return MICRO
         return GRO if (gro / micro) < MICRO_GRO_RATIO else MICRO
 
     def decide(self, ec: float, ph: float) -> Optional[Tuple[str, float, str, float]]:
-        """(channel, ml, the sensor that should move, by how much), or None."""
         if ec < DOSE_EC_TARGET - DOSE_EC_DEADBAND:
             channel = self._next_nutrient()
             ml = min((DOSE_EC_TARGET - ec) / EC_PER_ML[channel], DOSE_MAX_ML_PER_EVENT)
             return channel, ml, "water/ec", ml * EC_PER_ML[channel]
         if ph > DOSE_PH_TARGET + DOSE_PH_DEADBAND:
-            # its own cap: overshooting ph is easy and hard to walk back
             ml = min((ph - DOSE_PH_TARGET) / PH_PER_ML_DOWN, DOSE_MAX_ML_PH_EVENT)
             return PH_DOWN, ml, "water/ph", -(ml * PH_PER_ML_DOWN)
         return None
@@ -708,7 +562,6 @@ class Doser:
         return actual
 
     def update(self, ec, ph, level, water_temp) -> dict:
-        """Call once per sweep. returns what happened, for logging and mqtt."""
         now = time.time()
 
         if self.state == MIXING:
@@ -725,8 +578,6 @@ class Doser:
                 return {"state": FAULT, "note": self.fault_reason}
             moved = actual_now - p.get("before", actual_now)
             expected = p.get("expected", 0.0)
-            # a ratio, so one test covers both directions: ph down moves the reading
-            # down and nutrients move it up, and same-sign numbers divide positive
             ratio = (moved / expected) if expected else 1.0
             self._pending = None
             if ratio < DOSE_VERIFY_FRACTION:
@@ -735,9 +586,6 @@ class Doser:
                                      f"{expected:+.3g}, saw {moved:+.3g}. empty bottle, "
                                      f"slipped tube or dead pump")
                 return {"state": FAULT, "note": self.fault_reason}
-            # too much movement is a failed dose as well: a pump that did not stop,
-            # or a flow rate measured wrong, and both get worse if the answer is to
-            # dose on
             if ratio > DOSE_VERIFY_MAX_FRACTION:
                 self.state = FAULT
                 self.fault_reason = (f"{p.get('channel')} dose overshot: expected "
@@ -780,12 +628,6 @@ class Doser:
             ch.close()
 
 
-# =============================================================================
-# the daily csv. same columns as the sqlite table so a backfill is a load, not
-# a transformation, plus `iso` so the file is readable and `note` so a failed
-# row says why. one file per day. the durable record: written first, always.
-# =============================================================================
-
 class CsvLogger:
     def __init__(self, directory: str = CSV_DIR) -> None:
         self.directory = directory
@@ -806,15 +648,14 @@ class CsvLogger:
             return 0
         path = self._path_for(rows[0].ts)
         new_file = not os.path.exists(path) or os.path.getsize(path) == 0
-        with open(path, "a", newline="", encoding="utf-8") as fh:       # newline="" or windows writes \r\r\n
+        with open(path, "a", newline="", encoding="utf-8") as fh:
             writer = csv.writer(fh)
             if new_file:
                 writer.writerow(CSV_HEADER)
             for r in rows:
                 iso = dt.datetime.fromtimestamp(r.ts, dt.timezone.utc).isoformat(timespec="seconds")
                 writer.writerow([
-                    str(int(r.ts)),        # truncated, same as the mqtt payload, so
-                                           # the (sensor, ts) key dedups both
+                    str(int(r.ts)),
                     iso, r.sensor,
                     "" if r.value != r.value else f"{r.value:g}",
                     r.unit, 1 if r.valid else 0, r.note])
@@ -824,14 +665,6 @@ class CsvLogger:
     def path(self) -> Optional[str]:
         return self._path
 
-
-# =============================================================================
-# the mqtt publisher. the broker is on localhost; it is there so the loop, the
-# database and the dashboard do not have to know about each other. two rules:
-# publishing never breaks logging (no broker, no paho, every call fails quietly),
-# and the broker announces our death through a last will, because a heartbeat we
-# send ourselves cannot report that we stopped being able to send heartbeats.
-# =============================================================================
 
 TOPIC_ONLINE = f"{MQTT_TOPIC_PREFIX}/state/online"
 TOPIC_FAULT = f"{MQTT_TOPIC_PREFIX}/state/fault"
@@ -843,7 +676,6 @@ def sensor_topic(sensor: str) -> str:
 
 
 def payload_for(r: Reading) -> str:
-    """value, unit, timestamp, valid, and note when something failed."""
     body = {"value": None if r.value != r.value else round(r.value, 4), "unit": r.unit,
             "timestamp": int(r.ts), "valid": r.valid}
     if r.note:
@@ -857,22 +689,19 @@ class Publisher:
         self.enabled = self.connected = False
         self._client = None
         self._warned = False
-        # commands arrive on paho's thread but touch gpio, so they are queued and
-        # applied by the main loop
         self.commands: "queue.Queue[tuple]" = queue.Queue(maxsize=100)
         try:
             import paho.mqtt.client as mqtt
         except ImportError:
             print("  mqtt: paho-mqtt not installed, publishing disabled")
             return
-        try:                                    # paho 2.x wants the callback api version
+        try:
             self._client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2, client_id=MQTT_CLIENT_ID)
         except AttributeError:
             self._client = mqtt.Client(client_id=MQTT_CLIENT_ID)
         self._client.on_connect = self._on_connect
         self._client.on_disconnect = self._on_disconnect
         self._client.on_message = self._on_message
-        # the will. retained, so a dashboard connecting later sees we are gone
         self._client.will_set(TOPIC_ONLINE, json.dumps({"online": False}), qos=MQTT_QOS, retain=True)
         self.enabled = True
 
@@ -891,7 +720,6 @@ class Publisher:
         print("  mqtt: disconnected, will retry in the background")
 
     def _on_message(self, _client, _userdata, msg) -> None:
-        """Queue a command. never act on it here; this is paho's thread."""
         if not msg.topic.startswith(CMD_PREFIX):
             return
         try:
@@ -911,20 +739,20 @@ class Publisher:
         try:
             self._client.connect_async(self.host, self.port, MQTT_KEEPALIVE_S)
             self._client.loop_start()
-        except Exception as exc:                              # noqa: BLE001
+        except Exception as exc:
             print(f"  mqtt: {exc}, publishing disabled")
             self.enabled = False
 
     def close(self) -> None:
         if not self.enabled or self._client is None:
             return
-        try:                                    # say goodbye properly, so the will does not fire
+        try:
             self._publish(TOPIC_ONLINE, json.dumps({"online": False, "timestamp": int(time.time())}),
                           retain=True)
             time.sleep(0.1)
             self._client.loop_stop()
             self._client.disconnect()
-        except Exception:                                     # noqa: BLE001
+        except Exception:
             pass
 
     def _publish(self, topic: str, payload: str, retain: bool = False) -> bool:
@@ -932,12 +760,10 @@ class Publisher:
             return False
         try:
             return self._client.publish(topic, payload, qos=MQTT_QOS, retain=retain).rc == 0
-        except Exception:                                     # noqa: BLE001
+        except Exception:
             return False
 
     def publish(self, readings: Iterable[Reading]) -> int:
-        """Push a sweep, retained, so a dashboard that connects late sees the
-        current value of everything instead of an empty screen."""
         rows = list(readings)
         if not self.enabled:
             return 0
@@ -947,22 +773,18 @@ class Publisher:
         elif self.connected:
             self._warned = False
         sent = sum(1 for r in rows if self._publish(sensor_topic(r.sensor), payload_for(r), retain=True))
-        # the sensors currently failing. empty means healthy. a state, not an event
         failing = sorted(r.sensor for r in rows if not r.valid)
         self._publish(TOPIC_FAULT, json.dumps({"failing": failing, "count": len(failing),
                                                "timestamp": int(time.time())}), retain=True)
         return sent
 
     def publish_state(self, name: str, body: dict) -> bool:
-        """hydro/state/<name>, retained. lights and dosing use this."""
         payload = dict(body)
         payload.setdefault("timestamp", int(time.time()))
         return self._publish(f"{MQTT_TOPIC_PREFIX}/state/{name}",
                              json.dumps(payload, separators=(",", ":")), retain=True)
 
     def heartbeat(self) -> None:
-        """The will covers a dead process. this covers one that is alive but has
-        stopped sweeping, which the will cannot see."""
         self._publish(TOPIC_ONLINE, json.dumps({"online": True, "timestamp": int(time.time())}),
                       retain=True)
 
@@ -972,10 +794,6 @@ class Publisher:
             return "off"
         return "connected" if self.connected else "retrying"
 
-
-# =============================================================================
-# the loop
-# =============================================================================
 
 _running = True
 
@@ -987,9 +805,6 @@ def _stop(_signum, _frame):
 
 
 class SensorSet:
-    """All four devices, in a deliberate order: water temp first because ec needs
-    it, the probes last because they are slowest (two settles, about 4 s)."""
-
     def __init__(self, simulate: bool) -> None:
         self.water_temp = WaterTemp(simulate)
         self.air = AirSensor(simulate)
@@ -1011,20 +826,16 @@ class SensorSet:
         for s in (self.water_temp, self.air, self.level, self.probes):
             try:
                 s.close()
-            except Exception as exc:                      # noqa: BLE001
+            except Exception as exc:
                 print(f"  close failed on {s.name}: {exc}", file=sys.stderr)
 
 
 class Outputs:
-    """The led strip and the three dosing pumps, the four mosfets on the hat."""
-
     def __init__(self, simulate: bool, probes: ProbePair) -> None:
         self.lights = Lights(Channel(PIN_LIGHTS, "lights", LIGHT_PWM_HZ, simulate))
         pumps = {MICRO: Channel(PIN_DOSE_MICRO, "micro", 100, simulate),
                  GRO: Channel(PIN_DOSE_GRO, "gro", 100, simulate),
                  PH_DOWN: Channel(PIN_DOSE_PH_DOWN, "ph_down", 100, simulate)}
-        # in simulation the dose moves the fake tank, so the control law can be
-        # watched converging instead of dosing into a void that never responds
         self.doser = Doser(pumps, simulate, on_dose=probes.simulate_dose if simulate else None)
 
     def close(self) -> None:
@@ -1033,7 +844,6 @@ class Outputs:
 
 
 def value_of(readings: List[Reading], sensor: str) -> Optional[float]:
-    """The value if it was valid, else None. never a number we do not trust."""
     for r in readings:
         if r.sensor == sensor:
             return r.value if r.valid else None
@@ -1041,7 +851,6 @@ def value_of(readings: List[Reading], sensor: str) -> Optional[float]:
 
 
 def apply_commands(pub: Publisher, outputs: Outputs) -> None:
-    """Drain queued mqtt commands on the main thread, where gpio is safe."""
     while True:
         try:
             name, body = pub.commands.get_nowait()
@@ -1108,7 +917,7 @@ def main() -> int:
             started = time.time()
             readings = sensors.sweep()
 
-            logger.write(readings)             # csv first, always
+            logger.write(readings)
             pub.publish(readings)
             pub.heartbeat()
 
@@ -1136,16 +945,10 @@ def main() -> int:
 
             if args.once or not _running:
                 break
-            # sleep out the rest of the period in slices: python resumes a sleep
-            # after a signal handler returns, so one long sleep would make a stop
-            # request wait out the whole period and systemd would kill us before
-            # the pumps were switched off
             deadline = started + args.interval
             while _running and time.time() < deadline:
                 time.sleep(min(0.5, max(0.0, deadline - time.time())))
     finally:
-        # outputs go down first. a pump left running is the one failure here that
-        # does real damage
         if outputs is not None:
             outputs.close()
         sensors.close()

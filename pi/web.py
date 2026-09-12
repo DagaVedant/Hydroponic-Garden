@@ -1,42 +1,3 @@
-"""The dashboard, and the alerts. Both talk to humans, so they share a process.
-
-    python web.py                        dashboard on http://0.0.0.0:8080, alerts watching
-    python web.py --port 5000
-    python web.py --demo                 seed a fake day and open on that
-    python web.py --no-alerts            dashboard only
-    python web.py --alerts-only          no dashboard, just the watcher
-    python web.py --dry-run              alerts print instead of sending
-    python web.py --test-alert           send one test notification and exit
-
-**The dashboard reads sqlite and writes mqtt.** It never talks to a sensor and
-never touches a gpio. Display comes out of the database the ingest service fills;
-a button publishes on `hydro/cmd/...` and the control loop picks it up on its next
-sweep. So the dashboard can crash, restart, or be open in six tabs and none of it
-reaches the hardware. The page itself is dashboard.html, one file, served as is.
-
-**The alerts are the only thing between a problem and dead plants**, because
-nothing switches the pump. A thread here subscribes to the broker and pushes to
-ntfy (set ALERT_NTFY_TOPIC in config.py, subscribe to the same topic in the app).
-With no topic set it prints. What it watches for:
-
-    level low            top up the tank
-    level rose           the pump stopped and the tower drained back into the tank.
-                         a heuristic, and a top up trips it too, but it uses a
-                         sensor that is already fitted and it catches the failure
-                         that kills plants fastest
-    dosing fault         a dose did not land, or overshot. empty bottle, slipped
-                         tube, dead pump, wrong flow rate. the control loop has
-                         already stopped dosing; this tells you
-    out of band          ph, ec, water temp, air, humidity outside BANDS for a while
-    sensor failing       a sensor invalid for a while. one bad sweep is a blip
-    control offline      the broker fired the control loop's last will, or the
-                         heartbeat has stopped
-
-Every condition is a state, not an event: one notification when it starts, a
-reminder every ALERT_REPEAT_S while it lasts, one when it clears. Same thread rule
-as ingest: paho's callback only parses and queues, the watcher does the thinking.
-"""
-
 from __future__ import annotations
 
 import argparse
@@ -68,8 +29,6 @@ PAGE = os.path.join(HERE, "dashboard.html")
 app = Flask(__name__)
 app.config["db_path"] = DB_PATH
 
-# what each sensor is called. the band it should sit in is BANDS in config.py,
-# the same one the alerts fire on, so the two never disagree
 SENSORS = [
     ("water/level",  "water level", "L",     *BANDS["water/level"]),
     ("water/ph",     "pH",          "pH",    *BANDS["water/ph"]),
@@ -79,8 +38,8 @@ SENSORS = [
     ("air/humidity", "humidity",    "%RH",   *BANDS["air/humidity"]),
 ]
 LABELS = {k: (label, unit, lo, hi) for k, label, unit, lo, hi in SENSORS}
-TANK_FULL_L = round(TankLevel.depth_to_litres(MAX_FILL_DEPTH_MM), 1)   # the fill line
-BOTTLE_ML = 1000.0          # 1 L concentrate bottles
+TANK_FULL_L = round(TankLevel.depth_to_litres(MAX_FILL_DEPTH_MM), 1)
+BOTTLE_ML = 1000.0
 CHANNEL_LABEL = {"micro": "FloraMicro", "gro": "FloraGro", "ph_down": "pH Down"}
 
 SENSOR_PREFIX = f"{MQTT_TOPIC_PREFIX}/sensor/"
@@ -93,7 +52,6 @@ def store() -> Store:
 
 
 def _mqtt_client(client_id: str):
-    """A paho client, or None if paho is missing. both halves of this file use one."""
     try:
         import paho.mqtt.client as mqtt
     except ImportError:
@@ -104,13 +62,7 @@ def _mqtt_client(client_id: str):
         return mqtt.Client(client_id=client_id)
 
 
-# =============================================================================
-# the dashboard
-# =============================================================================
-
 class Commands:
-    """Publishes to hydro/cmd/... degrades to a no-op if there is no broker."""
-
     def __init__(self, host: str = MQTT_HOST, port: int = MQTT_PORT) -> None:
         self.client = _mqtt_client("hydro-web")
         if self.client is None:
@@ -118,7 +70,7 @@ class Commands:
         try:
             self.client.connect_async(host, port, 60)
             self.client.loop_start()
-        except Exception:                                        # noqa: BLE001
+        except Exception:
             self.client = None
 
     def send(self, name: str, body: dict) -> bool:
@@ -126,7 +78,7 @@ class Commands:
             return False
         try:
             return self.client.publish(f"{MQTT_TOPIC_PREFIX}/cmd/{name}", json.dumps(body), qos=1).rc == 0
-        except Exception:                                        # noqa: BLE001
+        except Exception:
             return False
 
 
@@ -153,7 +105,6 @@ def band_status(sensor: str, value: Optional[float], valid: bool) -> str:
 
 
 def snapshot() -> dict:
-    """Everything the overview needs, in one query pass."""
     s = store()
     try:
         latest = {r["sensor"]: r for r in s.latest()}
@@ -188,9 +139,6 @@ def snapshot() -> dict:
 
 
 def timeline(limit: int = 80) -> List[dict]:
-    """What happened, newest first. derived rather than stored: the state topics
-    are republished every sweep, so the raw event table is mostly the same row
-    over and over; only the transitions are worth showing."""
     s = store()
     try:
         events: List[dict] = []
@@ -213,7 +161,6 @@ def timeline(limit: int = 80) -> List[dict]:
                 elif body.get("state") == "fault" and body.get("fault"):
                     events.append({"ts": row["ts"], "kind": "fault", "text": f"dosing: {body['fault']}"})
                 elif pending_dose is not None and str(body.get("note", "")).startswith("verified"):
-                    # "5.0 mL micro, verified" is one event, not two
                     pending_dose["text"] += ", " + body["note"]
                     pending_dose = None
             elif row["topic"] == f"{STATE_PREFIX}lights":
@@ -224,8 +171,6 @@ def timeline(limit: int = 80) -> List[dict]:
                                    "text": f"lights {'on' if lit else 'off'}{pct}"})
                 last_lit = lit
 
-        # a sensor that fails usually fails for several sweeps in a row. consecutive
-        # identical faults collapse into one line carrying how long it went on
         runs: List[dict] = []
         for row in sorted(s.faults(limit=400), key=lambda r: r["ts"]):
             key = (row["sensor"], row["note"])
@@ -249,10 +194,6 @@ def timeline(limit: int = 80) -> List[dict]:
 
 
 def activity_summary(events: List[dict]) -> dict:
-    """Totals worth knowing before reading the log. the concentrate estimate is
-    arithmetic, not a measurement: there is no float switch in the bottles by
-    design, dose verification catches an empty one along with a slipped tube and
-    a dead pump. so it is labelled an estimate and reset by hand on a refill."""
     now = int(time.time())
     day = now - 86400
     consumed = {"micro": 0.0, "gro": 0.0, "ph_down": 0.0}
@@ -299,15 +240,8 @@ def api_cmd(name: str):
         return jsonify({"ok": False, "error": "unknown command"}), 404
     body = request.get_json(silent=True) or {}
     ok = commands.send(name, body) if commands is not None else False
-    # the button reports whether the message left, not whether it worked. the real
-    # answer arrives on the next sweep when the state topic changes
     return jsonify({"ok": ok, "sent": body, "error": "" if ok else "no broker"}), (200 if ok else 503)
 
-
-# =============================================================================
-# demo data. the interface is unreadable against an empty table, and until there
-# is a tower to read an empty table is all there is. hand it a temporary file.
-# =============================================================================
 
 DEMO_LIGHT_ON, DEMO_LIGHT_OFF = 6.0, 22.0
 
@@ -316,7 +250,7 @@ def seed_demo(path: str) -> int:
     s = Store(path)
     s.migrate(verbose=False)
     now = int(time.time())
-    start, step = now - 86400, 300               # a day, one sweep every 5 minutes
+    start, step = now - 86400, 300
 
     walk = {"water/level": TANK_FULL_L - 0.3, "water/ph": 5.72, "water/ec": 1255.0,
             "water/temp": 20.6, "air/temp": 21.6, "air/humidity": 58.0}
@@ -331,15 +265,15 @@ def seed_demo(path: str) -> int:
         t = time.localtime(ts)
         return DEMO_LIGHT_ON <= t.tm_hour + t.tm_min / 60.0 < DEMO_LIGHT_OFF
 
-    dropout = set(range(198, 209))               # the ph probe drops out for a while
+    dropout = set(range(198, 209))
     rows = []
     for i, ts in enumerate(range(start, now, step)):
         lit = lit_at(ts)
         for sensor in walk:
             walk[sensor] += drift[sensor] + random.uniform(-jitter[sensor], jitter[sensor])
         values = dict(walk)
-        values["air/temp"] += 1.9 if lit else 0.0            # the room warms and dries
-        values["air/humidity"] -= 6.5 if lit else 0.0        # while 54 W of led is on
+        values["air/temp"] += 1.9 if lit else 0.0
+        values["air/humidity"] -= 6.5 if lit else 0.0
         values["water/temp"] += 0.7 if lit else 0.0
         for sensor, value in values.items():
             if sensor == "water/ph" and i in dropout:
@@ -374,16 +308,10 @@ def seed_demo(path: str) -> int:
     return count
 
 
-# =============================================================================
-# the alerts
-# =============================================================================
-
 LABEL = {k: v[0] for k, v in LABELS.items()}
 UNIT = {"water/level": " L", "water/ph": "", "water/ec": " uS/cm",
         "water/temp": " C", "air/temp": " C", "air/humidity": "%"}
 URGENT = ("level_rise", "dosing_fault", "offline", "level_low")
-# conditions that are really events. they clear themselves (the level window slides
-# past the rise) and "cleared" would read as "fixed", which nobody checked
 EVENTS = ("level_rise",)
 
 
@@ -394,19 +322,15 @@ def _fmt(sensor: str, value: float) -> str:
 
 
 class Rules:
-    """Turns readings and state into a set of active conditions. pure: feed it
-    readings and state with timestamps, call tick(now), get back what changed.
-    no clock of its own, so every rule can be tested at any speed."""
-
     def __init__(self) -> None:
-        self.last: Dict[str, Tuple[float, float]] = {}          # sensor -> (ts, value)
-        self.out_since: Dict[str, float] = {}                   # sensor -> ts it left its band
-        self.fail_since: Dict[str, float] = {}                  # sensor -> ts it started failing
+        self.last: Dict[str, Tuple[float, float]] = {}
+        self.out_since: Dict[str, float] = {}
+        self.fail_since: Dict[str, float] = {}
         self.level_hist: Deque[Tuple[float, float]] = collections.deque()
         self.dosing_fault = ""
         self.online: Optional[bool] = None
         self.heartbeat_ts: Optional[float] = None
-        self.active: Dict[str, dict] = {}                       # key -> {text, since, sent}
+        self.active: Dict[str, dict] = {}
 
     def feed_reading(self, sensor: str, value: Optional[float], valid: bool, ts: float) -> None:
         if not valid or value is None:
@@ -434,7 +358,6 @@ class Rules:
             self.dosing_fault = str(body.get("fault") or "") if body.get("state") == "fault" else ""
 
     def conditions(self, now: float) -> Dict[str, str]:
-        """Every condition that holds right now, key -> message."""
         c: Dict[str, str] = {}
         if self.online is False:
             c["offline"] = "control loop is offline. the pi is down or the service crashed"
@@ -467,8 +390,6 @@ class Rules:
         return c
 
     def tick(self, now: float) -> List[Tuple[str, str, str]]:
-        """Advance. returns (kind, key, text) for every notification due, kind
-        being "raised", "repeat" or "cleared"."""
         out: List[Tuple[str, str, str]] = []
         current = self.conditions(now)
         for key, text in current.items():
@@ -491,16 +412,12 @@ class Rules:
         return out
 
     def summary(self, now: float) -> dict:
-        """What the dashboard shows. published retained on hydro/state/alerts."""
         return {"active": [{"key": k, "text": a["text"], "since": int(a["since"])}
                            for k, a in sorted(self.active.items())],
                 "count": len(self.active), "timestamp": int(now)}
 
 
 class Notifier:
-    """ntfy over plain http. never raises: a notification that cannot be sent is
-    printed, and the condition stays active so the reminder tries again."""
-
     def __init__(self, topic: str = ALERT_NTFY_TOPIC, server: str = ALERT_NTFY_SERVER,
                  dry_run: bool = False) -> None:
         self.topic = topic.strip()
@@ -530,9 +447,6 @@ class Notifier:
 
 
 class Watcher(threading.Thread):
-    """Subscribes to the broker, feeds the rules, sends what is due, publishes
-    the active set retained so the dashboard can show it."""
-
     def __init__(self, notifier: Notifier, host: str = MQTT_HOST, port: int = MQTT_PORT) -> None:
         super().__init__(name="alerts", daemon=True)
         self.notifier = notifier
@@ -577,7 +491,7 @@ class Watcher(threading.Thread):
         try:
             self.client.connect_async(self.host, self.port, 60)
             self.client.loop_start()
-        except Exception as exc:                               # noqa: BLE001
+        except Exception as exc:
             print(f"  alerts: {exc}")
             return
         last_publish = 0.0
@@ -600,8 +514,6 @@ class Watcher(threading.Thread):
                 changed = self.rules.tick(now)
                 for kind, key, text in changed:
                     self.notifier.send(kind, key, text)
-                # retained, so the dashboard can show what is active. refreshed on
-                # any change and once a minute regardless
                 if changed or now - last_publish >= 60:
                     self.client.publish(TOPIC_ALERTS, json.dumps(self.rules.summary(now)), qos=1, retain=True)
                     last_publish = now
@@ -609,8 +521,6 @@ class Watcher(threading.Thread):
             self.client.loop_stop()
             self.client.disconnect()
 
-
-# =============================================================================
 
 def main() -> int:
     global commands

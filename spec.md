@@ -484,13 +484,13 @@ all three dosers. the cost is 5 a instead of 2.5 a, which only matters if the ru
 
 ## software
 
-### control service, `pi/control/`
+### control loop, `pi/control.py`
 
 python, runs as a systemd service. talks to the hat over i2c, 1-wire, uart and gpio. no separate
 firmware, because there's no separate microcontroller.
 
 - sensor drivers behind one interface, each publishing `{value, unit, timestamp, valid}`
-- non blocking loop. dosing and pwm run on their own timers
+- one sweep a minute, in order. a pump pulse blocks the loop for the seconds it runs, on purpose
 - systemd restarts it on crash, the pi hardware watchdog is the backstop
 - **dosing runtime capped per hour, enforced here.** a stuck doser is the one fault that can wreck a
   whole tank of solution
@@ -509,26 +509,26 @@ hydro/state/fault             hydro/cmd/lights
 hydro/cmd/dose
 ```
 
-alerts to implement: level too low, **level rose unexpectedly** (probable pump failure), water temp
-out of range, missed heartbeat.
+alerts: level too low, **level rose unexpectedly** (probable pump failure), a dose that did not
+land, a reading out of band, a sensor failing, missed heartbeat. pushed to a phone over ntfy.
 
 ### raspberry pi — `pi/`
 
 - mosquitto broker, runs as a system service
-- `ingest/` mqtt subscriber, validates and writes to the db
-- `db/` schema and migrations. sqlite for now. written so postgres is a swap not a rewrite
-- `web/` dashboard, live tiles and history
-- `alerts/` phone notifications
+- `store.py` schema, mqtt subscriber that validates and writes, csv backfill. sqlite for now,
+  written so postgres is a swap not a rewrite
+- `web.py` and `dashboard.html`, the dashboard and the alerts
 
 ```sql
 CREATE TABLE reading (
     ts       INTEGER NOT NULL,   -- unix epoch seconds, utc
     sensor   TEXT    NOT NULL,   -- matches the mqtt topic suffix
-    value    REAL    NOT NULL,
+    value    REAL,               -- null when the reading failed
     unit     TEXT    NOT NULL,
-    valid    INTEGER NOT NULL    -- 0/1, store invalid readings, don't drop them
+    valid    INTEGER NOT NULL,   -- 0/1, store invalid readings, don't drop them
+    note     TEXT    NOT NULL DEFAULT '',
+    PRIMARY KEY (sensor, ts)     -- so a replayed or backfilled row is a no-op
 );
-CREATE INDEX reading_sensor_ts ON reading (sensor, ts);
 ```
 
 **store invalid readings instead of dropping them.** a gap in the data looks identical to "the pi was

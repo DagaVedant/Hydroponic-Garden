@@ -7,14 +7,6 @@
 <meta name="theme-color" content="#131312" media="(prefers-color-scheme: dark)">
 <title>Tower</title>
 <style>
-/* ============================================================================
-   The whole dashboard: markup, style and script in one file, served as is by
-   web.py. Two views, Overview and Activity, switched on the url hash; the status
-   header is shared and fed by one snapshot poll.
-
-   Tokens. Every colour, size and space comes from here. Nothing below this
-   block hardcodes a value, so the whole page retints from one place.
-   ========================================================================= */
 :root {
   color-scheme: light dark;
 
@@ -82,7 +74,6 @@ body {
 [hidden] { display: none !important; }
 .wrap { max-width: 1120px; margin: 0 auto; padding: 0 var(--s5) var(--s7); }
 
-/* ---- header ---- */
 header {
   display: flex; align-items: center; gap: var(--s5);
   padding: var(--s4) 0; border-bottom: 1px solid var(--line); margin-bottom: var(--s5);
@@ -103,7 +94,6 @@ nav a[aria-current="page"] { color: var(--text); background: var(--raised); font
 .link.down::before { background: var(--bad); }
 .link.down { color: var(--bad); }
 
-/* ---- system status. the one line that answers "is anything wrong" ---- */
 .status {
   display: flex; align-items: baseline; gap: var(--s3); flex-wrap: wrap;
   padding: var(--s3) var(--s4); border-radius: var(--r);
@@ -116,7 +106,6 @@ nav a[aria-current="page"] { color: var(--text); background: var(--raised); font
 .status .detail { font-size: var(--t-base); color: var(--text-2); }
 .status .when { margin-left: auto; font-size: var(--t-sm); color: var(--text-3); }
 
-/* ---- sections ---- */
 .sec { margin-bottom: var(--s5); }
 .sec-head { display: flex; align-items: baseline; gap: var(--s3); margin-bottom: var(--s3); }
 .sec-head h2 { font-size: var(--t-sm); font-weight: 500; color: var(--text-2); margin: 0; letter-spacing: 0.02em; }
@@ -124,7 +113,6 @@ nav a[aria-current="page"] { color: var(--text); background: var(--raised); font
 .panel { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: var(--s5); }
 .panel.tight { padding: var(--s4); }
 
-/* ---- schematic ---- */
 .hero { display: grid; grid-template-columns: minmax(260px, 340px) 1fr; gap: var(--s6); }
 .hero.activity { grid-template-columns: minmax(180px, 260px) 1fr; }
 .hero svg { display: block; width: 100%; height: auto; }
@@ -137,7 +125,6 @@ nav a[aria-current="page"] { color: var(--text); background: var(--raised); font
 .ro.warn dd { color: var(--warn); }
 .ro.bad dd { color: var(--bad); }
 
-/* ---- metric cards ---- */
 .cards { display: grid; gap: var(--s3); grid-template-columns: repeat(auto-fit, minmax(168px, 1fr)); }
 .card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: var(--s4); min-width: 0; }
 .card.warn { border-color: color-mix(in srgb, var(--warn) 40%, var(--line)); }
@@ -156,7 +143,6 @@ nav a[aria-current="page"] { color: var(--text); background: var(--raised); font
 .tag.warn { color: var(--warn); background: var(--warn-bg); }
 .tag.bad  { color: var(--bad);  background: var(--bad-bg); }
 
-/* ---- controls ---- */
 .ctl { display: grid; grid-template-columns: 92px 1fr; gap: var(--s4); align-items: start;
   padding: var(--s4) 0; border-top: 1px solid var(--line); }
 .ctl:first-child { border-top: 0; padding-top: 0; }
@@ -185,7 +171,6 @@ button.busy { color: var(--text-3); }
 .note { font-size: var(--t-base); color: var(--text-3); margin: var(--s3) 0 0; max-width: 68ch; line-height: 1.55; }
 .sched svg { display: block; width: 100%; height: auto; }
 
-/* ---- activity ---- */
 .counters { grid-template-columns: repeat(2, 1fr); }
 .counters .ro dd { font-size: var(--t-xl); letter-spacing: -0.02em; }
 .sub { display: flex; align-items: baseline; gap: var(--s3); margin-bottom: var(--s3); }
@@ -244,8 +229,7 @@ button.busy { color: var(--text-3); }
     <span class="when" id="status-when"></span>
   </div>
 
-  <!-- ================================================================ overview -->
-  <main id="view-overview">
+    <main id="view-overview">
     <section class="sec">
       <div class="panel">
         <div class="hero">
@@ -271,11 +255,9 @@ button.busy { color: var(--text-3); }
               <text x="54" y="36">4</text><text x="54" y="68">3</text>
               <text x="54" y="100">2</text><text x="54" y="132">1</text>
             </g>
-            <!-- supply pipe, one continuous length, jet splitter at the top -->
-            <rect x="111.5" y="14" width="1.5" height="138" fill="var(--text-3)" opacity="0.4"/>
+                        <rect x="111.5" y="14" width="1.5" height="138" fill="var(--text-3)" opacity="0.4"/>
             <circle cx="112.2" cy="13" r="3" fill="none" stroke="var(--text-3)" stroke-width="1" opacity="0.55"/>
-            <!-- tank -->
-            <rect x="61" y="156" width="103" height="42" rx="4" fill="none" stroke="var(--line-mid)"/>
+                        <rect x="61" y="156" width="103" height="42" rx="4" fill="none" stroke="var(--line-mid)"/>
             <rect id="tank-fill" x="62.5" y="160" width="100" height="36.5" fill="var(--water)"/>
             <line id="tank-line" x1="62.5" y1="160" x2="162.5" y2="160" stroke="var(--accent)" stroke-width="1.5"/>
             <text id="tank-label" x="172" y="181" font-size="11" font-weight="500" fill="var(--text-2)">&nbsp;</text>
@@ -364,8 +346,7 @@ button.busy { color: var(--text-3); }
     </section>
   </main>
 
-  <!-- ================================================================ activity -->
-  <main id="view-timeline" hidden>
+    <main id="view-timeline" hidden>
     <section class="sec">
       <div class="panel">
         <div class="hero activity">
@@ -421,14 +402,10 @@ button.busy { color: var(--text-3); }
 </div>
 
 <script>
-/* ===========================================================================
-   Shared: views, polling, system status, command buttons, formatting.
-   ======================================================================== */
 const LINK = document.getElementById('link');
 const STATUS = document.getElementById('status');
 const STALE_AFTER_S = 300;
 
-/* two views in one page, picked by the hash so links and back still work */
 function showView() {
   const view = location.hash === '#timeline' ? 'timeline' : 'overview';
   document.getElementById('view-overview').hidden = view !== 'overview';
@@ -466,8 +443,6 @@ function fmt(value, sensor) {
   return value.toFixed(2).replace(/\.?0+$/, '');
 }
 
-/* One line answering "is anything wrong", so the cards below never have to be
-   read to find out. */
 function setStatus(data) {
   const head = document.getElementById('status-head');
   const detail = document.getElementById('status-detail');
@@ -485,10 +460,8 @@ function setStatus(data) {
   });
   const dosing = data.dosing || {};
   if (dosing.state === 'fault') { problems.push('dosing halted on a fault'); worst = 'bad'; }
-  // the alerts watcher sees what a single reading cannot: a level that rose, a
-  // heartbeat that stopped. whatever it has active goes here
   (data.alerts || []).forEach((a) => {
-    if (a.key === 'dosing_fault' || (a.key || '').startsWith('fail:')) return;  // already listed
+    if (a.key === 'dosing_fault' || (a.key || '').startsWith('fail:')) return;
     problems.push(a.text);
     worst = 'bad';
   });
@@ -507,8 +480,6 @@ function setStatus(data) {
   when.textContent = data.last_seen ? 'Last reading ' + ago(data.now - data.last_seen) : '';
 }
 
-/* Polling. Pauses while the tab is hidden so a dashboard left open on a phone
-   does not keep waking the pi. */
 function poll(url, onData, intervalMs) {
   let timer = null;
   let failures = 0;
@@ -521,7 +492,7 @@ function poll(url, onData, intervalMs) {
       setLink(true, 'Live');
     } catch (err) {
       failures += 1;
-      if (failures > 1) setLink(false, 'Reconnecting');   // one dropped request is a blip
+      if (failures > 1) setLink(false, 'Reconnecting');
     }
   }
   function start() { if (!timer) { tick(); timer = setInterval(tick, intervalMs); } }
@@ -531,8 +502,6 @@ function poll(url, onData, intervalMs) {
   return tick;
 }
 
-/* Command buttons. Any element with data-cmd posts its data-body. The button
-   reports that the message left; whether it worked shows up on the next sweep. */
 let refreshSnapshot = () => {};
 function wireCommands() {
   document.querySelectorAll('[data-cmd]').forEach((btn) => {
@@ -560,8 +529,6 @@ function wireCommands() {
   });
 }
 
-/* Sparkline with the target band drawn behind it, so "is this drifting out of
-   range" is answerable without reading an axis. */
 function sparkline(points, status, lo, hi) {
   const W = 160, H = 30, PAD = 3;
   if (!points || points.length < 2) {
@@ -589,9 +556,6 @@ function sparkline(points, status, lo, hi) {
   </svg>`;
 }
 
-/* ===========================================================================
-   Overview: schematic annotations, trend cards, controls, photoperiod strip.
-   ======================================================================== */
 const CARDS = document.getElementById('cards');
 
 function setRO(id, text, status) {
@@ -619,8 +583,6 @@ function drawSchematic(data) {
     airOk ? unit(`${fmt(at.value, 'air/temp')} C / ${fmt(rh.value, 'air/humidity')}%`, '') : 'No reading',
     airOk ? (at.status === 'ok' && rh.status === 'ok' ? 'ok' : 'warn') : 'bad');
 
-  /* Tank drawn to its real fill. Full is the fill line from config, not the
-     bucket's capacity: the level sensor's blind zone is what sets it. */
   const level = by['water/level'];
   const fill = document.getElementById('tank-fill');
   const line = document.getElementById('tank-line');
@@ -653,8 +615,6 @@ function drawSchematic(data) {
   const stateLabel = { idle: 'Idle', dosing: 'Dosing', mixing: 'Mixing',
                        verifying: 'Verifying', fault: 'Fault' }[dosing.state] || '--';
   setRO('ro-dosing', stateLabel, dosing.state === 'fault' ? 'bad' : 'ok');
-  /* the pump is never switched, so its state is inferred from the control loop
-     still reporting, not read from anything */
   setRO('ro-pump', data.online ? 'Running' : 'Unknown', data.online ? 'ok' : 'warn');
 }
 
@@ -694,7 +654,6 @@ function drawControls(data) {
   document.querySelectorAll('[data-dose]').forEach((b) => {
     b.setAttribute('aria-pressed', String(b.dataset.dose === (dosing.enabled ? 'on' : 'off')));
   });
-  // clearing a fault that does not exist is a no-op dressed up as a control
   document.getElementById('clear-fault').disabled = dosing.state !== 'fault';
   const note = document.getElementById('dose-note');
   if (dosing.state === 'fault') {
@@ -708,8 +667,6 @@ function drawControls(data) {
     data.online ? 'Running continuously, not switchable' : 'Control service offline';
 }
 
-/* Two rectangles so a window crossing midnight draws as two segments rather than
-   one impossible negative-width bar. */
 function drawSchedule(data) {
   const lights = data.lights || {};
   const on = lights.on_hour, off = lights.off_hour;
@@ -740,9 +697,6 @@ function renderOverview(data) {
   drawSchedule(data);
 }
 
-/* ===========================================================================
-   Activity: counters, concentrate estimates, a 24h density strip, filtered log.
-   ======================================================================== */
 const OUT = document.getElementById('events');
 const MARKS = document.getElementById('strip-marks');
 const KIND = {
@@ -763,7 +717,6 @@ function dayOf(ts) {
   return d.toLocaleDateString([], { weekday: 'long', month: 'long', day: 'numeric' });
 }
 
-/* Split "5.0 mL micro, verified" so the outcome reads as secondary to the action. */
 function phrase(text) {
   const i = text.indexOf(', ');
   if (i < 0) return text;
@@ -785,8 +738,6 @@ function drawCounters(sum) {
   }).join('');
 }
 
-/* Density strip: where the events sit in the last 24h, so the rhythm is visible
-   without reading timestamps. */
 function drawStrip(events, sum) {
   const W = 620, span = sum.now - sum.window_start;
   const colour = { dose: 'var(--ok)', light: 'var(--lit)', fault: 'var(--bad)' };
@@ -801,7 +752,6 @@ function drawStrip(events, sum) {
 function drawLog() {
   const events = filter === 'all' ? allEvents : allEvents.filter((e) => e.kind === filter);
   if (!events.length) {
-    // an empty result is a real state. say which one it is
     OUT.innerHTML = allEvents.length
       ? `<p class="empty">No ${filter} events recorded.<br>Try a different filter.</p>`
       : '<p class="empty">No activity recorded yet.<br>Events appear here once the control '
@@ -839,10 +789,6 @@ document.getElementById('filters').addEventListener('click', (e) => {
   drawLog();
 });
 
-/* ===========================================================================
-   Go. One snapshot poll feeds the header and the overview; the activity log
-   polls on its own, slower.
-   ======================================================================== */
 wireCommands();
 refreshSnapshot = poll('/api/snapshot', renderOverview, 10000);
 poll('/api/timeline', renderTimeline, 20000);

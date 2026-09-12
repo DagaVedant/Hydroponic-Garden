@@ -1,30 +1,3 @@
-"""Everything that touches the database: the schema, the store, and the three
-ways rows get in and out.
-
-    python store.py ingest                  subscribe to the broker, write sqlite
-    python store.py ingest --verbose        print every row
-    python store.py backfill data/          load the control loop's csv files
-    python store.py report                  latest value of everything, plus a summary
-    python store.py report --faults         what has been failing
-    python store.py report --history water/temp --hours 24
-
-    --db somewhere.sqlite on any of them. default is hydro.sqlite next to this file.
-
-Ingest runs alongside the control loop, not inside it. That separation is the
-reason mqtt is here at all on a single machine: the loop should not stop reading
-sensors because the database is locked, and the database should not miss a day
-because the loop crashed.
-
-**The network callback never touches the database.** paho calls on_message from
-its own thread and a sqlite connection belongs to the thread that opened it.
-Messages are parsed and queued there; the main thread owns the database and drains
-the queue in batches, which is also an order of magnitude cheaper than a
-transaction per row.
-
-**The broker is not trusted.** Anything can publish to it. Every payload is
-validated again here and a malformed one is logged and dropped, never written.
-"""
-
 from __future__ import annotations
 
 import argparse
@@ -48,38 +21,26 @@ MQTT_PORT = 1883
 SENSOR_PREFIX = "hydro/sensor/"
 STATE_PREFIX = "hydro/state/"
 
-# Written so postgres is a swap and not a rewrite: no sqlite-only types, no
-# AUTOINCREMENT, no implicit rowid. ts becomes BIGINT and valid BOOLEAN there.
-#
-# `value` is nullable on purpose: an invalid reading has no value by definition,
-# and sqlite silently turns a stored NaN into NULL anyway, so NOT NULL would have
-# rejected every fault row. Keeping fault rows is the point: a gap in the data
-# looks identical to "the pi was off", an explicit valid=0 says the probe failed.
-#
-# The key is (sensor, ts) rather than a surrogate id. That is what makes ingest
-# idempotent: mqtt qos 1 is at least once and every topic is retained, so a
-# reconnecting subscriber is handed the last value of everything again, and a
-# csv backfill of the same day lands on rows that are already there.
 SCHEMA = [
     ("001_initial", """
 CREATE TABLE IF NOT EXISTS reading (
-    ts      INTEGER NOT NULL,          -- unix epoch seconds, utc
-    sensor  TEXT    NOT NULL,          -- matches the mqtt topic suffix, e.g. water/temp
-    value   REAL,                      -- NULL when the reading failed
+    ts      INTEGER NOT NULL,
+    sensor  TEXT    NOT NULL,
+    value   REAL,
     unit    TEXT    NOT NULL,
-    valid   INTEGER NOT NULL,          -- 0/1
+    valid   INTEGER NOT NULL,
     note    TEXT    NOT NULL DEFAULT '',
     PRIMARY KEY (sensor, ts)
 );
 CREATE INDEX IF NOT EXISTS reading_sensor_ts ON reading (sensor, ts);
 CREATE INDEX IF NOT EXISTS reading_ts        ON reading (ts);
--- the fault log wants "what has been failing" without scanning 99% healthy rows
+
 CREATE INDEX IF NOT EXISTS reading_invalid   ON reading (ts) WHERE valid = 0;
 
 CREATE TABLE IF NOT EXISTS event (
     ts      INTEGER NOT NULL,
-    topic   TEXT    NOT NULL,          -- hydro/state/online, hydro/state/dosing, ...
-    payload TEXT    NOT NULL,          -- raw json, kept verbatim
+    topic   TEXT    NOT NULL,
+    payload TEXT    NOT NULL,
     PRIMARY KEY (topic, ts)
 );
 CREATE INDEX IF NOT EXISTS event_ts ON event (ts);
@@ -97,22 +58,15 @@ ON CONFLICT (topic, ts) DO NOTHING
 
 
 def _clean(value: Optional[float]) -> Optional[float]:
-    """NaN and infinity become NULL. sqlite would do the NaN part silently."""
     if value is None or math.isnan(value) or math.isinf(value):
         return None
     return float(value)
 
 
 def _statements(sql: str) -> List[str]:
-    """Split a migration into statements, dropping -- comments. naive on purpose:
-    these strings are ours and contain no semicolons inside literals."""
     stripped = " ".join(line.split("--", 1)[0] for line in sql.splitlines())
     return [s.strip() for s in stripped.split(";") if s.strip()]
 
-
-# =============================================================================
-# the store
-# =============================================================================
 
 class Store:
     def __init__(self, path: str = DB_PATH) -> None:
@@ -122,14 +76,11 @@ class Store:
             os.makedirs(parent, exist_ok=True)
         self.conn = sqlite3.connect(path, isolation_level=None, timeout=10.0)
         self.conn.row_factory = sqlite3.Row
-        # WAL so the dashboard can read while ingest writes. without it a reader
-        # blocks the writer and the loop starts backing up
         self.conn.execute("PRAGMA journal_mode=WAL")
         self.conn.execute("PRAGMA synchronous=NORMAL")
         self.conn.execute("PRAGMA foreign_keys=ON")
 
     def migrate(self, verbose: bool = True) -> int:
-        """Apply any migration not yet recorded. safe to run every startup."""
         self.conn.execute("""
             CREATE TABLE IF NOT EXISTS schema_version (
                 version    INTEGER NOT NULL,
@@ -143,8 +94,6 @@ class Store:
             version = int(name.split("_", 1)[0])
             if version in done:
                 continue
-            # each migration is one transaction, statement by statement, because
-            # executescript commits any open transaction before it starts
             self.conn.execute("BEGIN")
             try:
                 for stmt in _statements(sql):
@@ -160,22 +109,17 @@ class Store:
             applied += 1
         return applied
 
-    # ---- writes
-
     def add_reading(self, ts: int, sensor: str, value: Optional[float], unit: str,
                     valid: bool, note: str = "") -> bool:
         cur = self.conn.execute(INSERT_READING, (int(ts), sensor, _clean(value), unit,
                                                  1 if valid else 0, note or ""))
-        return cur.rowcount > 0          # False means it was a duplicate
+        return cur.rowcount > 0
 
     def add_readings(self, rows: Iterable[Sequence]) -> Tuple[int, int]:
-        """Bulk insert. returns (inserted, skipped_as_duplicate)."""
         rows = [(int(ts), sensor, _clean(value), unit, 1 if valid else 0, note or "")
                 for ts, sensor, value, unit, valid, note in rows]
         if not rows:
             return 0, 0
-        # total_changes is a counter sqlite already keeps, so this is O(1) where
-        # COUNT(*) would scan a table that grows by 8600 rows a day, every flush
         before = self.conn.total_changes
         self.conn.execute("BEGIN")
         try:
@@ -190,13 +134,10 @@ class Store:
     def add_event(self, ts: int, topic: str, payload: str) -> bool:
         return self.conn.execute(INSERT_EVENT, (int(ts), topic, payload)).rowcount > 0
 
-    # ---- reads
-
     def count(self) -> int:
         return self.conn.execute("SELECT COUNT(*) FROM reading").fetchone()[0]
 
     def latest(self) -> List[sqlite3.Row]:
-        """Most recent reading per sensor. what a dashboard opens with."""
         return list(self.conn.execute("""
             SELECT r.* FROM reading r
             JOIN (SELECT sensor, MAX(ts) AS ts FROM reading GROUP BY sensor) m
@@ -221,7 +162,6 @@ class Store:
             FROM reading GROUP BY sensor ORDER BY sensor"""))
 
     def latest_event(self, topic: str):
-        """Most recent payload on a state topic."""
         return self.conn.execute("SELECT * FROM event WHERE topic = ? ORDER BY ts DESC LIMIT 1",
                                  (topic,)).fetchone()
 
@@ -230,9 +170,6 @@ class Store:
             "SELECT * FROM event WHERE ts >= ? ORDER BY ts DESC LIMIT ?", (since_ts, limit)))
 
     def series(self, sensor: str, since_ts: int, buckets: int = 60):
-        """Downsampled history for a sparkline. a day at 60 s is 1440 points and
-        a 120 px sparkline cannot show them; averaging into buckets here beats
-        moving the work to the browser to throw away."""
         row = self.conn.execute(
             "SELECT MIN(ts), MAX(ts) FROM reading WHERE sensor = ? AND ts >= ? AND valid = 1",
             (sensor, since_ts)).fetchone()
@@ -248,10 +185,6 @@ class Store:
         self.conn.close()
 
 
-# =============================================================================
-# ingest: broker -> sqlite
-# =============================================================================
-
 FLUSH_EVERY_S = 2.0
 FLUSH_AT_ROWS = 200
 
@@ -266,8 +199,6 @@ def _stop(_signum, _frame):
 
 
 def parse_reading(topic: str, payload: str) -> Optional[Tuple]:
-    """Turn a message into a row, or None if it is not one. every check is a
-    rejection, not a repair: a payload that is nearly right is still wrong."""
     sensor = topic[len(SENSOR_PREFIX):]
     if not sensor:
         return None
@@ -285,13 +216,12 @@ def parse_reading(topic: str, payload: str) -> Optional[Tuple]:
     value = body.get("value")
     if value is not None and (isinstance(value, bool) or not isinstance(value, (int, float))):
         return None
-    if valid and value is None:                 # valid with no number is contradictory
+    if valid and value is None:
         return None
     return (int(ts), sensor, value, unit, valid, str(body.get("note", "")))
 
 
 def drain(store: Store, verbose: bool) -> None:
-    """Move everything queued into the database in one transaction."""
     rows: List[Tuple] = []
     events: List[Tuple] = []
     while True:
@@ -325,7 +255,6 @@ def cmd_ingest(args) -> int:
     store.migrate()
     print(f"ingest -> {args.db}  ({store.count()} rows already)")
 
-    # these run on paho's thread. parse and queue only, no database, no disk
     def on_connect(client, _u, _f, reason_code, *_a):
         ok = getattr(reason_code, "is_failure", None)
         if not ((not ok()) if callable(ok) else (reason_code == 0)):
@@ -333,8 +262,6 @@ def cmd_ingest(args) -> int:
             return
         print(f"  connected to {args.broker}:{args.port}")
         client.subscribe([(SENSOR_PREFIX + "#", 1), (STATE_PREFIX + "#", 1)])
-        # retained messages arrive at once on subscribe. usually rows we already
-        # have; the (sensor, ts) key drops them without complaint
 
     def on_message(_client, _u, msg):
         payload = msg.payload.decode("utf-8", "replace")
@@ -348,7 +275,7 @@ def cmd_ingest(args) -> int:
         elif msg.topic.startswith(STATE_PREFIX):
             try:
                 ts = int(json.loads(payload).get("timestamp", time.time()))
-            except Exception:                              # noqa: BLE001
+            except Exception:
                 ts = int(time.time())
             item = ("e", (ts, msg.topic, payload))
         else:
@@ -356,7 +283,7 @@ def cmd_ingest(args) -> int:
         try:
             _q.put_nowait(item)
         except queue.Full:
-            stats["dropped"] += 1       # drop and say so rather than stall paho's thread
+            stats["dropped"] += 1
 
     try:
         client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2, client_id="hydro-ingest")
@@ -367,7 +294,7 @@ def cmd_ingest(args) -> int:
     try:
         client.connect_async(args.broker, args.port, 60)
         client.loop_start()
-    except Exception as exc:                               # noqa: BLE001
+    except Exception as exc:
         print(f"  {exc}", file=sys.stderr)
         return 1
 
@@ -388,18 +315,13 @@ def cmd_ingest(args) -> int:
     finally:
         client.loop_stop()
         client.disconnect()
-        drain(store, args.verbose)             # do not lose what is still queued
+        drain(store, args.verbose)
         print(f"\nstopped. {stats['readings']} rows written, {stats['duplicates']} duplicates "
               f"ignored, {stats['events']} events, {stats['rejected']} rejected. "
               f"{store.count()} in the table.")
         store.close()
     return 0
 
-
-# =============================================================================
-# backfill: csv -> sqlite. the csv columns match the table, so this is a load.
-# safe to run twice, the key drops anything already present.
-# =============================================================================
 
 CSV_COLUMNS = ["ts", "iso", "sensor", "value", "unit", "valid", "note"]
 
@@ -414,7 +336,7 @@ def load_file(store: Store, path: str) -> tuple:
             try:
                 raw = line["value"].strip()
                 rows.append((int(line["ts"]), line["sensor"],
-                             float(raw) if raw else None,     # blank means the reading failed
+                             float(raw) if raw else None,
                              line["unit"], line["valid"] == "1", line["note"]))
             except (ValueError, KeyError, TypeError):
                 skipped += 1
@@ -444,10 +366,6 @@ def cmd_backfill(args) -> int:
     store.close()
     return 0
 
-
-# =============================================================================
-# report: look at what is in there without writing sql by hand
-# =============================================================================
 
 def _iso(ts: int) -> str:
     return dt.datetime.fromtimestamp(ts, dt.timezone.utc).strftime("%Y-%m-%d %H:%M:%S")
