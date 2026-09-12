@@ -25,6 +25,7 @@ from store import DB_PATH, Store
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 PAGE = os.path.join(HERE, "dashboard.html")
+TOWER = os.path.join(HERE, "..", "images", "tower-assembly.png")
 
 app = Flask(__name__)
 app.config["db_path"] = DB_PATH
@@ -221,6 +222,11 @@ def activity_summary(events: List[dict]) -> dict:
 @app.route("/")
 def page():
     return send_file(PAGE, max_age=0)
+
+
+@app.route("/tower.png")
+def tower():
+    return send_file(TOWER, max_age=3600)
 
 
 @app.route("/api/snapshot")

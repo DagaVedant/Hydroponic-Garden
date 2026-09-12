@@ -3,421 +3,100 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="theme-color" content="#fcfcfb" media="(prefers-color-scheme: light)">
-<meta name="theme-color" content="#131312" media="(prefers-color-scheme: dark)">
 <title>Tower</title>
 <style>
-:root {
-  color-scheme: light dark;
-
-  --bg:        #fcfcfb;
-  --surface:   #ffffff;
-  --raised:    #f7f6f3;
-  --line:      #eae8e2;
-  --line-mid:  #dbd8d0;
-  --text:      #1b1a18;
-  --text-2:    #5d5b55;
-  --text-3:    #8d8a82;
-  --accent:    #1a5fb4;
-  --ok:        #2f7a3d;
-  --warn:      #96610f;
-  --bad:       #b3261e;
-  --ok-bg:     #eef5ea;
-  --warn-bg:   #fbf2e3;
-  --bad-bg:    #fbeceb;
-  --water:     #dbe8f6;
-  --lit:       #e0a33e;
-
-  --t-xs: 11px; --t-sm: 12px; --t-base: 13px;
-  --t-md: 15px; --t-lg: 17px; --t-xl: 30px;
-
-  --s1: 4px; --s2: 8px; --s3: 12px; --s4: 16px;
-  --s5: 24px; --s6: 32px; --s7: 48px;
-
-  --r: 8px;
-  --ring: 0 0 0 2px var(--bg), 0 0 0 4px var(--accent);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --bg:        #131312;
-    --surface:   #1c1c1a;
-    --raised:    #232321;
-    --line:      #2b2a27;
-    --line-mid:  #3b3a35;
-    --text:      #f0eee9;
-    --text-2:    #a6a39b;
-    --text-3:    #76736c;
-    --accent:    #6ea8fe;
-    --ok:        #86bf4e;
-    --warn:      #e0a33e;
-    --bad:       #ef7b73;
-    --ok-bg:     #1e2a18;
-    --warn-bg:   #2e2415;
-    --bad-bg:    #2e1a18;
-    --water:     #1d3b5c;
-    --lit:       #b8791f;
-  }
-}
-
-* { box-sizing: border-box; }
-html { -webkit-text-size-adjust: 100%; }
-body {
-  margin: 0;
-  background: var(--bg);
-  color: var(--text);
-  font: var(--t-md)/1.5 ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -webkit-tap-highlight-color: transparent;
-  font-variant-numeric: tabular-nums;
-}
-[hidden] { display: none !important; }
-.wrap { max-width: 1120px; margin: 0 auto; padding: 0 var(--s5) var(--s7); }
-
-header {
-  display: flex; align-items: center; gap: var(--s5);
-  padding: var(--s4) 0; border-bottom: 1px solid var(--line); margin-bottom: var(--s5);
-}
-.brand { font-size: var(--t-md); font-weight: 500; letter-spacing: -0.01em; margin: 0; }
-.brand span { color: var(--text-3); font-weight: 400; }
-nav { display: flex; gap: var(--s1); margin-left: var(--s3); }
-nav a {
-  font-size: var(--t-base); padding: var(--s1) var(--s3); border-radius: 6px;
-  color: var(--text-2); text-decoration: none; line-height: 1.7;
-}
-nav a:hover { color: var(--text); background: var(--raised); }
-nav a[aria-current="page"] { color: var(--text); background: var(--raised); font-weight: 500; }
-:is(a, button, [tabindex]):focus-visible { outline: none; box-shadow: var(--ring); border-radius: 5px; }
-.link { margin-left: auto; font-size: var(--t-sm); color: var(--text-3); display: flex;
-  align-items: center; gap: var(--s2); }
-.link::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: var(--ok); flex: none; }
-.link.down::before { background: var(--bad); }
-.link.down { color: var(--bad); }
-
-.status {
-  display: flex; align-items: baseline; gap: var(--s3); flex-wrap: wrap;
-  padding: var(--s3) var(--s4); border-radius: var(--r);
-  border: 1px solid var(--line); background: var(--surface); margin-bottom: var(--s5);
-}
-.status.ok   { border-color: var(--line); }
-.status.warn { border-color: color-mix(in srgb, var(--warn) 35%, var(--line)); background: var(--warn-bg); }
-.status.bad  { border-color: color-mix(in srgb, var(--bad) 35%, var(--line)); background: var(--bad-bg); }
-.status h2 { font-size: var(--t-md); font-weight: 500; margin: 0; letter-spacing: -0.01em; }
-.status .detail { font-size: var(--t-base); color: var(--text-2); }
-.status .when { margin-left: auto; font-size: var(--t-sm); color: var(--text-3); }
-
-.sec { margin-bottom: var(--s5); }
-.sec-head { display: flex; align-items: baseline; gap: var(--s3); margin-bottom: var(--s3); }
-.sec-head h2 { font-size: var(--t-sm); font-weight: 500; color: var(--text-2); margin: 0; letter-spacing: 0.02em; }
-.sec-head .aside { font-size: var(--t-sm); color: var(--text-3); margin-left: auto; }
-.panel { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: var(--s5); }
-.panel.tight { padding: var(--s4); }
-
-.hero { display: grid; grid-template-columns: minmax(260px, 340px) 1fr; gap: var(--s6); }
-.hero.activity { grid-template-columns: minmax(180px, 260px) 1fr; }
-.hero svg { display: block; width: 100%; height: auto; }
-.readout { display: grid; grid-template-columns: repeat(2, 1fr); gap: var(--s4) var(--s5); align-content: start; }
-.ro { min-width: 0; }
-.ro dt { font-size: var(--t-sm); color: var(--text-3); margin-bottom: 1px; }
-.ro dd { margin: 0; font-size: var(--t-lg); font-weight: 500; letter-spacing: -0.01em;
-  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.ro dd .u { font-size: var(--t-sm); font-weight: 400; color: var(--text-3); margin-left: 2px; }
-.ro.warn dd { color: var(--warn); }
-.ro.bad dd { color: var(--bad); }
-
-.cards { display: grid; gap: var(--s3); grid-template-columns: repeat(auto-fit, minmax(168px, 1fr)); }
-.card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: var(--s4); min-width: 0; }
-.card.warn { border-color: color-mix(in srgb, var(--warn) 40%, var(--line)); }
-.card.bad  { border-color: color-mix(in srgb, var(--bad) 40%, var(--line)); }
-.card .top { display: flex; align-items: center; justify-content: space-between; gap: var(--s2); margin-bottom: var(--s1); }
-.card .name { font-size: var(--t-sm); color: var(--text-2); }
-.card .val { font-size: var(--t-xl); font-weight: 500; line-height: 1.1; letter-spacing: -0.02em; white-space: nowrap; }
-.card .val .u { font-size: var(--t-sm); font-weight: 400; color: var(--text-3); margin-left: 3px; letter-spacing: 0; }
-.card .spark { margin: var(--s3) 0 var(--s1); }
-.card svg { display: block; width: 100%; height: 30px; }
-.card .foot { display: flex; justify-content: space-between; gap: var(--s2); font-size: var(--t-sm); color: var(--text-3); }
-.card.stale .val { opacity: .55; }
-.card.stale .foot::after { content: " (stale)"; color: var(--warn); }
-.tag { font-size: var(--t-xs); padding: 1px 6px; border-radius: 4px; font-weight: 500; white-space: nowrap; }
-.tag.ok   { color: var(--ok);   background: var(--ok-bg); }
-.tag.warn { color: var(--warn); background: var(--warn-bg); }
-.tag.bad  { color: var(--bad);  background: var(--bad-bg); }
-
-.ctl { display: grid; grid-template-columns: 92px 1fr; gap: var(--s4); align-items: start;
-  padding: var(--s4) 0; border-top: 1px solid var(--line); }
-.ctl:first-child { border-top: 0; padding-top: 0; }
-.ctl:last-child { padding-bottom: 0; }
-.ctl > dt { font-size: var(--t-base); color: var(--text-2); padding-top: 5px; }
-.ctl > dd { margin: 0; display: flex; flex-wrap: wrap; align-items: center; gap: var(--s3); }
-.ctl .meta { font-size: var(--t-base); color: var(--text-3); }
-.ctl .meta strong { color: var(--text-2); font-weight: 500; }
-button {
-  font: inherit; font-size: var(--t-base); line-height: 1.4;
-  padding: 5px var(--s3); color: var(--text); background: var(--surface);
-  border: 1px solid var(--line-mid); border-radius: 6px; cursor: pointer;
-  touch-action: manipulation; min-height: 30px;
-  transition: background-color .12s ease, border-color .12s ease, color .12s ease;
-}
-button:hover:not(:disabled) { background: var(--raised); }
-button[aria-pressed="true"] { background: var(--text); color: var(--bg); border-color: var(--text); font-weight: 500; }
-button[aria-pressed="true"]:hover { background: var(--text); }
-button:disabled { color: var(--text-3); background: var(--raised); cursor: not-allowed; }
-button.busy { color: var(--text-3); }
-.seg { display: inline-flex; }
-.seg button { border-radius: 0; margin-left: -1px; }
-.seg button:first-child { border-radius: 6px 0 0 6px; margin-left: 0; }
-.seg button:last-child { border-radius: 0 6px 6px 0; }
-.seg button[aria-pressed="true"] { position: relative; z-index: 1; }
-.note { font-size: var(--t-base); color: var(--text-3); margin: var(--s3) 0 0; max-width: 68ch; line-height: 1.55; }
-.sched svg { display: block; width: 100%; height: auto; }
-
-.counters { grid-template-columns: repeat(2, 1fr); }
-.counters .ro dd { font-size: var(--t-xl); letter-spacing: -0.02em; }
-.sub { display: flex; align-items: baseline; gap: var(--s3); margin-bottom: var(--s3); }
-.sub h3 { font-size: var(--t-sm); font-weight: 500; color: var(--text-2); margin: 0; }
-.sub .aside { font-size: var(--t-sm); color: var(--text-3); margin-left: auto; }
-.bottles #bottles { display: grid; gap: var(--s3); }
-.bottle .bl { display: flex; justify-content: space-between; align-items: baseline;
-  font-size: var(--t-base); color: var(--text-2); margin-bottom: 5px; }
-.bottle .bv { font-weight: 500; color: var(--text); }
-.bottle .bar { height: 5px; border-radius: 3px; background: var(--raised); overflow: hidden; }
-.bottle .fill { height: 100%; background: var(--text-3); border-radius: 3px; }
-.bottle.low .fill { background: var(--warn); }
-.bottle.low .bv { color: var(--warn); }
-.bottle .bu { font-size: var(--t-sm); color: var(--text-3); margin-top: 3px; }
-.strip { padding-bottom: var(--s4); margin-bottom: var(--s2); border-bottom: 1px solid var(--line); }
-.strip svg { display: block; width: 100%; height: auto; }
-.day { font-size: var(--t-sm); color: var(--text-3); font-weight: 500; padding: var(--s5) 0 var(--s2); }
-.day:first-child { padding-top: 0; }
-.ev { display: grid; grid-template-columns: 76px 68px 1fr; gap: var(--s4);
-  padding: var(--s3) 0; border-top: 1px solid var(--line); font-size: var(--t-base); align-items: baseline; }
-.ev time { color: var(--text-3); font-size: var(--t-sm); }
-.ev .tag { justify-self: start; }
-.ev .what { min-width: 0; overflow-wrap: break-word; color: var(--text); }
-.ev .what em { font-style: normal; color: var(--text-3); }
-.empty { color: var(--text-3); font-size: var(--t-base); padding: var(--s6) 0;
-  text-align: center; max-width: 46ch; margin: 0 auto; line-height: 1.6; }
-
-@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
-@media (max-width: 860px) {
-  .hero { grid-template-columns: 1fr; gap: var(--s4); }
-  .readout { grid-template-columns: repeat(4, 1fr); }
-}
-@media (max-width: 620px) {
-  .wrap { padding: 0 var(--s4) var(--s6); }
-  .readout { grid-template-columns: repeat(2, 1fr); }
-  .ctl { grid-template-columns: 1fr; gap: var(--s2); }
-  .ev { grid-template-columns: 64px 1fr; }
-  .status .when { margin-left: 0; width: 100%; }
-}
+body { font-family: sans-serif; max-width: 960px; margin: 2em auto; padding: 0 1em; line-height: 1.4; color: #222; }
+h1 { font-size: 1.5em; margin: 0 0 .2em; }
+h2 { font-size: 1.1em; margin: 2em 0 .6em; border-bottom: 1px solid #ccc; padding-bottom: .2em; }
+p { margin: .4em 0; }
+table { border-collapse: collapse; margin: .4em 0; }
+th, td { border: 1px solid #ccc; padding: 4px 10px; text-align: left; vertical-align: middle; }
+th { background: #f2f2f2; font-weight: normal; }
+td.num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.warn { color: #a65f00; }
+.bad { color: #c00000; }
+.muted { color: #666; }
+#status { padding: .6em .8em; border: 1px solid #ccc; margin: 1em 0; }
+#status.warn { border-color: #a65f00; background: #fff6e5; }
+#status.bad { border-color: #c00000; background: #fdecec; }
+.row { display: flex; gap: 2em; flex-wrap: wrap; align-items: flex-start; }
+#tower { width: 240px; height: auto; }
+svg.spark { width: 120px; height: 24px; vertical-align: middle; }
+button { font: inherit; margin-right: .3em; }
+button[aria-pressed="true"] { font-weight: bold; }
+#link { float: right; color: #666; }
+#link.down { color: #c00000; }
 </style>
 </head>
 <body>
-<div class="wrap">
-  <header>
-    <h1 class="brand">Vertical Hydroponic Tower <span>&middot; 16 plants</span></h1>
-    <nav aria-label="Views">
-      <a href="#overview" data-view="overview">Overview</a>
-      <a href="#timeline" data-view="timeline">Activity</a>
-    </nav>
-    <span class="link" id="link" aria-live="polite">Connecting</span>
-  </header>
 
-  <div class="status" id="status" role="status" aria-live="polite">
-    <h2 id="status-head">Loading</h2>
-    <span class="detail" id="status-detail"></span>
-    <span class="when" id="status-when"></span>
+<span id="link">connecting</span>
+<h1>Vertical hydroponic tower</h1>
+<p class="muted">16 plants, 4 modules, one bucket. <a href="#activity">activity</a></p>
+
+<p id="status"><b id="status-head">loading</b> <span id="status-detail"></span> <span class="muted" id="status-when"></span></p>
+
+<h2>Now</h2>
+<div class="row">
+  <img id="tower" src="tower.png" alt="the tower, from the onshape assembly">
+  <div>
+    <table id="readings">
+      <tr><th>sensor</th><th>value</th><th>target</th><th></th></tr>
+    </table>
+    <table id="state">
+      <tr><th>lights</th><td id="st-lights"></td></tr>
+      <tr><th>dosing</th><td id="st-dosing"></td></tr>
+      <tr><th>circulation pump</th><td id="st-pump"></td></tr>
+      <tr><th>control loop</th><td id="st-online"></td></tr>
+    </table>
   </div>
-
-    <main id="view-overview">
-    <section class="sec">
-      <div class="panel">
-        <div class="hero">
-          <svg viewBox="0 0 250 214" role="img" aria-labelledby="sch-t" aria-describedby="sch-d">
-            <title id="sch-t">Tower schematic</title>
-            <desc id="sch-d">Four grow modules on a nutrient tank. Corner rails show whether the
-              lights are on, and the tank is drawn to its current fill level.</desc>
-            <rect id="rail-l" x="34" y="16" width="5" height="132" rx="2.5" fill="var(--line-mid)"/>
-            <rect id="rail-r" x="186" y="16" width="5" height="132" rx="2.5" fill="var(--line-mid)"/>
-            <g fill="none" stroke="var(--line-mid)" stroke-width="1">
-              <rect x="43" y="18" width="139" height="29" rx="3"/>
-              <rect x="43" y="50" width="139" height="29" rx="3"/>
-              <rect x="43" y="82" width="139" height="29" rx="3"/>
-              <rect x="43" y="114" width="139" height="29" rx="3"/>
-            </g>
-            <g fill="var(--bg)" stroke="var(--line-mid)" stroke-width="1">
-              <circle cx="43" cy="32.5" r="4.5"/><circle cx="182" cy="32.5" r="4.5"/>
-              <circle cx="43" cy="64.5" r="4.5"/><circle cx="182" cy="64.5" r="4.5"/>
-              <circle cx="43" cy="96.5" r="4.5"/><circle cx="182" cy="96.5" r="4.5"/>
-              <circle cx="43" cy="128.5" r="4.5"/><circle cx="182" cy="128.5" r="4.5"/>
-            </g>
-            <g font-size="9" fill="var(--text-3)">
-              <text x="54" y="36">4</text><text x="54" y="68">3</text>
-              <text x="54" y="100">2</text><text x="54" y="132">1</text>
-            </g>
-                        <rect x="111.5" y="14" width="1.5" height="138" fill="var(--text-3)" opacity="0.4"/>
-            <circle cx="112.2" cy="13" r="3" fill="none" stroke="var(--text-3)" stroke-width="1" opacity="0.55"/>
-                        <rect x="61" y="156" width="103" height="42" rx="4" fill="none" stroke="var(--line-mid)"/>
-            <rect id="tank-fill" x="62.5" y="160" width="100" height="36.5" fill="var(--water)"/>
-            <line id="tank-line" x1="62.5" y1="160" x2="162.5" y2="160" stroke="var(--accent)" stroke-width="1.5"/>
-            <text id="tank-label" x="172" y="181" font-size="11" font-weight="500" fill="var(--text-2)">&nbsp;</text>
-          </svg>
-
-          <dl class="readout" id="readout">
-            <div class="ro"><dt>pH</dt><dd id="ro-water-ph">&nbsp;</dd></div>
-            <div class="ro"><dt>Conductivity</dt><dd id="ro-water-ec">&nbsp;</dd></div>
-            <div class="ro"><dt>Water temperature</dt><dd id="ro-water-temp">&nbsp;</dd></div>
-            <div class="ro"><dt>Tank volume</dt><dd id="ro-water-level">&nbsp;</dd></div>
-            <div class="ro"><dt>Air</dt><dd id="ro-air">&nbsp;</dd></div>
-            <div class="ro"><dt>Circulation pump</dt><dd id="ro-pump">&nbsp;</dd></div>
-            <div class="ro"><dt>Dosing</dt><dd id="ro-dosing">&nbsp;</dd></div>
-            <div class="ro"><dt>Lighting</dt><dd id="ro-lights">&nbsp;</dd></div>
-          </dl>
-        </div>
-      </div>
-    </section>
-
-    <section class="sec">
-      <div class="sec-head">
-        <h2>Trends</h2>
-        <span class="aside">Last 24 hours. Shaded band is the target range.</span>
-      </div>
-      <div class="cards" id="cards"></div>
-    </section>
-
-    <section class="sec">
-      <div class="sec-head"><h2>Controls</h2></div>
-      <div class="panel">
-        <dl class="ctl">
-          <dt id="lab-lights">Lighting</dt>
-          <dd>
-            <div class="seg" role="group" aria-labelledby="lab-lights">
-              <button type="button" data-cmd="lights" data-body='{"auto":true}' data-mode="schedule">Schedule</button>
-              <button type="button" data-cmd="lights" data-body='{"on":true}'   data-mode="on">Force on</button>
-              <button type="button" data-cmd="lights" data-body='{"on":false}'  data-mode="off">Force off</button>
-            </div>
-            <span class="meta" id="lights-note">&nbsp;</span>
-          </dd>
-        </dl>
-        <dl class="ctl">
-          <dt id="lab-dose">Dosing</dt>
-          <dd>
-            <div class="seg" role="group" aria-labelledby="lab-dose">
-              <button type="button" data-cmd="dose" data-body='{"enabled":true}'  data-dose="on">Enabled</button>
-              <button type="button" data-cmd="dose" data-body='{"enabled":false}' data-dose="off">Paused</button>
-            </div>
-            <button type="button" id="clear-fault" data-cmd="dose" data-body='{"clear_fault":true}'
-                    data-confirm="Clear the dosing fault?&#10;&#10;A dose that did not register usually means an empty bottle, a slipped tube or a dead pump. Check the hardware before clearing, or the next dose fails the same way.">Clear fault</button>
-            <span class="meta" id="dose-note">&nbsp;</span>
-          </dd>
-        </dl>
-        <dl class="ctl">
-          <dt>Circulation</dt>
-          <dd>
-            <button type="button" disabled aria-describedby="pump-note">Stop pump</button>
-            <span class="meta" id="pump-meta">&nbsp;</span>
-          </dd>
-        </dl>
-        <p class="note" id="pump-note">The circulation pump is wired directly to a GFCI outlet with
-          no relay on any GPIO, so no software path can stop it. This is deliberate: switching mains
-          beside an open reservoir to guard a failure mode that does not exist would add risk rather
-          than remove it. The control shows as unavailable rather than being hidden or faked.</p>
-      </div>
-    </section>
-
-    <section class="sec">
-      <div class="sec-head">
-        <h2>Photoperiod</h2>
-        <span class="aside" id="sched-note">&nbsp;</span>
-      </div>
-      <div class="panel tight sched">
-        <svg viewBox="0 0 620 46" role="img" aria-label="Lighting schedule across 24 hours">
-          <rect x="0" y="6" width="620" height="20" rx="4" fill="var(--raised)"/>
-          <rect id="sched-lit" x="0" y="6" width="0" height="20" fill="var(--lit)" opacity="0.5"/>
-          <rect id="sched-lit2" x="0" y="6" width="0" height="20" fill="var(--lit)" opacity="0.5"/>
-          <line id="sched-now" x1="0" y1="2" x2="0" y2="30" stroke="var(--text)" stroke-width="1.5"/>
-          <g font-size="10" fill="var(--text-3)">
-            <text x="0" y="42">00:00</text><text x="145" y="42">06:00</text>
-            <text x="300" y="42">12:00</text><text x="455" y="42">18:00</text>
-            <text x="588" y="42">24:00</text>
-          </g>
-        </svg>
-      </div>
-    </section>
-  </main>
-
-    <main id="view-timeline" hidden>
-    <section class="sec">
-      <div class="panel">
-        <div class="hero activity">
-          <dl class="readout counters" id="counters">
-            <div class="ro"><dt>Doses, last 24 h</dt><dd id="c-doses">&nbsp;</dd></div>
-            <div class="ro"><dt>Faults, last 24 h</dt><dd id="c-faults">&nbsp;</dd></div>
-          </dl>
-          <div class="bottles">
-            <div class="sub">
-              <h3>Concentrate remaining</h3>
-              <span class="aside">Estimated from what was dosed</span>
-            </div>
-            <div id="bottles"></div>
-          </div>
-        </div>
-        <p class="note" id="bottle-note">There is no level sensor in the bottles. Dose verification
-          catches an empty one along with a slipped tube and a dead pump, which a float switch cannot,
-          so these figures are arithmetic on what was dosed rather than a measurement. Reset them on a
-          refill.</p>
-      </div>
-    </section>
-
-    <section class="sec">
-      <div class="sec-head">
-        <h2>Activity</h2>
-        <div class="seg" role="group" aria-label="Filter activity" id="filters">
-          <button type="button" data-filter="all" aria-pressed="true">All</button>
-          <button type="button" data-filter="dose" aria-pressed="false">Doses</button>
-          <button type="button" data-filter="light" aria-pressed="false">Lighting</button>
-          <button type="button" data-filter="fault" aria-pressed="false">Faults</button>
-        </div>
-      </div>
-      <div class="panel">
-        <div class="strip" id="strip-wrap">
-          <svg viewBox="0 0 620 34" role="img" aria-label="When events happened over the last 24 hours">
-            <line x1="0" y1="17" x2="620" y2="17" stroke="var(--line)" stroke-width="1"/>
-            <g id="strip-marks"></g>
-            <g font-size="10" fill="var(--text-3)">
-              <text x="0" y="32">24 h ago</text>
-              <text x="288" y="32">12 h</text>
-              <text x="596" y="32">now</text>
-            </g>
-          </svg>
-        </div>
-        <div id="events"><p class="empty">Loading activity&hellip;</p></div>
-      </div>
-      <p class="note">Every dose records whether the reading actually moved afterwards. A dose that
-        does not register is treated as a fault and halts dosing rather than retrying, because the
-        cause is an empty bottle, a slipped tube or a dead pump, and none of those are fixed by
-        dosing again.</p>
-    </section>
-  </main>
 </div>
+
+<h2>Last 24 hours</h2>
+<table id="trends">
+  <tr><th>sensor</th><th>now</th><th>change</th><th></th><th>target</th></tr>
+</table>
+
+<h2>Controls</h2>
+<p>Lights:
+  <button data-cmd="lights" data-body='{"auto":true}' data-mode="schedule">schedule</button>
+  <button data-cmd="lights" data-body='{"on":true}' data-mode="on">force on</button>
+  <button data-cmd="lights" data-body='{"on":false}' data-mode="off">force off</button>
+  <span class="muted" id="lights-note"></span>
+</p>
+<p>Dosing:
+  <button data-cmd="dose" data-body='{"enabled":true}' data-dose="on">enabled</button>
+  <button data-cmd="dose" data-body='{"enabled":false}' data-dose="off">paused</button>
+  <button id="clear-fault" data-cmd="dose" data-body='{"clear_fault":true}'
+          data-confirm="Clear the dosing fault? A dose that did not register usually means an empty bottle, a slipped tube or a dead pump. Check the hardware first or the next dose fails the same way.">clear fault</button>
+  <span class="muted" id="dose-note"></span>
+</p>
+<p>Pump: <button disabled>stop pump</button> <span class="muted">plugged straight into a gfci outlet, nothing in software can stop it</span></p>
+<p class="muted" id="sched-note"></p>
+
+<h2 id="activity">Activity</h2>
+<p id="counters"></p>
+<table id="bottles">
+  <tr><th>bottle</th><th>used</th><th>left</th></tr>
+</table>
+<p class="muted">bottle levels are arithmetic on what was dosed, not a measurement. reset on a refill.</p>
+<p>
+  <button data-filter="all" aria-pressed="true">all</button>
+  <button data-filter="dose" aria-pressed="false">doses</button>
+  <button data-filter="light" aria-pressed="false">lights</button>
+  <button data-filter="fault" aria-pressed="false">faults</button>
+</p>
+<table id="events">
+  <tr><th>when</th><th>what</th></tr>
+</table>
 
 <script>
 const LINK = document.getElementById('link');
-const STATUS = document.getElementById('status');
 const STALE_AFTER_S = 300;
-
-function showView() {
-  const view = location.hash === '#timeline' ? 'timeline' : 'overview';
-  document.getElementById('view-overview').hidden = view !== 'overview';
-  document.getElementById('view-timeline').hidden = view !== 'timeline';
-  document.querySelectorAll('nav a[data-view]').forEach((a) => {
-    if (a.dataset.view === view) a.setAttribute('aria-current', 'page');
-    else a.removeAttribute('aria-current');
-  });
-  document.title = (view === 'timeline' ? 'Activity' : 'Overview') + ' · Tower';
-}
-window.addEventListener('hashchange', showView);
-showView();
+const LABELS = { dose: 'dose', light: 'lights', fault: 'fault' };
+let allEvents = [];
+let filter = 'all';
+let refreshSnapshot = () => {};
 
 function setLink(ok, note) {
   LINK.textContent = note;
@@ -432,31 +111,49 @@ function ago(seconds) {
   return Math.round(seconds / 86400) + ' d ago';
 }
 
-function clockOf(ts) {
-  return new Date(ts * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-}
-
 function fmt(value, sensor) {
-  if (value == null) return '--';
+  if (value == null) return '-';
   if (sensor === 'water/ec') return Math.round(value).toLocaleString();
   if (sensor === 'air/humidity') return Math.round(value).toString();
   return value.toFixed(2).replace(/\.?0+$/, '');
 }
 
+function when(ts) {
+  const d = new Date(ts * 1000);
+  const today = new Date().toDateString();
+  const time = d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  if (d.toDateString() === today) return time;
+  return d.toLocaleDateString([], { month: 'short', day: 'numeric' }) + ' ' + time;
+}
+
+function esc(s) {
+  return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;');
+}
+
+function sparkline(points, lo, hi) {
+  const W = 120, H = 24;
+  if (!points || points.length < 2) return '';
+  let min = Math.min(...points, lo == null ? Infinity : lo);
+  let max = Math.max(...points, hi == null ? -Infinity : hi);
+  const span = (max - min) || 1;
+  const y = (v) => 2 + (H - 4) * (1 - (v - min) / span);
+  const step = W / (points.length - 1);
+  let band = '';
+  if (lo != null && hi != null) {
+    band = `<rect x="0" y="${y(hi).toFixed(1)}" width="${W}" height="${Math.max(1, y(lo) - y(hi)).toFixed(1)}" fill="#ddd"/>`;
+  }
+  const d = points.map((v, i) => `${(i * step).toFixed(1)},${y(v).toFixed(1)}`).join(' ');
+  return `<svg class="spark" viewBox="0 0 ${W} ${H}">${band}<polyline fill="none" stroke="#333" stroke-width="1" points="${d}"/></svg>`;
+}
+
 function setStatus(data) {
-  const head = document.getElementById('status-head');
-  const detail = document.getElementById('status-detail');
-  const when = document.getElementById('status-when');
+  const box = document.getElementById('status');
   const problems = [];
   let worst = 'ok';
-
-  if (!data.online) { problems.push('control service is not reporting'); worst = 'bad'; }
+  if (!data.online) { problems.push('control loop is not reporting'); worst = 'bad'; }
   data.sensors.forEach((s) => {
-    if (!s.valid) { problems.push(`${s.label} sensor failing`); worst = 'bad'; }
-    else if (s.status === 'warn') {
-      problems.push(`${s.label} outside target`);
-      if (worst === 'ok') worst = 'warn';
-    }
+    if (!s.valid) { problems.push(s.label + ' sensor failing'); worst = 'bad'; }
+    else if (s.status === 'warn') { problems.push(s.label + ' outside target'); if (worst === 'ok') worst = 'warn'; }
   });
   const dosing = data.dosing || {};
   if (dosing.state === 'fault') { problems.push('dosing halted on a fault'); worst = 'bad'; }
@@ -465,19 +162,101 @@ function setStatus(data) {
     problems.push(a.text);
     worst = 'bad';
   });
+  box.className = worst;
+  document.getElementById('status-head').textContent = problems.length ? 'needs attention:' : 'all fine.';
+  document.getElementById('status-detail').textContent = problems.length ? problems.join('. ')
+    : (dosing.calibrated === false ? 'dosing pumps are not calibrated, so no dose will run.' : '');
+  document.getElementById('status-when').textContent = data.last_seen ? 'last reading ' + ago(data.now - data.last_seen) : '';
+}
 
-  STATUS.classList.remove('ok', 'warn', 'bad');
-  STATUS.classList.add(worst);
-  if (!problems.length) {
-    head.textContent = 'All systems nominal';
-    detail.textContent = dosing.calibrated === false
-      ? 'Dosing pumps are not calibrated, so no dose will run.' : '';
-  } else {
-    head.textContent = problems.length === 1
-      ? 'One issue needs attention' : `${problems.length} issues need attention`;
-    detail.textContent = problems.join('. ');
+function cls(s) {
+  return !s.valid ? 'bad' : (s.status === 'warn' ? 'warn' : '');
+}
+
+function renderNow(data) {
+  const rows = data.sensors.map((s) => {
+    const stale = s.age != null && s.age > STALE_AFTER_S;
+    const value = s.valid ? fmt(s.value, s.sensor) + ' ' + s.unit : 'no reading';
+    const note = !s.valid ? s.note : (stale ? 'stale, ' + ago(s.age) : '');
+    return `<tr><td>${s.label}</td><td class="num ${cls(s)}">${value}</td>` +
+      `<td class="num muted">${s.lo != null ? s.lo + ' to ' + s.hi : ''}</td><td class="muted">${esc(note)}</td></tr>`;
+  }).join('');
+  document.getElementById('readings').innerHTML = '<tr><th>sensor</th><th>value</th><th>target</th><th></th></tr>' + rows;
+
+  const lights = data.lights || {};
+  const dosing = data.dosing || {};
+  document.getElementById('st-lights').textContent = lights.on
+    ? Math.round((lights.duty || 0) * 100) + '%' + (lights.mode === 'manual' ? ', forced' : '') : 'off';
+  const dl = document.getElementById('st-dosing');
+  dl.textContent = dosing.state ? dosing.state + (dosing.fault ? ': ' + dosing.fault : '') : '-';
+  dl.className = dosing.state === 'fault' ? 'bad' : '';
+  document.getElementById('st-pump').textContent = data.online ? 'running' : 'unknown';
+  const ol = document.getElementById('st-online');
+  ol.textContent = data.online ? 'online' : 'offline';
+  ol.className = data.online ? '' : 'bad';
+}
+
+function renderTrends(data) {
+  const rows = data.sensors.map((s) => {
+    const change = s.delta == null ? '' : (s.delta > 0 ? '+' : '') + s.delta;
+    return `<tr><td>${s.label}</td><td class="num ${cls(s)}">${s.valid ? fmt(s.value, s.sensor) : '-'} ${s.unit}</td>` +
+      `<td class="num">${change}</td><td>${sparkline(s.series, s.lo, s.hi)}</td>` +
+      `<td class="num muted">${s.lo != null ? s.lo + ' to ' + s.hi : ''}</td></tr>`;
+  }).join('');
+  document.getElementById('trends').innerHTML = '<tr><th>sensor</th><th>now</th><th>change</th><th></th><th>target</th></tr>' + rows;
+}
+
+function renderControls(data) {
+  const lights = data.lights || {};
+  const mode = lights.mode === 'manual' ? (lights.on ? 'on' : 'off') : 'schedule';
+  document.querySelectorAll('[data-mode]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.mode === mode)));
+  const pad = (h) => String(h).padStart(2, '0') + ':00';
+  document.getElementById('lights-note').textContent = lights.on_hour != null
+    ? pad(lights.on_hour) + ' to ' + pad(lights.off_hour) + ', currently ' + Math.round((lights.duty || 0) * 100) + '%'
+    : 'no state yet';
+
+  const dosing = data.dosing || {};
+  document.querySelectorAll('[data-dose]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.dose === (dosing.enabled ? 'on' : 'off'))));
+  document.getElementById('clear-fault').disabled = dosing.state !== 'fault';
+  const note = document.getElementById('dose-note');
+  if (dosing.state === 'fault') note.textContent = 'halted: ' + (dosing.fault || '');
+  else if (dosing.calibrated === false) note.textContent = 'not calibrated, pumps will not run';
+  else note.textContent = (dosing.runtime_last_hour_s || 0) + 's of ' + (dosing.cap_s || 0) + 's hourly limit used';
+
+  if (lights.on_hour != null) {
+    const on = lights.on_hour, off = lights.off_hour;
+    const hours = on <= off ? off - on : (24 - on) + off;
+    document.getElementById('sched-note').textContent = 'photoperiod: ' + hours + ' hours a day, ' + pad(on) + ' to ' + pad(off) + ', with a 10 minute ramp at each end.';
   }
-  when.textContent = data.last_seen ? 'Last reading ' + ago(data.now - data.last_seen) : '';
+}
+
+function renderOverview(data) {
+  setStatus(data);
+  renderNow(data);
+  renderTrends(data);
+  renderControls(data);
+}
+
+function renderLog() {
+  const events = filter === 'all' ? allEvents : allEvents.filter((e) => e.kind === filter);
+  const rows = events.map((e) => {
+    const k = LABELS[e.kind] || e.kind;
+    const c = e.kind === 'fault' ? ' class="bad"' : '';
+    return `<tr><td class="num muted">${when(e.ts)}</td><td${c}>${k}: ${esc(e.text)}</td></tr>`;
+  }).join('');
+  document.getElementById('events').innerHTML = '<tr><th>when</th><th>what</th></tr>' +
+    (rows || '<tr><td colspan="2" class="muted">nothing yet</td></tr>');
+}
+
+function renderTimeline(data) {
+  allEvents = data.events || [];
+  const sum = data.summary;
+  document.getElementById('counters').textContent =
+    sum.doses_24h + ' doses and ' + sum.faults_24h + ' faults in the last 24 hours.';
+  document.getElementById('bottles').innerHTML = '<tr><th>bottle</th><th>used</th><th>left</th></tr>' +
+    sum.bottles.map((b) => `<tr><td>${b.label}</td><td class="num">${b.used_ml} mL</td>` +
+      `<td class="num ${b.remaining_pct <= 20 ? 'warn' : ''}">${b.remaining_pct}%</td></tr>`).join('');
+  renderLog();
 }
 
 function poll(url, onData, intervalMs) {
@@ -489,10 +268,10 @@ function poll(url, onData, intervalMs) {
       if (!res.ok) throw new Error(res.status);
       onData(await res.json());
       failures = 0;
-      setLink(true, 'Live');
+      setLink(true, 'live');
     } catch (err) {
       failures += 1;
-      if (failures > 1) setLink(false, 'Reconnecting');
+      if (failures > 1) setLink(false, 'reconnecting');
     }
   }
   function start() { if (!timer) { tick(); timer = setInterval(tick, intervalMs); } }
@@ -502,294 +281,33 @@ function poll(url, onData, intervalMs) {
   return tick;
 }
 
-let refreshSnapshot = () => {};
-function wireCommands() {
-  document.querySelectorAll('[data-cmd]').forEach((btn) => {
-    btn.addEventListener('click', async () => {
-      if (btn.dataset.confirm && !window.confirm(btn.dataset.confirm)) return;
-      const label = btn.textContent;
-      btn.disabled = true;
-      btn.classList.add('busy');
-      btn.textContent = 'Sending';
-      try {
-        const res = await fetch('/api/cmd/' + btn.dataset.cmd, {
-          method: 'POST', headers: { 'Content-Type': 'application/json' }, body: btn.dataset.body,
-        });
-        const body = await res.json();
-        if (!body.ok) setLink(false, body.error === 'no broker' ? 'No broker' : 'Command failed');
-      } catch (err) {
-        setLink(false, 'Command failed');
-      } finally {
-        btn.textContent = label;
-        btn.classList.remove('busy');
-        btn.disabled = false;
-        setTimeout(refreshSnapshot, 500);
-      }
-    });
+document.querySelectorAll('[data-cmd]').forEach((btn) => {
+  btn.addEventListener('click', async () => {
+    if (btn.dataset.confirm && !window.confirm(btn.dataset.confirm)) return;
+    btn.disabled = true;
+    try {
+      const res = await fetch('/api/cmd/' + btn.dataset.cmd, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: btn.dataset.body,
+      });
+      const body = await res.json();
+      if (!body.ok) setLink(false, body.error === 'no broker' ? 'no broker' : 'command failed');
+    } catch (err) {
+      setLink(false, 'command failed');
+    } finally {
+      btn.disabled = false;
+      setTimeout(refreshSnapshot, 500);
+    }
   });
-}
-
-function sparkline(points, status, lo, hi) {
-  const W = 160, H = 30, PAD = 3;
-  if (!points || points.length < 2) {
-    return `<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" aria-hidden="true"></svg>`;
-  }
-  let min = Math.min(...points, lo == null ? Infinity : lo);
-  let max = Math.max(...points, hi == null ? -Infinity : hi);
-  if (!isFinite(min) || !isFinite(max)) { min = Math.min(...points); max = Math.max(...points); }
-  const span = (max - min) || 1;
-  const y = (v) => PAD + (H - PAD * 2) * (1 - (v - min) / span);
-  const step = W / (points.length - 1);
-  let band = '';
-  if (lo != null && hi != null) {
-    const top = y(hi), bottom = y(lo);
-    band = `<rect x="0" y="${top.toFixed(1)}" width="${W}" height="${Math.max(1, bottom - top).toFixed(1)}" fill="var(--accent)" opacity="0.10"/>`;
-  }
-  const d = points.map((v, i) => `${(i * step).toFixed(1)},${y(v).toFixed(1)}`).join(' ');
-  const stroke = status === 'ok' ? 'var(--text-2)' : status === 'warn' ? 'var(--warn)' : 'var(--bad)';
-  const last = points[points.length - 1];
-  return `<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" aria-hidden="true">
-    ${band}
-    <polyline fill="none" stroke="${stroke}" stroke-width="1.25" vector-effect="non-scaling-stroke"
-      stroke-linejoin="round" stroke-linecap="round" points="${d}"/>
-    <circle cx="${W - 1}" cy="${y(last).toFixed(1)}" r="1.75" fill="${stroke}" vector-effect="non-scaling-stroke"/>
-  </svg>`;
-}
-
-const CARDS = document.getElementById('cards');
-
-function setRO(id, text, status) {
-  const dd = document.getElementById(id);
-  if (!dd) return;
-  dd.innerHTML = text;
-  const box = dd.closest('.ro');
-  box.classList.remove('warn', 'bad');
-  if (status && status !== 'ok') box.classList.add(status);
-}
-function unit(v, u) { return `${v}<span class="u">${u}</span>`; }
-
-function drawSchematic(data) {
-  const by = {};
-  data.sensors.forEach((s) => { by[s.sensor] = s; });
-
-  [['water/ph', ''], ['water/ec', ' uS/cm'], ['water/temp', ' C'], ['water/level', ' L']].forEach(([key, u]) => {
-    const s = by[key];
-    if (!s) return;
-    setRO('ro-' + key.replace('/', '-'), s.valid ? unit(fmt(s.value, key), u) : 'No reading', s.status);
-  });
-  const at = by['air/temp'], rh = by['air/humidity'];
-  const airOk = at && at.valid && rh && rh.valid;
-  setRO('ro-air',
-    airOk ? unit(`${fmt(at.value, 'air/temp')} C / ${fmt(rh.value, 'air/humidity')}%`, '') : 'No reading',
-    airOk ? (at.status === 'ok' && rh.status === 'ok' ? 'ok' : 'warn') : 'bad');
-
-  const level = by['water/level'];
-  const fill = document.getElementById('tank-fill');
-  const line = document.getElementById('tank-line');
-  const label = document.getElementById('tank-label');
-  const TOP = 160, FULL = 36.5;
-  if (level && level.valid) {
-    const frac = Math.max(0, Math.min(1, level.value / (data.tank_full_l || 10.6)));
-    const top = TOP + FULL * (1 - frac);
-    fill.setAttribute('height', (FULL * frac).toFixed(1));
-    fill.setAttribute('y', top.toFixed(1));
-    line.setAttribute('y1', top.toFixed(1));
-    line.setAttribute('y2', top.toFixed(1));
-    label.textContent = fmt(level.value, 'water/level') + ' L';
-  } else {
-    fill.setAttribute('height', '0');
-    line.setAttribute('y1', '-10'); line.setAttribute('y2', '-10');
-    label.textContent = '';
-  }
-
-  const lights = data.lights || {};
-  const lit = !!lights.on, duty = lights.duty || 0;
-  ['rail-l', 'rail-r'].forEach((id) => {
-    const el = document.getElementById(id);
-    el.setAttribute('fill', lit ? 'var(--lit)' : 'var(--line-mid)');
-    el.setAttribute('opacity', lit ? Math.max(0.4, duty).toFixed(2) : '1');
-  });
-  setRO('ro-lights', lit ? unit(Math.round(duty * 100), '%') : 'Off', 'ok');
-
-  const dosing = data.dosing || {};
-  const stateLabel = { idle: 'Idle', dosing: 'Dosing', mixing: 'Mixing',
-                       verifying: 'Verifying', fault: 'Fault' }[dosing.state] || '--';
-  setRO('ro-dosing', stateLabel, dosing.state === 'fault' ? 'bad' : 'ok');
-  setRO('ro-pump', data.online ? 'Running' : 'Unknown', data.online ? 'ok' : 'warn');
-}
-
-function drawCards(data) {
-  CARDS.innerHTML = data.sensors.map((s) => {
-    const stale = s.age != null && s.age > STALE_AFTER_S;
-    const cls = [s.status === 'ok' ? '' : s.status, stale ? 'stale' : ''].join(' ').trim();
-    const value = s.valid ? fmt(s.value, s.sensor) : '--';
-    const tag = !s.valid ? '<span class="tag bad">Fault</span>'
-      : s.status === 'warn' ? '<span class="tag warn">Out of band</span>' : '';
-    const trend = s.delta == null ? '' : (s.delta > 0 ? '+' : '') + s.delta + ' / 24h';
-    const range = s.lo != null ? `${s.lo}-${s.hi}` : '';
-    return `<article class="card ${cls}">
-      <div class="top"><span class="name">${s.label}</span>${tag}</div>
-      <div class="val">${value}<span class="u">${s.unit}</span></div>
-      <div class="spark">${sparkline(s.series, s.status, s.lo, s.hi)}</div>
-      <div class="foot">
-        <span>${s.valid ? trend : (s.note || 'No reading')}</span>
-        <span>${s.valid ? range : ''}</span>
-      </div>
-    </article>`;
-  }).join('');
-}
-
-function drawControls(data) {
-  const lights = data.lights || {};
-  const mode = lights.mode === 'manual' ? (lights.on ? 'on' : 'off') : 'schedule';
-  document.querySelectorAll('[data-mode]').forEach((b) => {
-    b.setAttribute('aria-pressed', String(b.dataset.mode === mode));
-  });
-  const pad = (h) => String(h).padStart(2, '0') + ':00';
-  document.getElementById('lights-note').innerHTML = lights.on_hour != null
-    ? `<strong>${pad(lights.on_hour)}-${pad(lights.off_hour)}</strong>, currently ${Math.round((lights.duty || 0) * 100)}%`
-    : 'No state reported yet';
-
-  const dosing = data.dosing || {};
-  document.querySelectorAll('[data-dose]').forEach((b) => {
-    b.setAttribute('aria-pressed', String(b.dataset.dose === (dosing.enabled ? 'on' : 'off')));
-  });
-  document.getElementById('clear-fault').disabled = dosing.state !== 'fault';
-  const note = document.getElementById('dose-note');
-  if (dosing.state === 'fault') {
-    note.innerHTML = `<strong>Halted.</strong> ${dosing.fault || ''}`;
-  } else if (dosing.calibrated === false) {
-    note.innerHTML = '<strong>Not calibrated.</strong> Pumps will not run until flow rates are measured';
-  } else {
-    note.innerHTML = `${dosing.runtime_last_hour_s || 0}s of <strong>${dosing.cap_s || 0}s</strong> hourly limit used`;
-  }
-  document.getElementById('pump-meta').textContent =
-    data.online ? 'Running continuously, not switchable' : 'Control service offline';
-}
-
-function drawSchedule(data) {
-  const lights = data.lights || {};
-  const on = lights.on_hour, off = lights.off_hour;
-  if (on == null || off == null) return;
-  const W = 620, x = (h) => (h / 24) * W;
-  const a = document.getElementById('sched-lit');
-  const b = document.getElementById('sched-lit2');
-  if (on <= off) {
-    a.setAttribute('x', x(on)); a.setAttribute('width', x(off) - x(on));
-    b.setAttribute('width', 0);
-  } else {
-    a.setAttribute('x', x(on)); a.setAttribute('width', W - x(on));
-    b.setAttribute('x', 0); b.setAttribute('width', x(off));
-  }
-  const now = new Date();
-  const nowX = x(now.getHours() + now.getMinutes() / 60);
-  const line = document.getElementById('sched-now');
-  line.setAttribute('x1', nowX); line.setAttribute('x2', nowX);
-  const hours = on <= off ? off - on : (24 - on) + off;
-  document.getElementById('sched-note').textContent = `${hours} hours of light per day. The marker is now.`;
-}
-
-function renderOverview(data) {
-  setStatus(data);
-  drawSchematic(data);
-  drawCards(data);
-  drawControls(data);
-  drawSchedule(data);
-}
-
-const OUT = document.getElementById('events');
-const MARKS = document.getElementById('strip-marks');
-const KIND = {
-  dose:  { label: 'Dose',  cls: 'ok' },
-  light: { label: 'Light', cls: 'warn' },
-  fault: { label: 'Fault', cls: 'bad' },
-};
-let allEvents = [];
-let filter = 'all';
-
-function dayOf(ts) {
-  const d = new Date(ts * 1000);
-  const today = new Date();
-  const yday = new Date(today.getTime() - 86400000);
-  const same = (a, b) => a.toDateString() === b.toDateString();
-  if (same(d, today)) return 'Today';
-  if (same(d, yday)) return 'Yesterday';
-  return d.toLocaleDateString([], { weekday: 'long', month: 'long', day: 'numeric' });
-}
-
-function phrase(text) {
-  const i = text.indexOf(', ');
-  if (i < 0) return text;
-  return `${text.slice(0, i)} <em>${text.slice(i + 2)}</em>`;
-}
-
-function drawCounters(sum) {
-  document.getElementById('c-doses').textContent = sum.doses_24h;
-  const f = document.getElementById('c-faults');
-  f.textContent = sum.faults_24h;
-  f.closest('.ro').classList.toggle('warn', sum.faults_24h > 0);
-  document.getElementById('bottles').innerHTML = sum.bottles.map((b) => {
-    const low = b.remaining_pct <= 20;
-    return `<div class="bottle${low ? ' low' : ''}">
-      <div class="bl"><span>${b.label}</span><span class="bv">${b.remaining_pct}%</span></div>
-      <div class="bar"><div class="fill" style="width:${b.remaining_pct}%"></div></div>
-      <div class="bu">${b.used_ml} mL used</div>
-    </div>`;
-  }).join('');
-}
-
-function drawStrip(events, sum) {
-  const W = 620, span = sum.now - sum.window_start;
-  const colour = { dose: 'var(--ok)', light: 'var(--lit)', fault: 'var(--bad)' };
-  MARKS.innerHTML = events.filter((e) => e.ts >= sum.window_start).map((e) => {
-    const x = ((e.ts - sum.window_start) / span) * W;
-    const h = e.kind === 'fault' ? 12 : 8;
-    return `<line x1="${x.toFixed(1)}" y1="${17 - h / 2}" x2="${x.toFixed(1)}" y2="${17 + h / 2}"
-      stroke="${colour[e.kind] || 'var(--text-3)'}" stroke-width="2" stroke-linecap="round"/>`;
-  }).join('');
-}
-
-function drawLog() {
-  const events = filter === 'all' ? allEvents : allEvents.filter((e) => e.kind === filter);
-  if (!events.length) {
-    OUT.innerHTML = allEvents.length
-      ? `<p class="empty">No ${filter} events recorded.<br>Try a different filter.</p>`
-      : '<p class="empty">No activity recorded yet.<br>Events appear here once the control '
-        + 'loop has run a dose, switched the lighting, or hit a fault.</p>';
-    return;
-  }
-  let lastDay = null;
-  OUT.innerHTML = events.map((e) => {
-    const day = dayOf(e.ts);
-    const header = day === lastDay ? '' : `<div class="day">${day}</div>`;
-    lastDay = day;
-    const k = KIND[e.kind] || { label: e.kind, cls: 'ok' };
-    return header + `<div class="ev">
-      <time datetime="${new Date(e.ts * 1000).toISOString()}">${clockOf(e.ts)}</time>
-      <span class="tag ${k.cls}">${k.label}</span>
-      <span class="what">${phrase(e.text)}</span>
-    </div>`;
-  }).join('');
-}
-
-function renderTimeline(data) {
-  allEvents = data.events || [];
-  drawCounters(data.summary);
-  drawStrip(allEvents, data.summary);
-  drawLog();
-}
-
-document.getElementById('filters').addEventListener('click', (e) => {
-  const btn = e.target.closest('button[data-filter]');
-  if (!btn) return;
-  filter = btn.dataset.filter;
-  document.querySelectorAll('[data-filter]').forEach((b) => {
-    b.setAttribute('aria-pressed', String(b === btn));
-  });
-  drawLog();
 });
 
-wireCommands();
+document.querySelectorAll('[data-filter]').forEach((btn) => {
+  btn.addEventListener('click', () => {
+    filter = btn.dataset.filter;
+    document.querySelectorAll('[data-filter]').forEach((b) => b.setAttribute('aria-pressed', String(b === btn)));
+    renderLog();
+  });
+});
+
 refreshSnapshot = poll('/api/snapshot', renderOverview, 10000);
 poll('/api/timeline', renderTimeline, 20000);
 </script>
