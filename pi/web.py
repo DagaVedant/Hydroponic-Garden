@@ -267,7 +267,7 @@ def seed_demo(path: str) -> int:
 
     dropout = set(range(198, 209))
     rows = []
-    for i, ts in enumerate(range(start, now, step)):
+    for i, ts in enumerate(range(start, now + 1, step)):
         lit = lit_at(ts)
         for sensor in walk:
             walk[sensor] += drift[sensor] + random.uniform(-jitter[sensor], jitter[sensor])
