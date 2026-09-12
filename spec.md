@@ -62,8 +62,9 @@ is what makes the tower scale.
 | **joint lip** | step and recess rim where modules stack. catches splash, not a pressure seal |
 | **tie rod** | #10-24 zinc rod running the full tower height. clamps the whole stack in compression |
 | **rod boss** | ⌀16 pad at each end of every rib that a tie rod passes through |
-| **drain base** | bottom part. sends the last module's water back to the tank |
-| **tank lid plate** | printed ring in the gamma seal lid. carries the pipe, the level sensor and the temp probe |
+| **drain base** | bottom part. sends the last module's water back to the tank. four bayonet grooves in its outer wall lock it onto the tank cap's hooks with a 20° twist |
+| **tank lid plate** | the printed cap. a shallow cup that screws into the tank ring. carries the pipe, the level sensor pod, the probe cables and the four hooks the drain base locks onto |
+| **tank ring** | printed, one piece, snaps over the bucket rim on twelve fingers and carries the internal thread the cap screws into. does what a gamma seal ring does, so no gamma seal is bought |
 | **sensor pod** | socket moulded into the tank lid plate, 50mm off the tank axis, that holds the level sensor |
 | **corner rail** | clip on channel for the led strip and cables |
 | **supply pipe** | 1/2" pvc from the pump to the tower lid. bought, not printed |
@@ -256,10 +257,11 @@ it was already there. with one continuous pipe that argument isn't needed at all
 **the cost is that changing module count means cutting a new pipe.** worth it. 10ft of stock is
 nearly three times what this tower needs, so it's a cut, not a redesign.
 
-**assembly.** stack the tower on the lid plate first, then drop the pipe down through the aligned
-pipe tunnels and glue it to the pump below. to service the pump, unscrew the gamma seal lid and lift
-tower, pipe, lid and pump out of the bucket as one unit. nothing separates, and it only needs about
-400mm of headroom to clear the bucket.
+**assembly.** snap the tank ring onto the bucket, screw the cap into it, drop the drain base into it so the four hooks
+enter its slots, twist it 20° clockwise until it stops, and it is locked. stack the tower on that,
+then drop the pipe down through the aligned pipe tunnels and glue it to the pump below. to service
+the pump, twist the tower 20° anticlockwise, lift it off, unscrew the cap and lift cap, pipe and
+pump out of the bucket as one unit. it only needs about 400mm of headroom to clear the bucket.
 
 ### flow
 
@@ -288,7 +290,7 @@ all, it runs continuously while the lights are on.
        ├── air temp + rh  sht31 / sht41, i2c
        ├── ph             analog probe ──► ads1115 16 bit adc, i2c
        ├── ec             analog probe ──► ads1115 16 bit adc, i2c
-       ├── led control    ch1 of the 4 channel mosfet board, pwm and photoperiod
+       ├── led control    ch1 of the 4 mosfet channels on the hat, pwm and photoperiod
        └── dosing         3 peristaltic pumps on ch2 3 and 4
 
    pump ──► straight into a gfci outlet. nothing switches it.
@@ -331,12 +333,31 @@ stands up through it in a ⌀23 collar carried on four ribs. the same opening is
 down to the tank, so it is deliberately open and there is nothing there to seal. the plate sits well
 above the water line in every state.
 
+**the plate is the lid, and the ring is printed too.** the plate sits at the bottom of a 20mm skirt
+with an external thread, ⌀236 major, 8mm pitch, single start, 2.5 turns, 45° flanks, and a ⌀252 flange
+at the top of the skirt with eight grip ribs on it. it screws into the **tank ring**: a ⌀311 printed
+ring that snaps over the bucket's rim on twelve fingers, each hooking 2mm under the rim's bead, with
+the matching internal thread hanging into the bucket mouth. the ring's plate stands 12mm above the rim
+on a support ring, which is what makes the fingers long enough to flex. both halves of the thread are
+ours, so nothing has to be measured on a gamma seal, and the gamma seal is off the bom. the bucket
+numbers came from a model of the home depot bucket (thingiverse thing 3688345): rim bead ⌀304.8,
+7.2mm tall, wall ⌀291.9 under it; check the bead on the real bucket, the fingers carry a millimetre of
+margin each way. the cap's plate top, and so the sensor face, sits 14mm above the bucket rim.
+
+**the tower is held, not just parked.** four hooks stand on the plate between the rod bosses, each a
+post with a toe pointing inward. the drain base has four slots up from its bottom edge and a 20°
+bayonet groove off each one, cut into its outer wall. drop the base in, twist it 20° clockwise, and
+each toe is in its groove with the groove floor under it. it cannot lift off or slide, both twist
+directions stop on the groove ends, and the lock twist is the same direction that tightens the cap.
+nothing on either part needs support to print: the cap goes plate down with everything pointing up,
+the base is only cut.
+
 the valve and the bypass return live inside the tank, so nothing extra passes through the lid. the
 returning bypass flow also stirs the tank, which helps keep nutrients mixed.
 
 **servicing the pump.** there's no union. the pipe is glued to the pump and stays on it permanently.
-to get at the pump i lift the whole tower off the bucket, unscrew the gamma seal lid, and the lid,
-pipe, tee and pump all come out together as one assembly.
+to get at the pump i twist the tower 20° to unlock it, lift it off the cap, unscrew the cap, and the
+cap, pipe, tee and pump all come out together as one assembly.
 
 that's one fewer joint, and it was the worst one. a union sitting directly on the pump outlet carries
 full pump pressure and is the single most likely thing in the build to weep. lifting the tower off is
@@ -452,8 +473,8 @@ turned out to be 29 W for the whole 5m reel, which is 5.8 W/m. that's 24 milliwa
 have delivered 19 W across 16 plants and grown pale leggy lettuce.
 
 **12 v, not 24.** grow strips are almost all 12 v, and the dosing pumps are 12 v too, so the whole
-build runs off one rail. no buck converter, and one 4 channel mosfet board drives the lights and all
-three dosers. the cost is 5 a instead of 2.5 a, which only matters if the runs get long. they don't.
+build runs off one rail. no buck converter, and the four mosfet channels on the hat drive the lights and
+all three dosers. the cost is 5 a instead of 2.5 a, which only matters if the runs get long. they don't.
 
 ---
 

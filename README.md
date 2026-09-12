@@ -51,7 +51,7 @@ the pump only does one job: get water to the top. after that it's all shape.
         ├── 12 V 100 W PSU  ............ one rail for everything
         │     ├── LED strip, 4 x 800mm .. wired in parallel, 5 A total
         │     └── 3 dosing pumps ........ 12 V
-        │           both switched by the 4 channel mosfet board on the hat
+        │           both switched by the 4 mosfet channels on the hat
         └── Pi 5 V supply
               └── raspberry pi 4b
 ```
