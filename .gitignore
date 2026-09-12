@@ -1,5 +1,8 @@
 journal/
-pi/
+pi/data/
+pi/db/*.sqlite*
+pi/.venv/
+__pycache__/
 PCB/*
 
 Thumbs.db

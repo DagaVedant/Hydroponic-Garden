@@ -1,0 +1,6 @@
+# pi only. on a dev machine run with --simulate and install none of this.
+smbus2>=0.4.3          # i2c, for the ads1115 and the sht31
+pyserial>=3.5          # uart, for the jsn-sr04t
+gpiozero>=2.0          # the two probe power mosfets
+lgpio>=0.2.2.0         # gpiozero backend on pi 5, harmless on a pi 4b
+paho-mqtt>=2.0         # publishing to the local broker
