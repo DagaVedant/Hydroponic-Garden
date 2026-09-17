@@ -1,0 +1,13 @@
+cmake_minimum_required(VERSION 3.13)
+include(pico_sdk_import.cmake)
+project(pumps C CXX ASM)
+set(CMAKE_C_STANDARD 11)
+pico_sdk_init()
+
+add_executable(pumps main.c link.c io.c)
+pico_generate_pio_header(pumps ${CMAKE_CURRENT_LIST_DIR}/uart_rx.pio)
+pico_generate_pio_header(pumps ${CMAKE_CURRENT_LIST_DIR}/uart_tx.pio)
+target_link_libraries(pumps pico_stdlib hardware_pio hardware_pwm hardware_adc hardware_i2c hardware_irq)
+pico_enable_stdio_usb(pumps 1)
+pico_enable_stdio_uart(pumps 0)
+pico_add_extra_outputs(pumps)
