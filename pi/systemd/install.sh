@@ -23,6 +23,7 @@ for unit in control store web; do
     echo "installed hydro-$unit.service for $USER_NAME in $PI_DIR"
 done
 
+systemctl enable --now pigpiod 2>/dev/null || echo 'install pigpio first: sudo apt install pigpio'
 systemctl daemon-reload
 systemctl enable --now hydro-control hydro-store hydro-web
 systemctl --no-pager --lines=0 status hydro-control hydro-store hydro-web || true

@@ -1,14 +1,17 @@
 # pi
 
-everything runs on the pi 4b with the hat on its header. no microcontroller.
+the pi 4b with the hat on its header runs everything below. the pumps board (a pico) only
+does what the pi tells it over the two wire link, and stops when the pi goes quiet.
 
 | file | role |
 |---|---|
 | `config.py` | the numbers you might change. lines marked MEASURE are guesses |
-| `control.py` | reads the hat, drives lights and dosing, writes csv, publishes to mqtt |
+| `control.py` | reads the hat, drives lights and dosing through the link, writes csv, publishes to mqtt |
+| `link.py` | the two wire link to the pumps board: command frames out on HB, telemetry back on FLT |
 | `store.py` | sqlite schema, the mqtt subscriber that fills it, csv backfill, a report |
 | `web.py` | the dashboard server and the alerts watcher |
 | `dashboard.html` | the frontend, one file |
+| `firmware/` | the pumps board firmware, c with the pico sdk, its own readme |
 
 ## run
 
@@ -24,8 +27,8 @@ python web.py --test-alert          one ntfy notification
 on a laptop `pip install flask paho-mqtt` is enough. on the pi:
 
 ```
-sudo raspi-config                   enable i2c, 1-wire, serial port hardware (no login shell)
-sudo apt install mosquitto python3-venv
+sudo raspi-config                   enable i2c and 1-wire
+sudo apt install mosquitto pigpio python3-venv
 sudo usermod -aG gpio,i2c,dialout $USER
 python3 -m venv .venv && .venv/bin/pip install -r requirements.txt
 sudo systemd/install.sh             three units: hydro-control, hydro-store, hydro-web

@@ -1,8 +1,8 @@
 # installed by systemd/install.sh, which fills in the two @ fields
 [Unit]
 Description=hydro control loop: sensors, lights, dosing
-After=network-online.target mosquitto.service
-Wants=mosquitto.service
+After=network-online.target mosquitto.service pigpiod.service
+Wants=mosquitto.service pigpiod.service
 
 [Service]
 User=@USER@

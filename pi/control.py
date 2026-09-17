@@ -17,7 +17,7 @@ import time
 from dataclasses import dataclass, field
 from typing import (Callable, Deque, Dict, Iterable, List, Optional, Tuple)
 
-from config import (CSV_DIR, DOSE_EC_DEADBAND, DOSE_EC_TARGET, DOSE_FLOW_ML_PER_S,
+from config import (CSV_DIR, DOSE_EC_DEADBAND, FAN_DUTY, DOSE_EC_TARGET, DOSE_FLOW_ML_PER_S,
                     DOSE_MAX_ML_PER_EVENT, DOSE_MAX_ML_PH_EVENT,
                     DOSE_MAX_SECONDS_PER_HOUR, DOSE_MIN_INTERVAL_S, DOSE_MIN_LEVEL_L,
                     DOSE_MIX_WAIT_S, DOSE_PH_DEADBAND, DOSE_PH_TARGET,
@@ -35,18 +35,16 @@ SHT3X_ADDR = 0x44
 ADS_CH_PH, ADS_CH_EC = 0, 1
 ADS_FSR_VOLTS = 4.096
 
+ADS_CH_BATTERY = 2
+BATTERY_DIVIDER = 2.0       # 100k / 100k on the hat
+INA226_ADDR = 0x40
+INA226_SHUNT_OHMS = 0.005
+
 PIN_PH_POWER = 23
 PIN_EC_POWER = 24
-PIN_LIGHTS = 18
-PIN_DOSE_MICRO = 17
-PIN_DOSE_GRO = 27
-PIN_DOSE_PH_DOWN = 22
-LIGHT_PWM_HZ = 1000
+PIN_MAINS_N = 27            # low while the 12 v brick is present
+# the lights, the pumps and the tank level live on the pumps board, over link.py
 
-LEVEL_PORT = "/dev/serial0"
-LEVEL_BAUD = 9600
-LEVEL_TIMEOUT_S = 0.5
-LEVEL_SAMPLES = 5
 LEVEL_BLIND_ZONE_MM = 200.0
 LEVEL_MAX_RANGE_MM = 6000.0
 BUCKET_BORE_MM = 290.0
@@ -65,6 +63,17 @@ RANGES = {
     "water/ec":     (0.0, 5000.0),
     "air/temp":     (-10.0, 60.0),
     "air/humidity": (0.0, 100.0),
+    "water/flow":   (0.0, 30.0),
+    "pump/1/current": (0.0, 1.5),
+    "pump/2/current": (0.0, 1.5),
+    "pump/3/current": (0.0, 1.5),
+    "lights/current": (0.0, 6.0),
+    "board/rail":   (9.0, 15.0),
+    "board/link":   (0.0, 1.0),
+    "power/mains":  (0.0, 1.0),
+    "power/battery": (2.5, 4.3),
+    "power/volts":  (9.0, 15.0),
+    "power/current": (0.0, 10.0),
 }
 
 MQTT_PORT = 1883
@@ -232,46 +241,23 @@ CMD_TRIGGER = b"\x55"
 
 
 class TankLevel(Sensor):
+    """The jsn-sr04t sits on the pumps board now; the distance arrives in its telemetry."""
     name = "water/level"
 
-    def __init__(self, simulate: bool = False) -> None:
+    def __init__(self, link, simulate: bool = False) -> None:
         super().__init__(simulate)
-        self._port = None
-        self._sim_depth = MAX_FILL_DEPTH_MM - 5.0
-        if not simulate:
-            import serial
-            self._port = serial.Serial(LEVEL_PORT, LEVEL_BAUD, timeout=LEVEL_TIMEOUT_S)
+        self.link = link
 
     @staticmethod
     def depth_to_litres(depth_mm: float) -> float:
         return depth_mm * BORE_AREA_MM2 / 1_000_000.0
 
-    def _one_sample(self) -> Optional[float]:
-        try:
-            self._port.reset_input_buffer()
-            self._port.write(CMD_TRIGGER)
-            frame = self._port.read(4)
-        except OSError:
-            return None
-        if len(frame) != 4 or frame[0] != 0xFF:
-            return None
-        if (0xFF + frame[1] + frame[2]) & 0xFF != frame[3]:
-            return None
-        return float((frame[1] << 8) | frame[2])
-
     def read(self) -> List[Reading]:
-        if self.simulate:
-            self._sim_depth -= random.uniform(0.0, 1.2)
-            if self._sim_depth < 60:
-                self._sim_depth = MAX_FILL_DEPTH_MM
-            return [checked(self.name, round(self.depth_to_litres(self._sim_depth), 2),
-                            "L", note=f"distance {SENSOR_HEIGHT_MM - self._sim_depth:.0f}mm")]
-
-        samples = [s for s in (self._one_sample() for _ in range(LEVEL_SAMPLES)) if s is not None]
-        if not samples:
-            return [Reading.bad(self.name, "L", "no valid frames from sensor")]
-        distance = statistics.median(samples)
-
+        if not self.link.fresh:
+            return [Reading.bad(self.name, "L", "no telemetry from the pumps board")]
+        distance = float(self.link.telemetry.get("SN", -1))
+        if distance < 0:
+            return [Reading.bad(self.name, "L", "no echo")]
         if distance < LEVEL_BLIND_ZONE_MM:
             return [Reading.bad(self.name, "L",
                                 f"{distance:.0f}mm inside the {LEVEL_BLIND_ZONE_MM:.0f}mm blind zone")]
@@ -284,9 +270,67 @@ class TankLevel(Sensor):
         return [checked(self.name, round(self.depth_to_litres(depth), 2), "L",
                         note=f"distance {distance:.0f}mm")]
 
+
+class BoardSensors(Sensor):
+    """What the pumps board measures: pump and strip currents, its 12 v rail, the flow."""
+    name = "board"
+
+    def __init__(self, link, simulate: bool = False) -> None:
+        super().__init__(simulate)
+        self.link = link
+
+    def read(self) -> List[Reading]:
+        if not self.link.fresh:
+            return [Reading.bad("board/link", "", "pumps board silent" +
+                                (", fault line held low" if self.link.fault_line else ""))]
+        t = self.link.telemetry
+        out = [checked("board/link", 1.0, "", note=", ".join(self.link.faults()) or "ok")]
+        for i, key in enumerate(("I1", "I2", "I3"), 1):
+            amps = t.get(key, -1)
+            out.append(Reading.bad(f"pump/{i}/current", "A", "ads1115 on the board failed") if amps < 0
+                       else checked(f"pump/{i}/current", round(amps, 3), "A"))
+        out.append(checked("lights/current", round(t.get("IL", 0), 2), "A"))
+        out.append(checked("board/rail", round(t.get("V", 0), 2), "V"))
+        out.append(checked("water/flow", round(t.get("FL", 0) / 7.5, 2), "L/min", note=f"{t.get('FL', 0):.0f} Hz"))
+        return out
+
+
+class Supply(Sensor):
+    """The hat's own power: mains present, and the ina226 on the 12 v input."""
+    name = "power"
+
+    def __init__(self, simulate: bool = False) -> None:
+        super().__init__(simulate)
+        self._mains = None
+        self._bus = None
+        if not simulate:
+            import smbus2
+            from gpiozero import DigitalInputDevice
+            self._mains = DigitalInputDevice(PIN_MAINS_N, pull_up=True)
+            self._bus = smbus2.SMBus(I2C_BUS)
+
+    def read(self) -> List[Reading]:
+        if self.simulate:
+            return [checked("power/mains", 1.0, ""), checked("power/current", 1.35, "A"),
+                    checked("power/volts", 12.05, "V")]
+        out = [checked("power/mains", 0.0 if self._mains.value else 1.0, "")]
+        try:
+            raw = self._bus.read_word_data(INA226_ADDR, 0x02)
+            bus_v = ((raw & 0xFF) << 8 | raw >> 8) * 1.25e-3
+            raw = self._bus.read_word_data(INA226_ADDR, 0x01)
+            sv = (raw & 0xFF) << 8 | raw >> 8
+            sv = sv - 65536 if sv > 32767 else sv
+            out.append(checked("power/volts", round(bus_v, 2), "V"))
+            out.append(checked("power/current", round(sv * 2.5e-6 / INA226_SHUNT_OHMS, 3), "A"))
+        except OSError as exc:
+            out.append(Reading.bad("power/volts", "V", f"ina226: {exc}"))
+        return out
+
     def close(self) -> None:
-        if self._port is not None:
-            self._port.close()
+        if self._mains is not None:
+            self._mains.close()
+        if self._bus is not None:
+            self._bus.close()
 
 
 REG_CONVERSION, REG_CONFIG = 0x00, 0x01
@@ -360,7 +404,8 @@ class ProbePair(Sensor):
             self._sim_ph = max(5.2, min(7.6, self._sim_ph))
             self._sim_ec = max(600.0, min(2200.0, self._sim_ec))
             return [checked("water/ph", round(self._sim_ph, 2), "pH"),
-                    checked("water/ec", round(self._sim_ec, 0), "uS/cm")]
+                    checked("water/ec", round(self._sim_ec, 0), "uS/cm"),
+                    checked("power/battery", 3.92, "V")]
 
         out: List[Reading] = []
         v_ph = self._sample(self._ph_power, ADS_CH_PH)
@@ -378,6 +423,9 @@ class ProbePair(Sensor):
             ppm = tds_from_volts(v_ec, self.water_temp_c)
             out.append(checked("water/ec", round(ppm * TDS_TO_EC, 0), "uS/cm",
                                note=f"{v_ec:.4f}V at {self.water_temp_c:.1f}C"))
+        v_bat = self._read_volts(ADS_CH_BATTERY)
+        out.append(Reading.bad("power/battery", "V", "ads1115 read failed") if v_bat is None
+                   else checked("power/battery", round(v_bat * BATTERY_DIVIDER, 3), "V"))
         return out
 
     def close(self) -> None:
@@ -805,11 +853,13 @@ def _stop(_signum, _frame):
 
 
 class SensorSet:
-    def __init__(self, simulate: bool) -> None:
+    def __init__(self, simulate: bool, link) -> None:
         self.water_temp = WaterTemp(simulate)
         self.air = AirSensor(simulate)
-        self.level = TankLevel(simulate)
+        self.level = TankLevel(link, simulate)
         self.probes = ProbePair(simulate)
+        self.board = BoardSensors(link, simulate)
+        self.supply = Supply(simulate)
 
     def sweep(self) -> List[Reading]:
         out: List[Reading] = []
@@ -820,10 +870,12 @@ class SensorSet:
         out.extend(self.air.read())
         out.extend(self.level.read())
         out.extend(self.probes.read())
+        out.extend(self.board.read())
+        out.extend(self.supply.read())
         return out
 
     def close(self) -> None:
-        for s in (self.water_temp, self.air, self.level, self.probes):
+        for s in (self.water_temp, self.air, self.level, self.probes, self.board, self.supply):
             try:
                 s.close()
             except Exception as exc:
@@ -831,12 +883,17 @@ class SensorSet:
 
 
 class Outputs:
-    def __init__(self, simulate: bool, probes: ProbePair) -> None:
-        self.lights = Lights(Channel(PIN_LIGHTS, "lights", LIGHT_PWM_HZ, simulate))
-        pumps = {MICRO: Channel(PIN_DOSE_MICRO, "micro", 100, simulate),
-                 GRO: Channel(PIN_DOSE_GRO, "gro", 100, simulate),
-                 PH_DOWN: Channel(PIN_DOSE_PH_DOWN, "ph_down", 100, simulate)}
+    """Every output is on the pumps board; the link carries the setpoints."""
+
+    def __init__(self, simulate: bool, probes: ProbePair, link) -> None:
+        from link import LinkChannel
+        self.link = link
+        self.lights = Lights(LinkChannel(link, "led", 0, "lights"))
+        pumps = {MICRO: LinkChannel(link, "pump", 0, "micro"),
+                 GRO: LinkChannel(link, "pump", 1, "gro"),
+                 PH_DOWN: LinkChannel(link, "pump", 2, "ph_down")}
         self.doser = Doser(pumps, simulate, on_dose=probes.simulate_dose if simulate else None)
+        link.set_fan(FAN_DUTY)
 
     def close(self) -> None:
         self.lights.close()
@@ -893,11 +950,16 @@ def main() -> int:
     signal.signal(signal.SIGTERM, _stop)
 
     try:
-        sensors = SensorSet(args.simulate)
-        outputs = None if args.no_outputs else Outputs(args.simulate, sensors.probes)
+        from link import Link
+        link = Link(args.simulate)
+        sensors = SensorSet(args.simulate, link)
+        outputs = None if args.no_outputs else Outputs(args.simulate, sensors.probes, link)
     except ImportError as exc:
         print(f"missing a hardware library: {exc}", file=sys.stderr)
         print("on a dev machine use --simulate", file=sys.stderr)
+        return 1
+    except OSError as exc:
+        print(f"pumps board link: {exc}", file=sys.stderr)
         return 1
 
     logger = CsvLogger(args.dir)
@@ -934,6 +996,7 @@ def main() -> int:
                 state.update(result)
                 pub.publish_state("dosing", state)
                 line = f"   lights {duty:.0%}   dosing {result['state']}: {result['note']}"
+            pub.publish_state("board", link.state())
 
             bad = sum(1 for r in readings if not r.valid)
             print(f"\n[{time.strftime('%H:%M:%S')}] {len(readings)} readings"
@@ -952,6 +1015,7 @@ def main() -> int:
         if outputs is not None:
             outputs.close()
         sensors.close()
+        link.close()
         pub.close()
     return 0
 

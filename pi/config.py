@@ -42,6 +42,7 @@ LIGHT_ON_HOUR = 6.0         # 06:00
 LIGHT_OFF_HOUR = 22.0       # 22:00, a 16 hour photoperiod. may cross midnight
 LIGHT_BRIGHTNESS = 1.0      # 1.0 is the full 54 W. pwm only dims
 LIGHT_RAMP_MINUTES = 10.0   # fade in and out. 0 snaps
+FAN_DUTY = 0.5              # the fan on the pumps board, 0..1
 
 # ---------------------------------------------------------------- dosing
 
