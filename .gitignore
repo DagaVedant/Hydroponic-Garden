@@ -4,7 +4,6 @@ pi/*.sqlite*
 pi/.venv/
 pi/tests/
 __pycache__/
-PCB/*
 
 Thumbs.db
 desktop.ini

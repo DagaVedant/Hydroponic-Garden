@@ -39,9 +39,60 @@ ADS1115 16-bit I2C ADC,"3 per pack. the pi has no analog input, so without this 
 12V peristaltic dosing pump,"intllab 5-100mL/min, 4 per pack. doses nutrient a, nutrient b and ph down without me measuring by hand",1,29.99,29.99,https://www.amazon.com/INTLLAB-Peristaltic-Liquid-Aquarium-Analytical/dp/B07Q1C3PW2/ref=sr_1_4?dib=eyJ2IjoiMSJ9.ncXwbwHiFCVNF7IyGJ0veyKn4Miu6_52sL1xlWoQbd8sbz7yK1ltpZyE82wF3tc7TsTDROQskdCPauDRnE37TXlXn1v-J1En5dFlYZ3_IuYvJ05-_vZKVMgLhsh74i-s9YDhVgIdyR26m-NQ0H4wXKU6j1f58cWPKS3KhNZClkNzNPNFd69GF-9ZjxvofpnXNSR8a4VJpsCzxbfmKdv2r7JHavXWSIQvE-TBvmFHOOI.wBh7WXGl5cCo6L5c8mBcoMnxI23V0uo5Qvwig5Pps6A&dib_tag=se&keywords=peristaltic%2Bpump%2B12v&qid=1787765729&sr=8-4&th=1,Amazon,TO BUY
 Peristaltic pump tubing 10m,"rebower silicone 3mm ID x 5mm OD. the pump pack ships none, without it nothing doses",1,9.39,9.39,https://www.amazon.com/dp/B0DSQLWKFF/,Amazon,TO BUY
 1L HDPE bottles with caps,"united scientific wide mouth, 6 per pack. holds each concentrate, the cap carries the intake tube and a vent",1,22.43,22.43,https://www.amazon.com/United-Scientific-Supplies-33410-Capacity/dp/B07B32GNQ6/ref=sr_1_2_sspa?dib=eyJ2IjoiMSJ9.uKA9IR9IQo6HQSY4_LV_sF5RVAfuPFr1noXMG4SjllugvQfbGMzaFFEhpXeWg8wOGkQL9RVVGsNoGkl7iMArJ3J1Uv3CDGzmoLkrdmYmdKwu2e46w3rRrsKMrPNBzvj4thSGpkwezKMaHG2pDcDzXfiNxPqw8J9uR_UUsUp5mfiPw9A_ExitNhUfnTFChhxPaMggzibN_lOrsbTmONq7r8AJu3ikl9rK5KJLk4BDIcg.BrkNrqpcXyA8ImI9VQBddmO5GqWLpssFF-1Mag8rCHU&dib_tag=se&keywords=hdpe%2Bbottles&qid=1787767724&sr=8-2-spons&sp_csd=d2lkZ2V0TmFtZT1zcF9hdGY&th=1,Amazon,TO BUY
-PCB fabrication and parts,"custom raspberry pi hat, 2 layer, 100x100, plus the parts on it: 4 mosfets, 3 flybacks, tvs, fuse, stacking header, eeprom, passives. the adc and every 12V switch live on it",1,TBD,TBD,IDK YET,JLCPCB,TO BUY
+PCB fabrication,"jlcpcb, two boards: the pi hat and the load board, both 4 layer. get the quote once the gerbers exist",1,TBD,TBD,N/A,JLCPCB,TO BUY
+LM74700QDBVRQ1 ideal diode controller,"sot-23-6. one on the 12v input, two or-ing mains and battery onto the pi 5v",3,TBD,TBD,N/A,Digikey,TO BUY
+AOD4184A n-fet,"dpak, 40v 50a. the pass fet for each ideal diode plus the led strip switch",4,TBD,TBD,N/A,Digikey,TO BUY
+SMBJ15A tvs,"smb. clamps the 12v input on both boards",2,TBD,TBD,N/A,Digikey,TO BUY
+INA226AIDGSR current monitor,"msop-10. reads the whole 12v input current and voltage over i2c",1,TBD,TBD,N/A,Digikey,TO BUY
+CRA2512-FZ-R005ELF 5 mohm shunt,"2512. the ina226 shunt",1,TBD,TBD,N/A,Digikey,TO BUY
+CRA2512-FZ-R010ELF 10 mohm shunt,"2512. the led strip current shunt",1,TBD,TBD,N/A,Digikey,TO BUY
+ERJ8BWFR100V 0.1 ohm 1W shunt,"1206. one per dosing pump for the ina180 sense",3,TBD,TBD,N/A,Digikey,TO BUY
+TPS565208DDCR 5a buck,"sot-23-6. 12v to 5v on the hat for the pi, and on the load board for the pico",2,TBD,TBD,N/A,Digikey,TO BUY
+SRP7028A-4R7M 4.7uH inductor,"7x7mm shielded, 6a. one per buck",2,TBD,TBD,N/A,Digikey,TO BUY
+SRP7028A-220M 22uH inductor,"7x7mm shielded. the xl6009 boost inductor",1,TBD,TBD,N/A,Digikey,TO BUY
+MCP73831T-2ACI/OT charger,"sot-23-5. 18650 charger at 500ma",1,TBD,TBD,N/A,Digikey,TO BUY
+XL6009E1 boost,"to-263-5. battery to 5v for the ups",1,TBD,TBD,N/A,Amazon,TO BUY
+Keystone 1042 18650 holder,"tht. the ups cell holder",1,TBD,TBD,N/A,Digikey,TO BUY
+18650 protected cell button top,"any protected 2500mah+ cell, must be the protected kind with the pcm in the cap",1,TBD,TBD,N/A,Amazon,TO BUY
+AMS1117-3.3 ldo,"sot-223. 3.3v for the sensors",1,TBD,TBD,N/A,Digikey,TO BUY
+AO3401A p-fet,"sot-23. high side switches for the ph and ec probe boards",2,TBD,TBD,N/A,Digikey,TO BUY
+AO3400A n-fet,"sot-23. low side switch per dosing pump",3,TBD,TBD,N/A,Digikey,TO BUY
+2N7002 n-fet,"sot-23. gate drivers, buzzer, fault and mains-sense lines",8,TBD,TBD,N/A,Digikey,TO BUY
+SUD50P04-08L p-fet,"dpak. the dosing rail interlock switch",1,TBD,TBD,N/A,Digikey,TO BUY
+24LC32A-I/SN eeprom,"soic-8. the hat id eeprom the pi reads at boot",1,TBD,TBD,N/A,Digikey,TO BUY
+DS3231MZ+ rtc,"soic-8. keeps time through a pi reboot, cr1220 backed",1,TBD,TBD,N/A,Digikey,TO BUY
+Keystone 3000 cr1220 holder + cr1220 cell,"smd holder plus one cell",1,TBD,TBD,N/A,Digikey,TO BUY
+SMF5.0A esd diode,"sod-123f. clamps sda, scl, the 1-wire line and the flow input",4,TBD,TBD,N/A,Digikey,TO BUY
+ADM2483BRWZ isolated rs485,"soic-16w. the expansion bus",1,TBD,TBD,N/A,Digikey,TO BUY
+B0505S-1WR3 isolated dc-dc,"sip-4. powers the isolated side of the rs485",1,TBD,TBD,N/A,Digikey,TO BUY
+SMAJ6.5CA tvs,"sma. one per rs485 line",2,TBD,TBD,N/A,Digikey,TO BUY
+SN74LVC1G123DCTR monostable,"ssop-8. the heartbeat watchdog on the load board",1,TBD,TBD,N/A,Digikey,TO BUY
+SN74LVC1G08DBVR and gate,"sot-23-5. heartbeat and arm gate",1,TBD,TBD,N/A,Digikey,TO BUY
+SN74LVC1G17DBVR schmitt buffer,"sot-23-5. cleans up the flow sensor pulses",1,TBD,TBD,N/A,Digikey,TO BUY
+INA180A2IDBVR current sense amp,"sot-23-5. one per pump plus the led strip",4,TBD,TBD,N/A,Digikey,TO BUY
+SS14 schottky,"sma. flyback per pump, buzzer, and the vsys diode",5,TBD,TBD,N/A,Digikey,TO BUY
+SS34 schottky,"sma. buck and boost catch diodes",2,TBD,TBD,N/A,Digikey,TO BUY
+Littelfuse 178.6165.0001 blade fuse holder,"tht ato holder. 12v in and the 12v link to the load board",2,TBD,TBD,N/A,Digikey,TO BUY
+ATO blade fuses 10A and 7.5A,"one 10a for the input, one 7.5a for the link. the strip alone is 4.5a",2,TBD,TBD,N/A,Amazon,TO BUY
+Littelfuse 0466003.NR 3A fuse,"1206. on the pi 5v rail and the battery",2,TBD,TBD,N/A,Digikey,TO BUY
+CUI TB007-508-02 terminal block,"5.08mm 2 pin. 12v in x2, 12v out, led strip, three pumps",8,TBD,TBD,N/A,Digikey,TO BUY
+CUI TB007-508-03 terminal block,"5.08mm 3 pin. ph, ec, ds18b20, rs485",4,TBD,TBD,N/A,Digikey,TO BUY
+JST B3B-XH-A,"xh 3 pin. the heartbeat link on both boards, and the flow sensor",3,TBD,TBD,N/A,Digikey,TO BUY
+JST B4B-XH-A,"xh 4 pin. the ultrasonic sensor",1,TBD,TBD,N/A,Digikey,TO BUY
+XH crimp housings and contacts,"3 pin x3, 4 pin x1 plus contacts, or a kit",1,TBD,TBD,N/A,Amazon,TO BUY
+2x20 stacking header for the pi,"extra tall so the hat clears the pi. the pi header socket",1,TBD,TBD,N/A,Amazon,TO BUY
+1x20 female header,"two make the pico socket",2,TBD,TBD,N/A,Amazon,TO BUY
+1x04 pin header strip,"sht31, veml7700, scd40, oled, spare gpio, and the fan header. one 40 pin strip cut up",1,TBD,TBD,N/A,Amazon,TO BUY
+12mm active buzzer 5v,"7.6mm pin pitch",1,TBD,TBD,N/A,Amazon,TO BUY
+0805 led assorted,"charging, rail, pump, link status leds",4,TBD,TBD,N/A,Amazon,TO BUY
+470uF 25V electrolytic 10mm,"12v bulk on both boards",2,TBD,TBD,N/A,Digikey,TO BUY
+470uF 10V and 220uF 10V electrolytic 8mm,"5v bulk on the hat, one of each",2,TBD,TBD,N/A,Digikey,TO BUY
+0805 ceramic caps 100n x28, 1u x3, 4u7 x4,"x7r 50v. a 0805 cap kit covers all of these",1,TBD,TBD,N/A,Amazon,TO BUY
+1206 ceramic caps 10u 25V x9, 22u 10V x9, 10u 10V x1,"x7r. the buck, boost and ldo caps, plus the heartbeat timing cap",19,TBD,TBD,N/A,Digikey,TO BUY
+0805 resistor kit 1%,"100R x5, 10R x3, 120R, 1k x16, 2k, 2k2 x3, 3k3 x2, 4k7, 10k x15, 30k, 47k x2, 100k x19, 470k",1,TBD,TBD,N/A,Amazon,TO BUY
+56k2 0805 1%,"the buck feedback divider, not in kits",2,TBD,TBD,N/A,Digikey,TO BUY
 #10-24 threaded rod 3ft,"everbilt zinc, unc coarse, one per corner. clamps the stack in compression, replaces 16 inserts and 16 bolts",4,2.98,11.92,https://www.homedepot.com/p/Everbilt-10-24-x-3-ft-Zinc-Plated-Steel-Coarse-Threaded-Rod-2300/332733255,Home Depot,TO BUY
 #10-24 nyloc nuts,"everbilt 18-8 stainless, 4 per pack so buy 2. nyloc because a tower next to a pump vibrates plain nuts loose",2,1.57,3.14,https://www.homedepot.com/p/Everbilt-10-24-Stainless-Steel-Nylon-Lock-Nut-4-Pieces-826011/317478988,Home Depot,TO BUY
 M5 fender washers,"hillman stainless, 12 per pack. spreads the nut load on the printed boss and covers the oversized clearance hole",1,5.25,5.25,https://www.homedepot.com/p/Hillman-Metric-Stainless-Fender-Washer-M5-44995/204786155,Home Depot,TO BUY
 ,,,,,,,
-TOTAL COST,"sum of every TO BUY line. does not include the pcb quote, still tbd",,,454.06,,,TO BUY
+TOTAL COST,"sum of every TO BUY line. the pcb rows are tbd until the jlcpcb quote and a digikey cart exist, they are not in the sum",,,454.06,,,TO BUY
