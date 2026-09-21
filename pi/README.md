@@ -1,10 +1,11 @@
 # pi
 
-**stale: written for the retired two-board design.** the electronics moved to a single pi 5 hat
-(see [../spec.md](../spec.md)'s electronics section, [twoboard_vertical_garden/](../twoboard_vertical_garden/)
-for what this replaced) -- `link.py` and `firmware/` describe hardware that no longer exists.
-everything below is the old pi 4b + pico shape, kept as a starting point to adapt from, not as
-current fact.
+**stale: written for the retired two-board design.** the electronics moved to a single pi 5 hat.
+**read [ARCHITECTURE.md](ARCHITECTURE.md) first** -- it's the full hardware spec for the current
+board, pulled directly from the schematic, written for whoever rewrites the code below.
+`link.py` and `firmware/` describe hardware that no longer exists and should be deleted, not
+adapted. everything else below is the old pi 4b + pico shape, kept as a rough starting point for
+the broker/storage/dashboard layers, not as current fact about the hardware.
 
 the pi 4b with the hat on its header runs everything below. the pumps board (a pico) only
 does what the pi tells it over the two wire link, and stops when the pi goes quiet.
