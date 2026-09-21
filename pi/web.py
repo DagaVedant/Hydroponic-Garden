@@ -362,8 +362,6 @@ class Rules:
                 self.heartbeat_ts = float(body.get("timestamp", ts))
         elif name == "dosing":
             self.dosing_fault = str(body.get("fault") or "") if body.get("state") == "fault" else ""
-        elif name == "board":
-            self.board = body
 
     def conditions(self, now: float) -> Dict[str, str]:
         c: Dict[str, str] = {}
@@ -374,16 +372,6 @@ class Rules:
         if self.dosing_fault:
             c["dosing_fault"] = (f"dosing stopped: {self.dosing_fault}. clear the fault on the "
                                  f"dashboard once fixed")
-        board = getattr(self, "board", None)
-        if board is not None and self.online:
-            if not board.get("fresh"):
-                c["board_silent"] = ("no telemetry from the pumps board" +
-                                     (", its fault line is held low" if board.get("fault_line") else "") +
-                                     ". check the link cable and the 12 v to it")
-            elif board.get("faults"):
-                c["board_fault"] = "pumps board reports: " + ", ".join(board["faults"])
-            if board.get("mains") is False:
-                c["on_battery"] = "mains is gone, the pi is running on the 18650"
         lvl = self.last.get("water/level")
         if lvl and lvl[1] < ALERT_LEVEL_LOW_L:
             c["level_low"] = f"tank is down to {lvl[1]:.1f} L, top it up"

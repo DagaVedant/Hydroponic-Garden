@@ -1,24 +1,15 @@
 # pi
 
-**stale: written for the retired two-board design.** the electronics moved to a single pi 5 hat.
-**read [ARCHITECTURE.md](ARCHITECTURE.md) first** -- it's the full hardware spec for the current
-board, pulled directly from the schematic, written for whoever rewrites the code below.
-`link.py` and `firmware/` describe hardware that no longer exists and should be deleted, not
-adapted. everything else below is the old pi 4b + pico shape, kept as a rough starting point for
-the broker/storage/dashboard layers, not as current fact about the hardware.
-
-the pi 4b with the hat on its header runs everything below. the pumps board (a pico) only
-does what the pi tells it over the two wire link, and stops when the pi goes quiet.
+one pi 5 with the hat on its header runs everything. read [ARCHITECTURE.md](ARCHITECTURE.md)
+first -- it is the full hardware spec for the board, pulled directly from the schematic.
 
 | file | role |
 |---|---|
 | `config.py` | the numbers you might change. lines marked MEASURE are guesses |
-| `control.py` | reads the hat, drives lights and dosing through the link, writes csv, publishes to mqtt |
-| `link.py` | the two wire link to the pumps board: command frames out on HB, telemetry back on FLT |
+| `control.py` | reads the hat, drives lights, pumps and dosing, writes csv, publishes to mqtt |
 | `store.py` | sqlite schema, the mqtt subscriber that fills it, csv backfill, a report |
 | `web.py` | the dashboard server and the alerts watcher |
 | `dashboard.html` | the frontend, one file |
-| `firmware/` | the pumps board firmware, c with the pico sdk, its own readme |
 
 ## run
 
@@ -35,7 +26,7 @@ on a laptop `pip install flask paho-mqtt` is enough. on the pi:
 
 ```
 sudo raspi-config                   enable i2c and 1-wire
-sudo apt install mosquitto pigpio python3-venv
+sudo apt install mosquitto python3-venv
 sudo usermod -aG gpio,i2c,dialout $USER
 python3 -m venv .venv && .venv/bin/pip install -r requirements.txt
 sudo systemd/install.sh             three units: hydro-control, hydro-store, hydro-web

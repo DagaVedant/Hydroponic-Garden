@@ -234,37 +234,6 @@ class SensorMathTests(unittest.TestCase):
         self.assertGreater(control.LEVEL_MIN_VALID_MM, control.LEVEL_BLIND_ZONE_MM)
         self.assertLessEqual(config.BANDS["water/level"][1], full + 0.5)
 
-    def test_level_from_the_link(self):
-        """The distance comes from the pumps board; the tank window still applies."""
-        import time
-
-        class FakeLink:
-            fresh = True
-            fault_line = False
-            telemetry = {"SN": 300}
-
-        lvl = TankLevel(FakeLink(), simulate=False)
-        r = lvl.read()[0]
-        self.assertTrue(r.valid)
-        self.assertAlmostEqual(r.value, TankLevel.depth_to_litres(SENSOR_HEIGHT_MM - 300), places=2)
-        FakeLink.telemetry = {"SN": 100}
-        self.assertFalse(lvl.read()[0].valid)                 # inside the blind zone
-        FakeLink.fresh = False
-        self.assertFalse(lvl.read()[0].valid)                 # board silent
-
-    def test_link_frames_round_trip(self):
-        import link
-        f = link.encode([0.5, 0, 1], 0.62, 0.5, True)
-        self.assertTrue(f.startswith(b">P1=0.50,P2=0.00,P3=1.00,L=0.62,F=0.50,A=1*"))
-        body = f[1:f.index(b"*")].decode()
-        self.assertEqual(int(f[f.index(b"*") + 1:].strip(), 16), link.checksum(body))
-        line = "<I1=0.320,I2=0.000,I3=0.000,IL=2.35,V=12.1,FL=12.3,SN=345,HB=1,AR=1,E=09"
-        line += "*%02X" % link.checksum(line[1:])
-        got = link.decode(line)
-        self.assertEqual(got["SN"], 345)
-        self.assertEqual(got["E"], 9)
-        self.assertIsNone(link.decode(line[:-1] + "0"))     # bad checksum
-
     def test_checked_marks_out_of_range(self):
         self.assertTrue(checked("water/ph", 6.0, "pH").valid)
         self.assertFalse(checked("water/ph", 15.0, "pH").valid)
