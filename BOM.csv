@@ -3,7 +3,6 @@ ALREADY OWN,no cost. these are on hand,,,,,,
 5 gal bucket,"302mm OD x 368mm tall, 18.9 L. the nutrient tank. no reservoir means no loop",1,0.00,0.00,N/A,N/A,OWNED
 GROWNEER SML-630 submersible pump,"550 GPH, 2.2m lift, 30W, 120V AC. the only thing that moves water, everything after it is gravity",1,0.00,0.00,N/A,N/A,OWNED
 1/2in PVC Schedule 40 pipe 10ft,21.34mm OD. carries water pump to top in one unbroken run,1,0.00,0.00,N/A,N/A,OWNED
-Raspberry Pi 4B,"runs the broker, control loop, database, dashboard and alerts",1,0.00,0.00,N/A,N/A,OWNED
 Analog pH interface board,signal conditioning with bnc socket. nutrients only dissolve in a narrow ph band,1,0.00,0.00,N/A,Amazon,OWNED
 ,SUBTOTAL,,,0.00,,,
 ,,,,,,,
@@ -12,87 +11,78 @@ PLA and PETG filament,"2-3kg. petg for anything that lives in water, pla for pro
 ,SUBTOTAL,,,0.00,,,
 ,,,,,,,
 PARTS I STILL NEED,the funding request,,,,,,
+Raspberry Pi 5,"the pi 4b in the other project is spoken for. this variant needs its own pi 5, powered separately over usb-c",1,65.00,65.00,https://www.amazon.com/Raspberry-Pi-8GB-SC1112-Quad-core/dp/B0CK2FCG1K,N/A,TO BUY
 2in slotted mesh net pots (60-pack),"nobrand 60 pack, listing says 55mm lip, not yet measured. every socket is cut to this pot's taper",1,10.97,10.97,https://www.walmart.com/ip/60-Pack-2-Inch-Net-Cups-Slotted-Mesh-Wide-Lip-Filter-Plant-Net-Pot-Bucket-Basket-for-Hydroponics/917097535?wmlspartner=wlpa&selectedSellerId=102637587&veh=seo_fpl&cn=google,Walmart,TO BUY
 1/2in PVC MPT x Slip adapter,pump outlet is threaded and the pipe is slip. nothing connects without it,1,0.84,0.84,https://www.homedepot.com/p/LASCO-Fittings-1-2-in-PVC-Schedule-40-Male-MPT-x-Slip-Adapter-436005BC/317654558,Home Depot,TO BUY
 PVC bypass tee / ball valve / fittings,"everbilt 1/2in sch 40 slip ball valve. the pump makes 10x the flow the tower wants, this sheds the rest instead of throttling it",1,2.98,2.98,https://www.homedepot.com/p/Everbilt-1-2-in-PVC-Sch-40-Solvent-x-Solvent-Ball-Valve-107-633EB/319340955,Home Depot,TO BUY
 1/2in PVC slip tee,"charlotte pipe sch 40, slip x3. tees the bypass leg off the pump outlet",1,0.87,0.87,https://www.homedepot.com/p/Charlotte-Pipe-1-2-in-PVC-Schedule-40-S-x-S-x-S-Tee-PVC024000600HD/203812195,Home Depot,TO BUY
 1/2in PVC 90 elbow,charlotte pipe sch 40 slip. aims the bypass return down into the tank,1,0.78,0.78,https://www.homedepot.com/p/Charlotte-Pipe-1-2-in-PVC-Schedule-40-90-Degree-S-x-S-Elbow-Fitting-PVC023000600HD/203812033,Home Depot,TO BUY
 PVC primer and cement,"oatey 8oz combo. slip joints are solvent welded, an unglued bypass blows apart under pressure",1,11.98,11.98,https://www.homedepot.com/p/Oatey-8-oz-Purple-CPVC-and-PVC-Primer-and-Regular-Clear-PVC-Cement-Combo-Pack-302483/100151579,Home Depot,TO BUY
-JSN-SR04T ultrasonic sensor,"non-contact tank level, 2 per pack. an unexplained level rise means the tower drained back",1,9.49,9.49,https://www.amazon.com/Integrated-Transducer-Ultrasonic-Waterproof-JSN-SR04T-V3-0/dp/B0CP5YQF43/ref=sr_1_4?adgrpid=190252425550&dib=eyJ2IjoiMSJ9.l8Tj5MsxMd8h-m2KtpmnbdDaqhkE3SSrTFEr2eXnZvhJkJf8j_XNb_-Ryr1tdilcbgnFwRlVpbhX-pv5FKyYxDhyHVrko2XpixCtUczR1N3p_hJha_Dlr7ZWbjqB1IcvuzMzCwMXRzOjBH-uME_7BBVVfodK2pInCCdYzMSH02b99MRjB-gUjM9kiKORSFguZGDSpPbsYfZOLxFQ8HM0RJADFXwQ_Kg6krrjwyVHyWA.eY63HMqH8EAB8cCxvg7n7nlOnFkRF8iq7-2AV8jKU1U&dib_tag=se&hvadid=792933901168&hvdev=c&hvexpln=0&hvlocphy=9189690&hvnetw=g&hvocijid=7121382780416595688--&hvqmt=e&hvrand=7121382780416595688&hvtargid=kwd-1730412093307&hydadcr=3202_13894388_2200205&keywords=jsn-sr04t%2Bultrasonic%2Bsensor&mcid=c777391a9dcf316783a555baf629bfa4&qid=1787764311&sr=8-4&th=1,Amazon,TO BUY
-DS18B20 waterproof probe,"water temperature, 2 per pack. warm solution loses dissolved oxygen and bare roots rot fast",1,6.99,6.99,https://www.amazon.com/DROK-Waterproof-Temperature-Resistors-Raspberry/dp/B0FLDTKW78/ref=sr_1_10?dib=eyJ2IjoiMSJ9.YVfMt5xANCyaGta9WfSFIFsp3wn8ZcrOI0y-O7W90XHW2W-us5gUtoD5v855YWXCXeQ2m9esRrN2EtFQCSM9u273Lobaza9ur60zLymnaCFsaF9duN7nNIOik0LLq757ONQOtXgnb1LVubOiGCnjXv0MvkU-oM14yqOPuBVNwo6tsel8vazHIGD2QyaZd-VguJewb6MIWTW91u3lYJfwabPD0B74RtlGysKeayLTZWY.9EU_852zhtUt7a4BP_sRJPRrrfY8y8LP62dGzawoprI&dib_tag=se&keywords=ds18b20%2Btemperature%2Bsensor&qid=1787764408&sr=8-10&th=1,Amazon,TO BUY
-SHT31 temp and humidity module,"mtdele sht31, i2c 0x44, 2 per pack. tells me if the grow space is drying the leaves out",1,9.99,9.99,https://www.amazon.com/MTDELE-Temperature-Humidity-Compatible-Interface/dp/B0F9WVY98D/ref=sr_1_4?crid=3VLU6BWP2ALG5&dib=eyJ2IjoiMSJ9.f7b4OIIHF5eAn5CAun6v9FP5c7kMwXGXILG5pquZEDx8b_M-OsyGB8LpfgdR4uSNuEmz0UR1EBhlmxVKitJf2BEktb7aexwRasW_GZ7mKhocGief_HmiOS_bWs_ab6k_nCsNimJNvQNa-WRMow2YNg.6oRaDMw_MdPRoGQG89OTMuyp_eJqagUdcTIUEmcYPfU&dib_tag=se&keywords=SHT41&qid=1787764538&refinements=p_76%3A1249158011&rnid=1249156011&rps=1&sprefix=sht4%2Caps%2C172&sr=8-4,Amazon,TO BUY
+JSN-SR04T ultrasonic sensor,"non-contact tank level, 2 per pack. an unexplained level rise means the tower drained back",1,9.49,9.49,https://www.amazon.com/Integrated-Transducer-Ultrasonic-Waterproof-JSN-SR04T-V3-0/dp/B0CP5YQF43,Amazon,TO BUY
+DS18B20 waterproof probe,"water temperature, 2 per pack. warm solution loses dissolved oxygen and bare roots rot fast",1,6.99,6.99,https://www.amazon.com/DROK-Waterproof-Temperature-Resistors-Raspberry/dp/B0FLDTKW78,Amazon,TO BUY
+SHT31 temp and humidity module,"mtdele sht31, i2c 0x44, 2 per pack. tells me if the grow space is drying the leaves out",1,9.99,9.99,https://www.amazon.com/MTDELE-Temperature-Humidity-Compatible-Interface/dp/B0F9WVY98D,Amazon,TO BUY
+SCD40 CO2 module,"i2c co2/temp/rh sensor. kept from the other design, same reasoning: co2 draws down fast in a sealed grow space",1,39.99,39.99,https://www.amazon.com/detects-Dioxide-Temperature-Humidity-Communication/dp/B0C1B5R36X,Amazon,TO BUY
+VEML7700 light sensor module,i2c ambient light sensor. confirms the led strip and photoperiod are actually doing something,1,7.99,7.99,https://www.amazon.com/Rakstore-VEML7700-Measuring-Interface-Raspberry/dp/B09C7SNDJ7,Amazon,TO BUY
 12V white LED strip 5m,"XUNATA 5630 120led/m 12V neutral white. indoor tower with no sun, 3.2m draws about 54W",1,17.99,17.99,https://www.amazon.com/XUNATA-SMD5630-Dimmable-Linkable-Flexible/dp/B076HJFR58,Amazon,TO BUY
 Aluminium LED channel + diffuser,"muzata u1sw 17x7mm, 6 x 1m, milky diffuser. heatsinks the strip, bare tape on plastic cooks itself and dims",1,19.99,19.99,https://www.amazon.com/Muzata-Aluminum-Mounting-Installations-Diffuser/dp/B01M09PBYX,Amazon,TO BUY
-12V 100W PSU,"fsjee ysd-12100-qtl sealed ip67 12v 8.3a driver, ul listed file e498189, moulded 3-prong cord. the only supply, runs lights and dosers off one 12v rail",1,34.99,34.99,https://www.amazon.com/FSJEE-LED-Transformer/dp/B0GSVGLT2N,Amazon,TO BUY
+12V 100W PSU,"fsjee ysd-12100-qtl sealed ip67 12v 8.3a driver, ul listed file e498189, moulded 3-prong cord. the only supply, runs lights, dosers and the board off one 12v rail",1,34.99,34.99,https://www.amazon.com/FSJEE-LED-Transformer/dp/B0GSVGLT2N,Amazon,TO BUY
 Waterproof connectors and wire,"twippo 50 set, 1-6 pin, 22-16 awg, crimper included. lets me unplug a sensor instead of cutting it out of the loom",1,39.99,39.99,https://www.amazon.com/Twippo-Waterproof-Automotive-Electrical-Connectors/dp/B0CBJV2WSM,Amazon,TO BUY
 22awg silicone hookup wire,"tuofeng, 6 colours, 8m each. the sensor runs. the connector kit ships no wire at all",1,15.69,15.69,https://www.amazon.com/Electric-Flexible-Silicone-different-Electronic/dp/B07G2JWYDW,Amazon,TO BUY
 16awg silicone wire 50ft,"milapeak, 25ft red plus 25ft black. 12V feed to the led strip at 4.5A, 22awg would drop too much",1,17.89,17.89,https://www.amazon.com/Silicone-Flexible-Stranded-Strands-MILAPEAK/dp/B07CMYVF3J,Amazon,TO BUY
-Drip tray,"lwalrs 16in saucer, 2.25in deep, 2 per pack. passive leak containment when sensors and plumbing have all failed",1,29.99,29.99,https://www.amazon.com/Saucers-Extra-Deep-Drainage-Indoors-Plastic/dp/B0CPBC6ML3?th=1,Amazon,TO BUY
-Rockwool starter cubes 1.5in,"wangshiqi, 56 per pack. seeds need somewhere to germinate before they go into a net pot",1,12.59,12.59,https://www.amazon.com/dp/B0DJSXHQJ6/ref=twister_B0DJSZQ1ZC?_encoding=UTF8&th=1,Amazon,TO BUY
+Drip tray,"lwalrs 16in saucer, 2.25in deep, 2 per pack. passive leak containment when sensors and plumbing have all failed",1,29.99,29.99,https://www.amazon.com/Saucers-Extra-Deep-Drainage-Indoors-Plastic/dp/B0CPBC6ML3,Amazon,TO BUY
+Rockwool starter cubes 1.5in,"wangshiqi, 56 per pack. seeds need somewhere to germinate before they go into a net pot",1,12.59,12.59,https://www.amazon.com/dp/B0DJSXHQJ6,Amazon,TO BUY
 pH replacement electrode,"0-14 glass electrode, bnc, 300cm cable. the old bulb is cracked, the board it plugs into is fine",1,17.90,17.90,https://www.amazon.com/Connector-Electrode-Replacement-Aquarium-Hydroponics/dp/B07KG7RVVH,Amazon,TO BUY
 General Hydroponics pH Control Kit,"ph up and ph down plus indicator. ph drifts up as the plants feed, this pulls it back",1,18.89,18.89,https://www.amazon.com/dp/B000BNKWZY,Amazon,TO BUY
 General Hydroponics Flora Series trio,"floramicro / floragro / florabloom, 32oz quarts. the actual food, bare roots in plain water starve",1,39.86,39.86,https://www.amazon.com/Hydroponics-GH-Flora-FloraMicro-FloraBloom/dp/B01HG98GX0,Amazon,TO BUY
 Analog EC/TDS probe + interface board,"dfrobot gravity tds kit, 0-1000ppm. nutrient strength, and confirms a dose actually landed in the tank",1,11.90,11.90,https://www.amazon.com/Gravity-Waterproof-Anti-Polarization-0-1000ppm-Hydroponics/dp/B086GX2539,Amazon,TO BUY
-pH and EC calibration solution set,"gidigi, 4 x 50ml, ph 4/7/10 plus 1413 uS/cm. an uncalibrated probe reads confident nonsense",1,12.99,12.99,https://www.amazon.com/GIDIGI-Calibration-Calibrating-Multifunction-Hydroponics/dp/B0GD6LMBLB/ref=sr_1_2_sspa?dib=eyJ2IjoiMSJ9.kMtZewJi_-XbTFs6ad9O67s9UsmZHkP8VrKJuyW88LAFI0VtOIvNe9Fcnp3zcbHnSbo8O23dBT-UnJF22LQLdMGGYbNgM5flJT4FsKRXIRzip1wsNQIgr2J6k2ku2trsN3QcU7v_6WA3O_SfK_ciUrwm5VtAnRlMg4D4aKqxO15zryAy_U2DzAIbkwxksmm3b_5XcQm-5TAeKS7ldIusDKSxlm7TncS6vhmUwfjlx4g.qeNPF2EfJSAQBuitbhqGX4Uc49iwFxP5dNdJcGUQ91M&dib_tag=se&keywords=ec%2Bcalibration%2Bsolution&qid=1787765656&sr=8-2-spons&sp_csd=d2lkZ2V0TmFtZT1zcF9hdGY&th=1,Amazon,TO BUY
+pH and EC calibration solution set,"gidigi, 4 x 50ml, ph 4/7/10 plus 1413 uS/cm. an uncalibrated probe reads confident nonsense",1,12.99,12.99,https://www.amazon.com/GIDIGI-Calibration-Calibrating-Multifunction-Hydroponics/dp/B0GD6LMBLB,Amazon,TO BUY
 pH probe storage solution,"biopharm 250ml, 1m kcl. a ph probe stored dry is a dead ph probe",1,14.50,14.50,https://www.amazon.com/Biopharm-Electrode-Storage-Solution-Suitable/dp/B074G37V12,Amazon,TO BUY
-ADS1115 16-bit I2C ADC,"3 per pack. the pi has no analog input, so without this ph and ec simply cannot be read",1,11.89,11.89,https://www.amazon.com/HiLetgo-Converter-Programmable-Amplifier-Development/dp/B07VPFLSMX,Amazon,TO BUY
-12V peristaltic dosing pump,"intllab 5-100mL/min, 4 per pack. doses nutrient a, nutrient b and ph down without me measuring by hand",1,29.99,29.99,https://www.amazon.com/INTLLAB-Peristaltic-Liquid-Aquarium-Analytical/dp/B07Q1C3PW2/ref=sr_1_4?dib=eyJ2IjoiMSJ9.ncXwbwHiFCVNF7IyGJ0veyKn4Miu6_52sL1xlWoQbd8sbz7yK1ltpZyE82wF3tc7TsTDROQskdCPauDRnE37TXlXn1v-J1En5dFlYZ3_IuYvJ05-_vZKVMgLhsh74i-s9YDhVgIdyR26m-NQ0H4wXKU6j1f58cWPKS3KhNZClkNzNPNFd69GF-9ZjxvofpnXNSR8a4VJpsCzxbfmKdv2r7JHavXWSIQvE-TBvmFHOOI.wBh7WXGl5cCo6L5c8mBcoMnxI23V0uo5Qvwig5Pps6A&dib_tag=se&keywords=peristaltic%2Bpump%2B12v&qid=1787765729&sr=8-4&th=1,Amazon,TO BUY
+ADS1115 16-bit I2C ADC,"3 per pack, 2 used (ph/ec, and the pump+led currents). the pi has no analog input, so without this ph and ec simply cannot be read",1,11.89,11.89,https://www.amazon.com/HiLetgo-Converter-Programmable-Amplifier-Development/dp/B07VPFLSMX,Amazon,TO BUY
+INA226 breakout module,"i2c voltage/current monitor board (0x40 default, strapped to 0x41 here to dodge the pca9685's own 0x40). reads the whole 12v input current and voltage",1,6.99,6.99,https://www.amazon.com/Monitoring-Interface-Bi-Directional-Zero-Drift-DC2-7-5-5/dp/B0HFHML7Q1,Amazon,TO BUY
+12V peristaltic dosing pump,"intllab 5-100mL/min, 4 per pack. doses nutrient a, nutrient b and ph down without me measuring by hand",1,29.99,29.99,https://www.amazon.com/INTLLAB-Peristaltic-Liquid-Aquarium-Analytical/dp/B07Q1C3PW2,Amazon,TO BUY
 Peristaltic pump tubing 10m,"rebower silicone 3mm ID x 5mm OD. the pump pack ships none, without it nothing doses",1,9.39,9.39,https://www.amazon.com/dp/B0DSQLWKFF/,Amazon,TO BUY
-1L HDPE bottles with caps,"united scientific wide mouth, 6 per pack. holds each concentrate, the cap carries the intake tube and a vent",1,22.43,22.43,https://www.amazon.com/United-Scientific-Supplies-33410-Capacity/dp/B07B32GNQ6/ref=sr_1_2_sspa?dib=eyJ2IjoiMSJ9.uKA9IR9IQo6HQSY4_LV_sF5RVAfuPFr1noXMG4SjllugvQfbGMzaFFEhpXeWg8wOGkQL9RVVGsNoGkl7iMArJ3J1Uv3CDGzmoLkrdmYmdKwu2e46w3rRrsKMrPNBzvj4thSGpkwezKMaHG2pDcDzXfiNxPqw8J9uR_UUsUp5mfiPw9A_ExitNhUfnTFChhxPaMggzibN_lOrsbTmONq7r8AJu3ikl9rK5KJLk4BDIcg.BrkNrqpcXyA8ImI9VQBddmO5GqWLpssFF-1Mag8rCHU&dib_tag=se&keywords=hdpe%2Bbottles&qid=1787767724&sr=8-2-spons&sp_csd=d2lkZ2V0TmFtZT1zcF9hdGY&th=1,Amazon,TO BUY
-PCB fabrication,"jlcpcb, two boards: the pi hat and the load board, both 4 layer. get the quote once the gerbers exist",1,TBD,TBD,N/A,JLCPCB,TO BUY
-LM74700QDBVRQ1 ideal diode controller,"sot-23-6. one on the 12v input, two or-ing mains and battery onto the pi 5v",3,TBD,TBD,N/A,Digikey,TO BUY
-AOD4184A n-fet,"dpak, 40v 50a. the pass fet for each ideal diode plus the led strip switch",4,TBD,TBD,N/A,Digikey,TO BUY
-SMBJ15A tvs,"smb. clamps the 12v input on both boards",2,TBD,TBD,N/A,Digikey,TO BUY
-INA226AIDGSR current monitor,"msop-10. reads the whole 12v input current and voltage over i2c",1,TBD,TBD,N/A,Digikey,TO BUY
-CRA2512-FZ-R005ELF 5 mohm shunt,"2512. the ina226 shunt",1,TBD,TBD,N/A,Digikey,TO BUY
-CRA2512-FZ-R010ELF 10 mohm shunt,"2512. the led strip current shunt",1,TBD,TBD,N/A,Digikey,TO BUY
-ERJ8BWFR100V 0.1 ohm 1W shunt,"1206. one per dosing pump for the ina180 sense",3,TBD,TBD,N/A,Digikey,TO BUY
-TPS565208DDCR 5a buck,"sot-23-6. 12v to 5v on the hat for the pi, and on the load board for the pico",2,TBD,TBD,N/A,Digikey,TO BUY
-SRP7028A-4R7M 4.7uH inductor,"7x7mm shielded, 6a. one per buck",2,TBD,TBD,N/A,Digikey,TO BUY
-SRP7028A-220M 22uH inductor,"7x7mm shielded. the xl6009 boost inductor",1,TBD,TBD,N/A,Digikey,TO BUY
-MCP73831T-2ACI/OT charger,"sot-23-5. 18650 charger at 500ma",1,TBD,TBD,N/A,Digikey,TO BUY
-XL6009E1 boost,"to-263-5. battery to 5v for the ups",1,TBD,TBD,N/A,Amazon,TO BUY
-Keystone 1042 18650 holder,"tht. the ups cell holder",1,TBD,TBD,N/A,Digikey,TO BUY
-18650 protected cell button top,"any protected 2500mah+ cell, must be the protected kind with the pcm in the cap",1,TBD,TBD,N/A,Amazon,TO BUY
-AMS1117-3.3 ldo,"sot-223. 3.3v for the sensors",1,TBD,TBD,N/A,Digikey,TO BUY
-AO3401A p-fet,"sot-23. high side switches for the ph and ec probe boards",2,TBD,TBD,N/A,Digikey,TO BUY
-AO3400A n-fet,"sot-23. low side switch per dosing pump",3,TBD,TBD,N/A,Digikey,TO BUY
-2N7002 n-fet,"sot-23. gate drivers, buzzer, fault and mains-sense lines",8,TBD,TBD,N/A,Digikey,TO BUY
-SUD50P04-08L p-fet,"dpak. the dosing rail interlock switch",1,TBD,TBD,N/A,Digikey,TO BUY
-24LC32A-I/SN eeprom,"soic-8. the hat id eeprom the pi reads at boot",1,TBD,TBD,N/A,Digikey,TO BUY
-DS3231MZ+ rtc,"soic-8. keeps time through a pi reboot, cr1220 backed",1,TBD,TBD,N/A,Digikey,TO BUY
-Keystone 3000 cr1220 holder + cr1220 cell,"smd holder plus one cell",1,TBD,TBD,N/A,Digikey,TO BUY
-SMF5.0A esd diode,"sod-123f. clamps sda, scl, the 1-wire line and the flow input",4,TBD,TBD,N/A,Digikey,TO BUY
-ADM2483BRWZ isolated rs485,"soic-16w. the expansion bus",1,TBD,TBD,N/A,Digikey,TO BUY
-B0505S-1WR3 isolated dc-dc,"sip-4. powers the isolated side of the rs485",1,TBD,TBD,N/A,Digikey,TO BUY
-SMAJ6.5CA tvs,"sma. one per rs485 line",2,TBD,TBD,N/A,Digikey,TO BUY
-SN74LVC1G123DCTR monostable,"ssop-8. the heartbeat watchdog on the load board",1,TBD,TBD,N/A,Digikey,TO BUY
-SN74LVC1G08DBVR and gate,"sot-23-5. heartbeat and arm gate",1,TBD,TBD,N/A,Digikey,TO BUY
-SN74LVC1G17DBVR schmitt buffer,"sot-23-5. cleans up the flow sensor pulses",1,TBD,TBD,N/A,Digikey,TO BUY
-INA180A2IDBVR current sense amp,"sot-23-5. one per pump plus the led strip",4,TBD,TBD,N/A,Digikey,TO BUY
-SS14 schottky,"sma. flyback per pump, buzzer, and the vsys diode",5,TBD,TBD,N/A,Digikey,TO BUY
-SS34 schottky,"sma. buck and boost catch diodes",2,TBD,TBD,N/A,Digikey,TO BUY
-Littelfuse 178.6165.0001 blade fuse holder,"tht ato holder. 12v in and the 12v link to the load board",2,TBD,TBD,N/A,Digikey,TO BUY
-ATO blade fuses 10A and 7.5A,"one 10a for the input, one 7.5a for the link. the strip alone is 4.5a",2,TBD,TBD,N/A,Amazon,TO BUY
-Littelfuse 0466003.NR 3A fuse,"1206. on the pi 5v rail and the battery",2,TBD,TBD,N/A,Digikey,TO BUY
-CUI TB007-508-02 terminal block,"5.08mm 2 pin. 12v in x2, 12v out, led strip, three pumps",8,TBD,TBD,N/A,Digikey,TO BUY
-CUI TB007-508-03 terminal block,"5.08mm 3 pin. ph, ec, ds18b20, rs485",4,TBD,TBD,N/A,Digikey,TO BUY
-JST B3B-XH-A,"xh 3 pin. the heartbeat link on both boards, and the flow sensor",3,TBD,TBD,N/A,Digikey,TO BUY
-JST B4B-XH-A,"xh 4 pin. the ultrasonic sensor",1,TBD,TBD,N/A,Digikey,TO BUY
-XH crimp housings and contacts,"3 pin x3, 4 pin x1 plus contacts, or a kit",1,TBD,TBD,N/A,Amazon,TO BUY
-2x20 stacking header for the pi,"extra tall so the hat clears the pi. the pi header socket",1,TBD,TBD,N/A,Amazon,TO BUY
-1x20 female header,"two make the pico socket",2,TBD,TBD,N/A,Amazon,TO BUY
-1x04 pin header strip,"sht31, veml7700, scd40, oled, spare gpio, and the fan header. one 40 pin strip cut up",1,TBD,TBD,N/A,Amazon,TO BUY
-12mm active buzzer 5v,"7.6mm pin pitch",1,TBD,TBD,N/A,Amazon,TO BUY
-0805 led assorted,"charging, rail, pump, link status leds",4,TBD,TBD,N/A,Amazon,TO BUY
-470uF 25V electrolytic 10mm,"12v bulk on both boards",2,TBD,TBD,N/A,Digikey,TO BUY
-470uF 10V and 220uF 10V electrolytic 8mm,"5v bulk on the hat, one of each",2,TBD,TBD,N/A,Digikey,TO BUY
-0805 ceramic caps 100n x28, 1u x3, 4u7 x4,"x7r 50v. a 0805 cap kit covers all of these",1,TBD,TBD,N/A,Amazon,TO BUY
-1206 ceramic caps 10u 25V x9, 22u 10V x9, 10u 10V x1,"x7r. the buck, boost and ldo caps, plus the heartbeat timing cap",19,TBD,TBD,N/A,Digikey,TO BUY
-0805 resistor kit 1%,"100R x5, 10R x3, 120R, 1k x16, 2k, 2k2 x3, 3k3 x2, 4k7, 10k x15, 30k, 47k x2, 100k x19, 470k",1,TBD,TBD,N/A,Amazon,TO BUY
-56k2 0805 1%,"the buck feedback divider, not in kits",2,TBD,TBD,N/A,Digikey,TO BUY
+1L HDPE bottles with caps,"united scientific wide mouth, 6 per pack. holds each concentrate, the cap carries the intake tube and a vent",1,22.43,22.43,https://www.amazon.com/United-Scientific-Supplies-33410-Capacity/dp/B07B32GNQ6,Amazon,TO BUY
+PCB fabrication,"jlcpcb, one board (330x283mm), 4 layer, no smd anywhere -- hand-solder rows, >0.2mm holes, no via-in-pad. live jlcpcb quote at qty 5: $105.80, board cost only, excludes shipping",1,105.80,105.80,https://cart.jlcpcb.com,JLCPCB,TO BUY
+SB5H100 schottky diode,"do-201ad, 5a/100v. sits on the 12v input in place of the old ideal-diode controller circuit -- just a series diode, accepting the forward-voltage drop for the sake of staying through-hole",1,1.49,1.49,https://www.digikey.com/en/products/detail/vishay-general-semiconductor-diodes-division/SB5H100-E3-54/2146221,Digikey,TO BUY
+1.5KE15A TVS diode,do-201ae axial. clamps the 12v input,1,1.10,1.10,https://www.digikey.com/en/products/detail/stmicroelectronics/1-5KE15A/497-11371-1-ND/2674521,Digikey,TO BUY
+5 mOhm 1W axial shunt,"do0411, hand-solder. the ina226 shunt on the 12v input",1,2.20,2.20,https://www.digikey.com/en/products/filter/through-hole-resistors/1w/53,Digikey,TO BUY
+0.01 Ohm 1W axial shunt,"do0411. the led strip current shunt, read differentially by an ads1115 channel",1,2.20,2.20,https://www.digikey.com/en/products/filter/through-hole-resistors/1w/53,Digikey,TO BUY
+0.1 Ohm 1W axial shunt,"do0411. one per dosing pump, read differentially by an ads1115 channel -- the ina180 amp stage is gone, the adc reads the shunt directly",3,1.95,5.85,https://www.digikey.com/en/products/filter/through-hole-resistors/1w/53,Digikey,TO BUY
+Buck converter module 12V to 5V,"generic tht-pin breakout (e.g. mp1584/lm2596 style), a few amps. powers the board's own logic off the 12v rail -- the pi 5 is powered separately over usb-c",1,9.99,9.99,https://www.amazon.com/EBL-MP1584EN-Converter-Adjustable-Supply/dp/B08GSJVPB2,Amazon,TO BUY
+AMS1117 3.3V module,"small breakout board, not a bare sot-223. 3.3v for the sensors and logic, off the 5v rail",1,6.99,6.99,https://www.amazon.com/DollaTek-AMS1117-3-3-Voltage-Regulator-4-75V-12V/dp/B07PQPGMZ2,Amazon,TO BUY
+BS250 p-fet,"to-92, tht. high side switches for the ph and ec probe boards -- replaces the sot-23 ao3401a",2,1.75,3.50,https://www.digikey.com/en/products/detail/diodes-incorporated/BS250P/92630,Digikey,TO BUY
+IRLZ44N n-fet,"to-220, logic-level. one per dosing pump, the led strip, and the fan -- replaces the sot-23 ao3400a low-side switches with a single tht part everywhere",5,1.52,7.60,https://www.digikey.com/en/products/detail/infineon-technologies/IRLZ44NPBF/811808,Digikey,TO BUY
+2N7000 n-fet,"to-92, tht. gate drivers and the buzzer line -- replaces the sot-23 2n7002",2,0.65,1.30,https://www.digikey.com/en/products/detail/onsemi/2N7000G/1475375,Digikey,TO BUY
+IRF9540N p-fet,to-220. the dosing rail interlock switch -- replaces the dpak sud50p04-08l,1,2.10,2.10,https://www.digikey.com/en/products/detail/infineon-technologies/IRF9540NPBF/812088,Digikey,TO BUY
+24LC32A/P eeprom,"dip-8, tht. the hat id eeprom, read at boot -- same part as before, just the tht suffix instead of soic",1,0.56,0.56,https://www.digikey.com/en/products/detail/microchip-technology/24LC32A-P/249076,Digikey,TO BUY
+DS3231 RTC breakout module,"i2c real-time clock board with its own battery holder -- no separate cr1220 holder needed, the module carries one",1,9.99,9.99,https://www.amazon.com/HiLetgo-DS3231-DS3231SN-Module-PinHeader/dp/B0832PM954,Amazon,TO BUY
+1N4148 diode,"do-35, tht. clamps the flow sensor input",1,0.10,0.10,https://www.digikey.com/en/products/detail/onsemi/1N4148/458603,Digikey,TO BUY
+CD4538BE dual monostable,"dip-16. the heartbeat watchdog timer -- one half retriggered directly by a pi 5 gpio, this is the fail-safe: if the pi hangs, this drops the pump/led enable line on its own",1,0.70,0.70,https://www.digikey.com/en/products/detail/on-semiconductor/CD4538BCN/148229,Digikey,TO BUY
+CD4081BE quad AND gate,"dip-14. heartbeat/arm interlock gate -- one gate used, the rest tied off safely",1,1.11,1.11,https://www.digikey.com/en/products/detail/CD4081BE/296-2066-5-ND/67323,Digikey,TO BUY
+CD40106BE hex schmitt inverter,"dip-14. cleans up the flow sensor pulses -- two gates used as a non-inverting buffer, the rest tied off safely",1,0.77,0.77,https://www.digikey.com/en/products/detail/texas-instruments/CD40106BE/376602,Digikey,TO BUY
+DIP-16 IC socket,one for the cd4538,1,0.55,0.55,https://www.digikey.com/en/products/detail/preci-dip/110-87-316-41-001101/1212-1009-ND/3757259,Digikey,TO BUY
+DIP-14 IC socket,one each for the cd4081 and cd40106,2,0.50,1.00,https://www.digikey.com/en/products/detail/on-shore-technology-inc/ED14DT/4147595,Digikey,TO BUY
+DIP-8 IC socket,one for the 24lc32a/p eeprom,1,0.45,0.45,https://www.digikey.com/en/products/detail/on-shore-technology-inc/ED08DT/4147594,Digikey,TO BUY
+1N5819 schottky diode,"do-41, tht. flyback per dosing pump plus the buzzer",4,0.35,1.40,https://www.digikey.com/en/products/detail/stmicroelectronics/1N5819/1037326,Digikey,TO BUY
+1N5822 schottky diode,"do-201ad, tht. flyback for the led strip switch",1,0.50,0.50,https://www.digikey.com/en/products/detail/stmicroelectronics/1N5822/1037332,Digikey,TO BUY
+Littelfuse 178.6165.0001 blade fuse holder,tht ato holder. the 12v input -- no separate link fuse needed with one board,1,5.75,5.75,https://www.digikey.com/en/products/detail/littelfuse-inc/178-6165-0001/2515815,Digikey,TO BUY
+ATO blade fuse 10A,the 12v input,1,7.99,7.99,https://www.digikey.com/en/products/detail/littelfuse-inc/0287010-L/3672098,Amazon,TO BUY
+CUI TB007-508-02 terminal block,"5.08mm 2 pin. 12v in, led strip, three pumps, fan",6,0.72,4.32,https://www.digikey.com/en/products/detail/cui-devices/TB007-508-02BE/10064127,Digikey,TO BUY
+CUI TB007-508-03 terminal block,5.08mm 3 pin. ds18b20 and the flow sensor,2,0.95,1.90,https://www.digikey.com/en/products/detail/cui-devices/TB007-508-03BE/10064128,Digikey,TO BUY
+CUI TB007-508-04 terminal block,"5.08mm 4 pin. the jsn-sr04t (power, ground, tx, rx)",1,1.15,1.15,https://www.digikey.com/en/products/detail/cui-devices/TB007-508-04BE/10064129,Digikey,TO BUY
+Gravity analog probe terminal block,"5.08mm 3 pin, same connector family as the other project's ph/ec boards -- one each for the ph and ec interface boards",2,0.95,1.90,https://www.digikey.com/en/products/detail/cui-devices/TB007-508-03BE/10064128,Digikey,TO BUY
+2x20 stacking header for the pi 5,extra tall so the hat clears the pi 5's active cooler and side ports. the pi header socket,1,6.99,6.99,https://www.amazon.com/ELEDIY-20-40-Stacking-Header-Raspberry/dp/B071XCHZNB,Amazon,TO BUY
+2.54mm breakaway pin header strips,"covers every single/2/4/6/9 pin header on the board: the pca9685 channel taps, spare gpio, and every sensor/module header (ams1117, rtc, pca9685, buck, oled, scd40, sht31, veml7700, ina226, 3x ads1115) -- cut from a couple of 40-pin strips",2,3.00,6.00,https://www.amazon.com/Gikfun-2-54mm-Single-Breakaway-Arduino/dp/B00U8OCENY,Amazon,TO BUY
+PCA9685 16-channel PWM breakout module,"i2c pwm driver board, address strapped to 0x41 (a0 tied to +3.3v) to avoid colliding with the ina226's 0x40. generates all 5 pwm outputs (3 pumps, led, fan) so the pi 5's own gpio/pwm isn't the bottleneck",1,8.99,8.99,https://www.amazon.com/SunFounder-PCA9685-Channel-Arduino-Raspberry/dp/B014KTSMLA,Amazon,TO BUY
+128x64 I2C OLED display,"ssd1306, 0.96in. local status without needing the dashboard open",1,7.99,7.99,https://www.amazon.com/HiLetgo-Adafruit-Beaglebones-Raspberry-Optional/dp/B076DYCWC8,Amazon,TO BUY
+12mm active buzzer 5v,"7.6mm pin pitch, tht",1,6.99,6.99,https://www.amazon.com/10PCS-Active-Buzzer-Magnetic-Buzzers/dp/B0D9SBJQYZ,Amazon,TO BUY
+3mm THT LED assorted,"rail and pump status leds. no charging or link leds -- no battery, no second board",2,5.00,10.00,https://www.amazon.com/250pcs-colors-Emitting-Diffused-Assorted/dp/B00XT0P1VQ,Amazon,TO BUY
+Ceramic capacitor assortment kit,"24 values, 480pcs, 10pF-10uF at 50V, multilayer monolithic. covers every ceramic value on the board (100nF, 4.7uF, 10uF) in one purchase with huge spare margin",1,9.99,9.99,https://www.amazon.com/Multilayer-Monolithic-Capacitor-Assortment-Electronics/dp/B0D2GVNDHY,Amazon,TO BUY
+Electrolytic capacitor assortment kit,"24 values, 500pcs, 0.1uF-1000uF at 10V/16V/25V/50V, radial. covers every electrolytic value on the board (470uF25V, 470uF10V, 220uF10V, 22uF10V) in one purchase with huge spare margin",1,12.99,12.99,https://www.amazon.com/OCR-Electrolytic-Capacitor-Assortment-0-1uF%EF%BC%8D1000uF/dp/B01MSQOX0Q,Amazon,TO BUY
+Axial resistor kit 1% THT,"covers every value on the board: 100R x5, 1k x6, 4k7, 10k x12, 470k -- a through-hole 1/4w kit, not the smd 0805 kit from the two-board design",1,12.99,12.99,https://www.amazon.com/Resistor-Assorted-Resistors-Assortment-Experiments/dp/B07L851T3V,Amazon,TO BUY
 #10-24 threaded rod 3ft,"everbilt zinc, unc coarse, one per corner. clamps the stack in compression, replaces 16 inserts and 16 bolts",4,2.98,11.92,https://www.homedepot.com/p/Everbilt-10-24-x-3-ft-Zinc-Plated-Steel-Coarse-Threaded-Rod-2300/332733255,Home Depot,TO BUY
 #10-24 nyloc nuts,"everbilt 18-8 stainless, 4 per pack so buy 2. nyloc because a tower next to a pump vibrates plain nuts loose",2,1.57,3.14,https://www.homedepot.com/p/Everbilt-10-24-Stainless-Steel-Nylon-Lock-Nut-4-Pieces-826011/317478988,Home Depot,TO BUY
 M5 fender washers,"hillman stainless, 12 per pack. spreads the nut load on the printed boss and covers the oversized clearance hole",1,5.25,5.25,https://www.homedepot.com/p/Hillman-Metric-Stainless-Fender-Washer-M5-44995/204786155,Home Depot,TO BUY
 ,,,,,,,
-TOTAL COST,"sum of every TO BUY line. the pcb rows are tbd until the jlcpcb quote and a digikey cart exist, they are not in the sum",,,454.06,,,TO BUY
+TOTAL COST,"sum of every TO BUY line with a real price, now including the jlcpcb board cost. the pi 5 and every bare electronics component are still TBD until parts are actually sourced -- they are not in this sum. updated against the real, erc-clean, all-through-hole schematic and placed pcb in PCB/kicad/hat -- quantities now come straight from PCB/gen/pcb_data.json rather than being reasoned estimates",,,847.22,,,TO BUY
+

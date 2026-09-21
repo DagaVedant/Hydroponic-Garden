@@ -150,7 +150,7 @@
         "min_microvia_drill": 0.1,
         "min_resolved_spokes": 2,
         "min_silk_clearance": 0.0,
-        "min_text_height": 0.8,
+        "min_text_height": 0.7,
         "min_text_thickness": 0.08,
         "min_through_hole_diameter": 0.3,
         "min_track_width": 0.25,
@@ -645,7 +645,7 @@
       {
         "filename": "hat.kicad_sch",
         "name": "hat",
-        "uuid": "3c39a53a-81ee-49b4-a31c-816519c3d855"
+        "uuid": "2d99a82a-41d8-4860-a405-b3de3c8069b1"
       }
     ],
     "used_designators": "J_PI1,R_SHUNT1",
@@ -653,7 +653,7 @@
   },
   "sheets": [
     [
-      "3c39a53a-81ee-49b4-a31c-816519c3d855",
+      "2d99a82a-41d8-4860-a405-b3de3c8069b1",
       "hat"
     ]
   ],

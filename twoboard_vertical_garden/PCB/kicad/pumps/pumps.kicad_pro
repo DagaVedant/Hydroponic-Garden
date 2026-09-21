@@ -118,7 +118,7 @@
         "silk_over_copper": "warning",
         "silk_overlap": "warning",
         "skew_out_of_range": "error",
-        "solder_mask_bridge": "warning",
+        "solder_mask_bridge": "error",
         "starved_thermal": "error",
         "text_height": "warning",
         "text_on_edge_cuts": "error",
@@ -142,20 +142,20 @@
         "max_error": 0.005,
         "min_clearance": 0.15,
         "min_connection": 0.0,
-        "min_copper_edge_clearance": 0.3,
+        "min_copper_edge_clearance": 0.5,
         "min_groove_width": 0.0,
         "min_hole_clearance": 0.25,
         "min_hole_to_hole": 0.25,
         "min_microvia_diameter": 0.2,
         "min_microvia_drill": 0.1,
-        "min_resolved_spokes": 1,
+        "min_resolved_spokes": 2,
         "min_silk_clearance": 0.0,
-        "min_text_height": 0.8,
+        "min_text_height": 0.7,
         "min_text_thickness": 0.08,
         "min_through_hole_diameter": 0.3,
-        "min_track_width": 0.2,
+        "min_track_width": 0.25,
         "min_via_annular_width": 0.1,
-        "min_via_diameter": 0.5,
+        "min_via_diameter": 0.6,
         "solder_mask_to_copper_clearance": 0.0,
         "use_height_for_length_calcs": true
       },
@@ -240,7 +240,7 @@
       "internal_id": "",
       "mfg": "",
       "mpn": "",
-      "sch_revision": "D"
+      "sch_revision": ""
     },
     "layer_pairs": [],
     "layer_presets": [],
@@ -495,7 +495,7 @@
     "classes": [
       {
         "bus_width": 12,
-        "clearance": 0.15,
+        "clearance": 0.2,
         "diff_pair_gap": 0.25,
         "diff_pair_via_gap": 0.25,
         "diff_pair_width": 0.2,
@@ -508,7 +508,7 @@
         "schematic_color": "rgba(0, 0, 0, 0.000)",
         "track_width": 0.2,
         "tuning_profile": "",
-        "via_diameter": 0.5,
+        "via_diameter": 0.6,
         "via_drill": 0.3,
         "wire_width": 6
       }
@@ -644,19 +644,14 @@
     "top_level_sheets": [
       {
         "filename": "pumps.kicad_sch",
-        "name": "load",
-        "uuid": "bd3bf567-f0ba-4358-97b1-e0fe4e27a806"
+        "name": "pumps",
+        "uuid": "00000000-0000-0000-0000-000000000000"
       }
     ],
-    "used_designators": "U_PICO1",
+    "used_designators": "",
     "variants": []
   },
-  "sheets": [
-    [
-      "bd3bf567-f0ba-4358-97b1-e0fe4e27a806",
-      "load"
-    ]
-  ],
+  "sheets": [],
   "text_variables": {},
   "tuning_profiles": {
     "meta": {

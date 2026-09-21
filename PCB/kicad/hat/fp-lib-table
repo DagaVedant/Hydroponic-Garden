@@ -1,4 +1,4 @@
 (fp_lib_table
   (version 7)
-  (lib (name "revd")(type "KiCad")(uri "${KIPRJMOD}/../revd.pretty")(options "")(descr "rev d custom footprints"))
+  (lib (name "revd")(type "KiCad")(uri "${KIPRJMOD}/../revd.pretty")(options "")(descr "gwp custom footprints"))
 )

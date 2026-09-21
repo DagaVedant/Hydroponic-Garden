@@ -33,41 +33,50 @@ the pump only does one job: get water to the top. after that it's all shape.
 
 ## how it's wired
 
+one board, one computer -- a raspberry pi 5 and a custom hat, no second microcontroller. an earlier
+two-board revision (pi 4b hat + pico pumps board over an isolated link) is fully routed and archived
+at [twoboard_vertical_garden/](twoboard_vertical_garden/); see [spec.md](spec.md) for why this one
+replaced it.
+
 ```
 120 V AC wall
   └── GFCI outlet, manual reset
         ├── pump, 30 W ................. always on, nothing switches it
         ├── 12 V 100 W PSU  ............ one rail for everything
-        │     ├── LED strip, 4 x 800mm .. wired in parallel, 5 A total
-        │     └── 3 dosing pumps ........ 12 V
-        │           both switched by the 4 mosfet channels on the hat
-        └── Pi 5 V supply
-              └── raspberry pi 4b
+        │     ├── LED strip, fan ....... switched via the hat's PCA9685 PWM driver
+        │     └── 3 dosing pumps ....... 12 V, same PWM driver
+        └── Pi 5, over its own USB-C ... powered separately, per the Pi 5's own guidance
 ```
 
-led strip and dosers share one 12 v rail, so there's no buck converter and no second mosfet
-board. the 12 v never touches the pi. switching is low side, so the pi only ever drives a gate.
+the hat regulates its own 12 V-to-5 V and 5 V-to-3.3 V for its own load. none of that comes from
+the Pi's 5 V/3.3 V pins, and the hat never feeds the Pi's rail either.
 
 ```
-raspberry pi 4b
-  └── 40 pin header
+raspberry pi 5
+  └── 40 pin header, tall standoffs to clear the active cooler and side ports
         └── hat   (the custom pcb)
               │
-              ├── i2c ────┬── ads1115  0x48 ──┬── a0 ◄── ph board ◄── ph probe
-              │           │                   └── a1 ◄── ec board ◄── ec probe
-              │           └── sht31    0x44 ...... air temp + humidity
+              ├── i2c ────┬── ads1115 #1 ──┬── ph board ◄── ph probe
+              │           │                └── ec board ◄── ec probe
+              │           ├── ads1115 #2 ──── 3x pump current + LED current (differential shunts)
+              │           ├── sht31 .......... air temp + humidity
+              │           ├── scd40 .......... co2
+              │           ├── ina226 ......... 12V rail voltage + current
+              │           ├── pca9685 ........ 3 pumps, LED, fan -- all PWM
+              │           └── oled ........... local status
               │
               ├── 1-wire ──── ds18b20 ............ water temp, 4.7k pull-up
               ├── uart ────── jsn-sr04t .......... tank level
-              │
-              ├── gpio x2 ───── mosfets .......... ph and ec probe power
-              └── gpio x4 ───── 4-ch board ──┬── ch1 pwm ... led strip
-                                             └── ch2 3 4 ... dosing pumps
+              ├── gpio (int)── flow sensor ........ pulse output
+              ├── gpio x2 ──── mosfets ............ ph and ec probe power
+              ├── gpio ─────── buzzer
+              └── gpio (toggle) ── watchdog monostable ──► pump/LED enable line
+                                   hung control process ⇒ line drops on its own
 ```
 
-the ads1115 is a hard dependency. the pi has no analog input, so ph and ec reach it only through that
-chip. the two gpio switching probe power are the cross-talk fix: ph on, ec off, settle, sample. then
-swap. then both off.
+the ads1115 is a hard dependency. the pi has no analog input, so ph, ec, and both current reads reach
+it only through those two chips. the two gpio switching probe power are the cross-talk fix: ph on, ec
+off, settle, sample. then swap. then both off.
 
 ## specs
 
@@ -78,9 +87,9 @@ swap. then both off.
 | tower | ~800mm, ~1.35m with the tank |
 | tank | 5 gal, 18.9 L |
 | pump | 550 gph, 2.2m lift, throttled to 1-3.5 L/min with a bypass |
-| sensors | water level, water temp, air temp + humidity, ph, ec |
+| sensors | water level, water temp, air temp + humidity, co2, ph, ec, water flow, pump/LED current, 12V rail |
 | dosing | 3 peristaltic pumps, nutrient a/b and ph down |
-| control | raspberry pi 4b + custom hat → mqtt → sqlite + dashboard |
+| control | raspberry pi 5 + custom hat → mqtt → sqlite + dashboard |
 | scaling | `MODULE_COUNT` is one number. a taller tower is a parameter change, not a redesign |
 
 ## repo
@@ -90,4 +99,5 @@ swap. then both off.
 | [spec.md](spec.md) | the design. structure, water path, electronics, software |
 | [parameters.md](parameters.md) | every dimension, straight from the onshape variable studio |
 | [CAD/](CAD/) | step exports and the part list |
-| `PCB/` | raspberry pi hat, not started |
+| `PCB/` | raspberry pi 5 hat, routed, 0 DRC errors, gerbers exported |
+| [twoboard_vertical_garden/](twoboard_vertical_garden/) | the archived pi 4b + pico two-board design, superseded but kept for reference |

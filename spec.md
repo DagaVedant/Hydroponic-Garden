@@ -133,7 +133,7 @@ fits; 45° is the natural place to land. turned, the widest thing is not the soc
 bosses at r = 107, and the sockets have room out to r = 151 before they matter again.
 
 measured on the solid: 1272mm² of downward-facing surface is flat, out of 72000mm², and **nothing
-falls between 46° and 89°** — no true overhangs at all. the two flat patches are a 1.8mm bridge over
+falls between 46° and 89°** -- no true overhangs at all. the two flat patches are a 1.8mm bridge over
 the joint recess and a 4mm ledge under the upper rod boss, both of which bridge unsupported.
 
 ---
@@ -190,7 +190,7 @@ outboard, to r = 133.4.
 `SOCKET_FACE_OFFSET` is **26, not 8**, and it is the one number the socket lives or dies on. a 45°
 collar's upper rim sits at r = 74.99 + 0.707 × offset, so it only clears the ⌀184 chamber once the
 offset passes 24.06. below that the chamber trim shaves the collar's top off and the socket comes out
-as an arc rather than a circle — at 8 it was 250° of 360. at 26 the ring closes.
+as an arc rather than a circle -- at 8 it was 250° of 360. at 26 the ring closes.
 
 the cost is real and it is the thing to watch. pushing the socket out drags the pot out with it, so
 **the root ball now sits 10.7mm inside the chamber wall instead of 23.4mm.** still in the water film,
@@ -273,36 +273,55 @@ not the pump: the four ⌀10 drip holes pass 3.7 L/min with the channel brim ful
 
 ## electronics
 
-the pi reads five sensors and drives two things: the lights and three dosing pumps. everything hangs
-off one custom hat on the 40 pin header. there's no microcontroller. the main pump isn't switched at
-all, it runs continuously while the lights are on.
+one board, one computer. a raspberry pi 5 drives everything directly over i2c and gpio through a
+custom hat -- no microcontroller, no link protocol to a second board. an earlier revision split this
+across a pi 4b hat plus a pico "pumps" board talking over an isolated two-wire link; that design is
+finished, fully routed, and archived at [twoboard_vertical_garden/](twoboard_vertical_garden/) for
+reference. it worked, but two dense 4-layer boards to route, stock, and hand-assemble was more than
+the job needed, so this revision asks whether one board and one computer can do the same job. it can.
 
 ```
-   raspberry pi 4b        lives in the control box, at the tower
+   raspberry pi 5          lives in the control box, at the tower. powered separately over usb-c
    ├── mosquitto (mqtt broker, local)
-   ├── control service ──► reads the hat, drives lights and dosing
+   ├── control service ──► reads the hat, drives lights, dosing and the fan
    ├── ingest service ──► sqlite
    ├── web dashboard
    ├── phone alerts
-   └── custom hat on the 40 pin header
-       ├── water level    jsn-sr04t ultrasonic, uart mode, flush in the tank lid plate
-       ├── water temp     ds18b20 waterproof probe, 1-wire
-       ├── air temp + rh  sht31 / sht41, i2c
-       ├── ph             analog probe ──► ads1115 16 bit adc, i2c
-       ├── ec             analog probe ──► ads1115 16 bit adc, i2c
-       ├── led control    ch1 of the 4 mosfet channels on the hat, pwm and photoperiod
-       └── dosing         3 peristaltic pumps on ch2 3 and 4
+   └── custom hat on the 40 pin header, tall standoffs to clear the active cooler and side ports
+       ├── water level     jsn-sr04t ultrasonic, uart mode, flush in the tank lid plate
+       ├── water temp      ds18b20 waterproof probe, 1-wire
+       ├── air temp + rh   sht31, i2c
+       ├── co2             scd40, i2c
+       ├── ph              analog probe ──► ads1115 #1, i2c
+       ├── ec              analog probe ──► ads1115 #1, i2c
+       ├── pump + led current  3x pump, 1x led ──► ads1115 #2, i2c (differential shunt reads)
+       ├── 12v rail        voltage + current ──► ina226, i2c
+       ├── water flow      pulse output ──► gpio interrupt
+       ├── pwm out         pca9685 16-ch i2c driver ──► led strip, fan, 3 dosing pumps
+       ├── local status    128x64 oled + buzzer, i2c / gpio
+       └── watchdog        gpio toggled at a steady rate ──► retriggerable monostable ──►
+                            pump/led enable line. hangs the control process, the line drops on
+                            its own. no second mcu needed to make that true.
 
    pump ──► straight into a gfci outlet. nothing switches it.
 ```
+
+the hat has its own 12v-to-5v and 5v-to-3.3v regulation for its own load (pwm driver, both
+ads1115s, the ina226, the oled, the watchdog, the gate drivers) -- none of it comes from the pi's
+5v/3.3v pins, and the hat never feeds the pi's own rail either.
+
+**cut from the two-board design, on purpose:** the ups (18650 cell, charger, boost, ideal-diode
+or-ing) and mains-presence sensing go with it, since there's no battery to fail over to -- a power
+outage stops the tower until mains returns, no ride-through. isolated rs-485 goes too, since it had
+no defined second device to talk to even in the two-board design.
 
 **the ph and ec probes cross-talk.** two powered probes in the same tank leak current through the
 solution and corrupt each other's readings. either buy isolated interface boards, or power them
 alternately in firmware: read ph, cut power, let it settle, then read ec.
 
-**no camera and no flow sensor.** ph, ec and dosing are all in this build. the camera needs a mount
-600mm off the tower axis to clear the foliage and that's a part i haven't designed. flow is set once by
-hand at commissioning instead of being measured continuously.
+**no camera.** the camera needs a mount 600mm off the tower axis to clear the foliage and that's a
+part i haven't designed. flow, unlike the two-board design, now is measured continuously off a
+pulse sensor instead of being set once by hand at commissioning.
 
 ### pump
 
@@ -512,7 +531,7 @@ hydro/cmd/dose
 alerts: level too low, **level rose unexpectedly** (probable pump failure), a dose that did not
 land, a reading out of band, a sensor failing, missed heartbeat. pushed to a phone over ntfy.
 
-### raspberry pi — `pi/`
+### raspberry pi -- `pi/`
 
 - mosquitto broker, runs as a system service
 - `store.py` schema, mqtt subscriber that validates and writes, csv backfill. sqlite for now,
