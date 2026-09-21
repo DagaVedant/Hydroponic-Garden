@@ -2,7 +2,6 @@ journal/
 pi/data/
 pi/*.sqlite*
 pi/.venv/
-pi/tests/
 __pycache__/
 
 Thumbs.db
