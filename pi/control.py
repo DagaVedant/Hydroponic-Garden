@@ -13,6 +13,7 @@ import random
 import signal
 import statistics
 import sys
+import threading
 import time
 from dataclasses import dataclass, field
 from typing import (Callable, Deque, Dict, Iterable, List, Optional, Tuple)
@@ -28,22 +29,48 @@ from config import (CSV_DIR, DOSE_EC_DEADBAND, FAN_DUTY, DOSE_EC_TARGET, DOSE_FL
                     PROBE_SETTLE_S, SAMPLE_INTERVAL_S, SENSOR_HEIGHT_MM, TDS_TEMP_COEFF,
                     TDS_TO_EC)
 
+# ---------------------------------------------------------------------------
+# hardware map. see ARCHITECTURE.md for how every one of these was verified
+# against hat.kicad_pcb -- this is not reasoned from memory, it's transcribed.
+# ---------------------------------------------------------------------------
 
 I2C_BUS = 1
-ADS1115_ADDR = 0x48
-SHT3X_ADDR = 0x44
-ADS_CH_PH, ADS_CH_EC = 0, 1
-ADS_FSR_VOLTS = 4.096
 
-ADS_CH_BATTERY = 2
-BATTERY_DIVIDER = 2.0       # 100k / 100k on the hat
 INA226_ADDR = 0x40
-INA226_SHUNT_OHMS = 0.005
+PCA9685_ADDR = 0x41
+SHT3X_ADDR = 0x44
+ADS1115_PH_EC_ADDR = 0x48        # ph (A0), ec (A1), pump3 current (A2)
+ADS1115_PUMP12_ADDR = 0x49       # pump1 current (A0), pump2 current (A2)
+ADS1115_LED_ADDR = 0x4A          # led current (A0); A2 is genuinely floating, don't read it
+SCD40_ADDR = 0x62                # standard address, not re-strapped
+VEML7700_ADDR = 0x10             # standard address, not re-strapped
+DS3231_ADDR = 0x68                # standard address, RTC not currently used by this loop
 
-PIN_PH_POWER = 23
-PIN_EC_POWER = 24
-PIN_MAINS_N = 27            # low while the 12 v brick is present
-# the lights, the pumps and the tank level live on the pumps board, over link.py
+ADS_CH_PH, ADS_CH_EC, ADS_CH_PUMP3 = 0, 1, 2
+ADS_CH_PUMP1, ADS_CH_PUMP2 = 0, 2
+ADS_CH_LED = 0
+ADS_FSR_PROBE_V = 4.096          # +-4.096V range, for the analog probe boards
+ADS_FSR_SHUNT_V = 0.256          # +-0.256V range, for the low-side current shunts
+
+PUMP_SHUNT_OHMS = {1: 0.1, 2: 0.1, 3: 0.1}     # R13/R16/R19
+LED_SHUNT_OHMS = 0.01                          # R22
+INA226_SHUNT_OHMS = 0.005                      # R_SHUNT, the 12V input
+
+PIN_PH_POWER = 23           # /PH_EN
+PIN_EC_POWER = 24           # /EC_EN
+PIN_FLOW = 17               # /FLOW, off the CD40106 schmitt buffer
+PIN_FAN_TACH = 27           # /FAN_TACH
+PIN_HB_ALIVE = 18           # /HB_ALIVE -- the watchdog retrigger. see Watchdog below
+PIN_ARM = 25                # /ARM -- the software's own deliberate arm/disarm
+
+# the CD4538 monostable's timeout, measured off the real board: R1=470k, C2=10uF
+# on MONO_RC/MONO_CEXT. CD4538 timeout ~= 0.7 * R * C -- verify on the bench, this
+# is a datasheet-formula estimate, not a bench measurement.
+WATCHDOG_TIMEOUT_S = 0.7 * 470_000 * 10e-6      # ~3.3s
+WATCHDOG_TOGGLE_S = 1.0                          # retrigger well inside the timeout
+
+JSN_SERIAL_PORT = "/dev/serial0"
+JSN_BAUD = 9600
 
 LEVEL_BLIND_ZONE_MM = 200.0
 LEVEL_MAX_RANGE_MM = 6000.0
@@ -63,15 +90,15 @@ RANGES = {
     "water/ec":     (0.0, 5000.0),
     "air/temp":     (-10.0, 60.0),
     "air/humidity": (0.0, 100.0),
+    "air/co2":      (0.0, 10000.0),
+    "air/light":    (0.0, 120000.0),
     "water/flow":   (0.0, 30.0),
     "pump/1/current": (0.0, 1.5),
     "pump/2/current": (0.0, 1.5),
     "pump/3/current": (0.0, 1.5),
     "lights/current": (0.0, 6.0),
-    "board/rail":   (9.0, 15.0),
-    "board/link":   (0.0, 1.0),
-    "power/mains":  (0.0, 1.0),
-    "power/battery": (2.5, 4.3),
+    "fan/rpm":      (0.0, 10000.0),
+    "board/armed":  (0.0, 1.0),
     "power/volts":  (9.0, 15.0),
     "power/current": (0.0, 10.0),
 }
@@ -115,6 +142,7 @@ def checked(sensor: str, value: float, unit: str, note: str = "") -> Reading:
 
 
 def crc8_sensirion(data: bytes) -> int:
+    """Shared by every Sensirion part on this board: SHT31 and SCD40 both use it."""
     crc = 0xFF
     for byte in data:
         crc ^= byte
@@ -184,6 +212,7 @@ MEASURE_DELAY_S = 0.016
 
 
 class AirSensor(Sensor):
+    """SHT31 at 0x44. temp + humidity."""
     name = "air"
 
     def __init__(self, simulate: bool = False) -> None:
@@ -236,28 +265,154 @@ class AirSensor(Sensor):
             self._bus.close()
 
 
+CMD_SCD40_START_PERIODIC = (0x21, 0xB1)
+CMD_SCD40_READ_MEASUREMENT = (0xEC, 0x05)
+CMD_SCD40_DATA_READY = (0xE4, 0xB8)
+
+
+class Co2Sensor(Sensor):
+    """SCD40 at 0x62. co2 + temp + humidity, but only co2 is used from here --
+    air temp/humidity already come from the SHT31, which settles faster."""
+    name = "air/co2"
+
+    def __init__(self, simulate: bool = False) -> None:
+        super().__init__(simulate)
+        self._bus = None
+        self._sim_co2 = 650.0
+        if not simulate:
+            import smbus2
+            self._bus = smbus2.SMBus(I2C_BUS)
+            try:
+                self._bus.i2c_rdwr(smbus2.i2c_msg.write(SCD40_ADDR, list(CMD_SCD40_START_PERIODIC)))
+            except OSError:
+                pass  # first read() will report the failure
+
+    def _write_read(self, cmd: Tuple[int, int], n: int, delay_s: float):
+        import smbus2
+        self._bus.i2c_rdwr(smbus2.i2c_msg.write(SCD40_ADDR, list(cmd)))
+        time.sleep(delay_s)
+        rx = smbus2.i2c_msg.read(SCD40_ADDR, n)
+        self._bus.i2c_rdwr(rx)
+        return bytes(rx)
+
+    def read(self) -> List[Reading]:
+        if self.simulate:
+            self._sim_co2 += random.uniform(-15.0, 25.0)
+            self._sim_co2 = max(420.0, min(1800.0, self._sim_co2))
+            return [checked(self.name, round(self._sim_co2, 0), "ppm")]
+
+        try:
+            ready = self._write_read(CMD_SCD40_DATA_READY, 3, 0.001)
+            if crc8_sensirion(ready[0:2]) != ready[2]:
+                return [Reading.bad(self.name, "ppm", "data-ready crc failed")]
+            if (((ready[0] << 8) | ready[1]) & 0x07FF) == 0:
+                return [Reading.bad(self.name, "ppm", "not ready yet, 5s update cycle")]
+            data = self._write_read(CMD_SCD40_READ_MEASUREMENT, 9, 0.001)
+        except OSError as exc:
+            return [Reading.bad(self.name, "ppm", f"i2c failed: {exc}")]
+
+        if crc8_sensirion(data[0:2]) != data[2]:
+            return [Reading.bad(self.name, "ppm", "crc failed")]
+        co2 = (data[0] << 8) | data[1]
+        return [checked(self.name, float(co2), "ppm")]
+
+    def close(self) -> None:
+        if self._bus is not None:
+            self._bus.close()
+
+
+VEML_ALS_CONF0 = 0x00
+VEML_ALS = 0x04
+VEML_LUX_PER_COUNT = 0.0576  # gain=1x, integration=100ms, per Vishay's app note table
+
+
+class LightSensor(Sensor):
+    """VEML7700 at 0x10. confirms the LED strip/photoperiod are doing something --
+    not a control input, the photoperiod schedule is timer-based (see Lights)."""
+    name = "air/light"
+
+    def __init__(self, simulate: bool = False) -> None:
+        super().__init__(simulate)
+        self._bus = None
+        self._sim_lux = 8000.0
+        if not simulate:
+            import smbus2
+            self._bus = smbus2.SMBus(I2C_BUS)
+            try:
+                # gain=1x, IT=100ms, not shutdown. see VEML_LUX_PER_COUNT's comment.
+                self._bus.write_word_data(VEML7700_ADDR, VEML_ALS_CONF0, 0x0000)
+            except OSError:
+                pass
+
+    def read(self) -> List[Reading]:
+        if self.simulate:
+            self._sim_lux += random.uniform(-200.0, 200.0)
+            self._sim_lux = max(0.0, min(20000.0, self._sim_lux))
+            return [checked(self.name, round(self._sim_lux, 0), "lux")]
+        try:
+            raw = self._bus.read_word_data(VEML7700_ADDR, VEML_ALS)
+        except OSError as exc:
+            return [Reading.bad(self.name, "lux", f"i2c failed: {exc}")]
+        return [checked(self.name, round(raw * VEML_LUX_PER_COUNT, 0), "lux")]
+
+    def close(self) -> None:
+        if self._bus is not None:
+            self._bus.close()
+
+
 BORE_AREA_MM2 = math.pi * (BUCKET_BORE_MM / 2.0) ** 2
-CMD_TRIGGER = b"\x55"
 
 
 class TankLevel(Sensor):
-    """The jsn-sr04t sits on the pumps board now; the distance arrives in its telemetry."""
+    """JSN-SR04T, wired directly in its own native UART mode (9600 8N1): a 4-byte
+    frame, 0xFF header + distance high byte + distance low byte + checksum, sent
+    continuously on its own. No more relaying through a pumps board -- this reads
+    the sensor's wire protocol directly."""
     name = "water/level"
 
-    def __init__(self, link, simulate: bool = False) -> None:
+    def __init__(self, simulate: bool = False) -> None:
         super().__init__(simulate)
-        self.link = link
+        self._ser = None
+        self._sim_distance = SENSOR_HEIGHT_MM - 80.0
+        if not simulate:
+            import serial
+            self._ser = serial.Serial(JSN_SERIAL_PORT, JSN_BAUD, timeout=0.3)
 
     @staticmethod
     def depth_to_litres(depth_mm: float) -> float:
         return depth_mm * BORE_AREA_MM2 / 1_000_000.0
 
+    def _read_distance_mm(self) -> Optional[float]:
+        # hunt for the 0xFF header rather than assuming byte alignment -- the
+        # sensor free-runs, so a stale partial frame can be sitting in the buffer
+        for _ in range(4):
+            header = self._ser.read(1)
+            if not header:
+                return None
+            if header[0] != 0xFF:
+                continue
+            rest = self._ser.read(3)
+            if len(rest) != 3:
+                return None
+            data_h, data_l, checksum = rest
+            if (0xFF + data_h + data_l) & 0xFF != checksum:
+                continue
+            return float((data_h << 8) | data_l)
+        return None
+
     def read(self) -> List[Reading]:
-        if not self.link.fresh:
-            return [Reading.bad(self.name, "L", "no telemetry from the pumps board")]
-        distance = float(self.link.telemetry.get("SN", -1))
-        if distance < 0:
-            return [Reading.bad(self.name, "L", "no echo")]
+        if self.simulate:
+            self._sim_distance += random.uniform(-1.0, 1.0)
+            self._sim_distance = max(LEVEL_MIN_VALID_MM, min(LEVEL_MAX_VALID_MM, self._sim_distance))
+            distance = self._sim_distance
+        else:
+            try:
+                distance = self._read_distance_mm()
+            except OSError as exc:
+                return [Reading.bad(self.name, "L", f"serial failed: {exc}")]
+            if distance is None:
+                return [Reading.bad(self.name, "L", "no valid frame from the sensor")]
+
         if distance < LEVEL_BLIND_ZONE_MM:
             return [Reading.bad(self.name, "L",
                                 f"{distance:.0f}mm inside the {LEVEL_BLIND_ZONE_MM:.0f}mm blind zone")]
@@ -270,50 +425,93 @@ class TankLevel(Sensor):
         return [checked(self.name, round(self.depth_to_litres(depth), 2), "L",
                         note=f"distance {distance:.0f}mm")]
 
+    def close(self) -> None:
+        if self._ser is not None:
+            self._ser.close()
 
-class BoardSensors(Sensor):
-    """What the pumps board measures: pump and strip currents, its 12 v rail, the flow."""
-    name = "board"
 
-    def __init__(self, link, simulate: bool = False) -> None:
+class PulseCounter:
+    """A GPIO edge counter for anything that outputs pulses: the flow sensor and
+    the fan tachometer are both this, just with different pulses-per-unit."""
+
+    def __init__(self, pin: int, simulate: bool = False, sim_hz: float = 0.0) -> None:
+        self.simulate = simulate
+        self._count = 0
+        self._lock = threading.Lock()
+        self._dev = None
+        self._sim_hz = sim_hz
+        if not simulate:
+            from gpiozero import DigitalInputDevice
+            self._dev = DigitalInputDevice(pin, pull_up=False)
+            self._dev.when_activated = self._tick
+
+    def _tick(self) -> None:
+        with self._lock:
+            self._count += 1
+
+    def hz_since_last_call(self) -> float:
+        """Call this on a roughly-known interval (the sweep interval); it hands
+        back edges-per-second since the last call and resets the counter."""
+        if self.simulate:
+            return self._sim_hz
+        with self._lock:
+            n, self._count = self._count, 0
+        return n  # caller divides by however many seconds actually elapsed
+
+    def close(self) -> None:
+        if self._dev is not None:
+            self._dev.close()
+
+
+class FlowAndFan(Sensor):
+    """Flow sensor (BCM17) and fan tach (BCM27). The flow sensor module itself
+    isn't sourced yet -- see ARCHITECTURE.md section 5 -- so this will report
+    'no pulses' until one is plugged in. That's expected, not a fault."""
+    name = "flow_fan"
+    FLOW_HZ_PER_LPM = 7.5  # carried over from the old design's flow sensor spec;
+                           # re-verify once an actual sensor is sourced and dated
+
+    def __init__(self, simulate: bool = False, interval_s: float = SAMPLE_INTERVAL_S) -> None:
         super().__init__(simulate)
-        self.link = link
+        self.interval_s = interval_s
+        self._last_ts = time.time()
+        self.flow = PulseCounter(PIN_FLOW, simulate, sim_hz=0.0)
+        self.fan = PulseCounter(PIN_FAN_TACH, simulate, sim_hz=(FAN_DUTY * 2400.0 / 60.0 * 2))
 
     def read(self) -> List[Reading]:
-        if not self.link.fresh:
-            return [Reading.bad("board/link", "", "pumps board silent" +
-                                (", fault line held low" if self.link.fault_line else ""))]
-        t = self.link.telemetry
-        out = [checked("board/link", 1.0, "", note=", ".join(self.link.faults()) or "ok")]
-        for i, key in enumerate(("I1", "I2", "I3"), 1):
-            amps = t.get(key, -1)
-            out.append(Reading.bad(f"pump/{i}/current", "A", "ads1115 on the board failed") if amps < 0
-                       else checked(f"pump/{i}/current", round(amps, 3), "A"))
-        out.append(checked("lights/current", round(t.get("IL", 0), 2), "A"))
-        out.append(checked("board/rail", round(t.get("V", 0), 2), "V"))
-        out.append(checked("water/flow", round(t.get("FL", 0) / 7.5, 2), "L/min", note=f"{t.get('FL', 0):.0f} Hz"))
+        now = time.time()
+        elapsed = max(0.5, now - self._last_ts)
+        self._last_ts = now
+        flow_hz = self.flow.hz_since_last_call() / elapsed
+        fan_hz = self.fan.hz_since_last_call() / elapsed
+        out = [checked("water/flow", round(flow_hz / self.FLOW_HZ_PER_LPM, 2), "L/min",
+                       note=f"{flow_hz:.1f} Hz" if flow_hz else "no pulses -- sensor not connected yet")]
+        # most PC-style fan tachs pulse twice per revolution
+        out.append(checked("fan/rpm", round(fan_hz / 2.0 * 60.0, 0), "rpm"))
         return out
+
+    def close(self) -> None:
+        self.flow.close()
+        self.fan.close()
 
 
 class Supply(Sensor):
-    """The hat's own power: mains present, and the ina226 on the 12 v input."""
+    """The HAT's own 12V input: the INA226 at 0x40. no mains-sense and no
+    battery in this design -- see ARCHITECTURE.md section 10, both were cut with
+    the UPS."""
     name = "power"
 
     def __init__(self, simulate: bool = False) -> None:
         super().__init__(simulate)
-        self._mains = None
         self._bus = None
         if not simulate:
             import smbus2
-            from gpiozero import DigitalInputDevice
-            self._mains = DigitalInputDevice(PIN_MAINS_N, pull_up=True)
             self._bus = smbus2.SMBus(I2C_BUS)
 
     def read(self) -> List[Reading]:
         if self.simulate:
-            return [checked("power/mains", 1.0, ""), checked("power/current", 1.35, "A"),
-                    checked("power/volts", 12.05, "V")]
-        out = [checked("power/mains", 0.0 if self._mains.value else 1.0, "")]
+            return [checked("power/current", 1.35, "A"), checked("power/volts", 12.05, "V")]
+        out: List[Reading] = []
         try:
             raw = self._bus.read_word_data(INA226_ADDR, 0x02)
             bus_v = ((raw & 0xFF) << 8 | raw >> 8) * 1.25e-3
@@ -327,20 +525,31 @@ class Supply(Sensor):
         return out
 
     def close(self) -> None:
-        if self._mains is not None:
-            self._mains.close()
         if self._bus is not None:
             self._bus.close()
 
 
 REG_CONVERSION, REG_CONFIG = 0x00, 0x01
-_MUX = {0: 0b100, 1: 0b101, 2: 0b110, 3: 0b111}
-_PGA_4V096, _DR_128SPS = 0b001, 0b100
+_MUX = {0: 0b100, 1: 0b101, 2: 0b110, 3: 0b111}   # single-ended vs GND, per channel
+_PGA_4V096, _PGA_0V256, _DR_128SPS = 0b001, 0b101, 0b100
 
 
-def _config_word(channel: int) -> int:
-    return (0x8000 | (_MUX[channel] << 12) | (_PGA_4V096 << 9) | (1 << 8)
-            | (_DR_128SPS << 5) | 0x03)
+def _config_word(channel: int, pga: int) -> int:
+    return 0x8000 | (_MUX[channel] << 12) | (pga << 9) | (1 << 8) | (_DR_128SPS << 5) | 0x03
+
+
+def _read_ads1115_volts(bus, address: int, channel: int, pga: int, fsr: float) -> Optional[float]:
+    cfg = _config_word(channel, pga)
+    try:
+        bus.write_i2c_block_data(address, REG_CONFIG, [(cfg >> 8) & 0xFF, cfg & 0xFF])
+        time.sleep(1.0 / 128 + 0.002)
+        raw = bus.read_i2c_block_data(address, REG_CONVERSION, 2)
+    except OSError:
+        return None
+    counts = (raw[0] << 8) | raw[1]
+    if counts > 0x7FFF:
+        counts -= 0x10000
+    return counts * fsr / 32768.0
 
 
 def ph_from_volts(v: float) -> float:
@@ -354,6 +563,7 @@ def tds_from_volts(v: float, water_temp_c: float) -> float:
 
 
 class ProbePair(Sensor):
+    """pH and EC, both single-ended off the ADS1115 at 0x48 (channels A0/A1)."""
     name = "probes"
 
     def __init__(self, simulate: bool = False) -> None:
@@ -368,24 +578,12 @@ class ProbePair(Sensor):
             self._ph_power = DigitalOutputDevice(PIN_PH_POWER, initial_value=False)
             self._ec_power = DigitalOutputDevice(PIN_EC_POWER, initial_value=False)
 
-    def _read_volts(self, channel: int) -> Optional[float]:
-        cfg = _config_word(channel)
-        try:
-            self._bus.write_i2c_block_data(ADS1115_ADDR, REG_CONFIG, [(cfg >> 8) & 0xFF, cfg & 0xFF])
-            time.sleep(1.0 / 128 + 0.002)
-            raw = self._bus.read_i2c_block_data(ADS1115_ADDR, REG_CONVERSION, 2)
-        except OSError:
-            return None
-        counts = (raw[0] << 8) | raw[1]
-        if counts > 0x7FFF:
-            counts -= 0x10000
-        return counts * ADS_FSR_VOLTS / 32768.0
-
     def _sample(self, power, channel: int) -> Optional[float]:
         power.on()
         try:
             time.sleep(PROBE_SETTLE_S)
-            return self._read_volts(channel)
+            return _read_ads1115_volts(self._bus, ADS1115_PH_EC_ADDR, channel,
+                                        _PGA_4V096, ADS_FSR_PROBE_V)
         finally:
             power.off()
 
@@ -404,8 +602,7 @@ class ProbePair(Sensor):
             self._sim_ph = max(5.2, min(7.6, self._sim_ph))
             self._sim_ec = max(600.0, min(2200.0, self._sim_ec))
             return [checked("water/ph", round(self._sim_ph, 2), "pH"),
-                    checked("water/ec", round(self._sim_ec, 0), "uS/cm"),
-                    checked("power/battery", 3.92, "V")]
+                    checked("water/ec", round(self._sim_ec, 0), "uS/cm")]
 
         out: List[Reading] = []
         v_ph = self._sample(self._ph_power, ADS_CH_PH)
@@ -423,9 +620,6 @@ class ProbePair(Sensor):
             ppm = tds_from_volts(v_ec, self.water_temp_c)
             out.append(checked("water/ec", round(ppm * TDS_TO_EC, 0), "uS/cm",
                                note=f"{v_ec:.4f}V at {self.water_temp_c:.1f}C"))
-        v_bat = self._read_volts(ADS_CH_BATTERY)
-        out.append(Reading.bad("power/battery", "V", "ads1115 read failed") if v_bat is None
-                   else checked("power/battery", round(v_bat * BATTERY_DIVIDER, 3), "V"))
         return out
 
     def close(self) -> None:
@@ -437,14 +631,123 @@ class ProbePair(Sensor):
             self._bus.close()
 
 
-class Channel:
-    def __init__(self, pin: int, name: str, frequency: int = 1000, simulate: bool = False) -> None:
-        self.pin, self.name, self.simulate = pin, name, simulate
-        self._duty = 0.0
-        self._dev = None
+class CurrentSense(Sensor):
+    """3x pump current + LED current, across the three ADS1115s at 0x48/0x49/0x4A.
+    Every one of these is a single-ended read of a low-side shunt: I = V / R."""
+    name = "current"
+
+    def __init__(self, simulate: bool = False) -> None:
+        super().__init__(simulate)
+        self._bus = None
+        self._sim = {1: 0.12, 2: 0.12, 3: 0.12, "led": 3.6}
         if not simulate:
-            from gpiozero import PWMOutputDevice
-            self._dev = PWMOutputDevice(pin, frequency=frequency, initial_value=0.0)
+            import smbus2
+            self._bus = smbus2.SMBus(I2C_BUS)
+
+    def _current(self, address: int, channel: int, shunt_ohms: float) -> Optional[float]:
+        v = _read_ads1115_volts(self._bus, address, channel, _PGA_0V256, ADS_FSR_SHUNT_V)
+        if v is None:
+            return None
+        return v / shunt_ohms
+
+    def read(self) -> List[Reading]:
+        if self.simulate:
+            for k in (1, 2, 3):
+                self._sim[k] = max(0.0, self._sim[k] + random.uniform(-0.01, 0.01))
+            self._sim["led"] = max(0.0, self._sim["led"] + random.uniform(-0.1, 0.1))
+            return [checked("pump/1/current", round(self._sim[1], 3), "A"),
+                    checked("pump/2/current", round(self._sim[2], 3), "A"),
+                    checked("pump/3/current", round(self._sim[3], 3), "A"),
+                    checked("lights/current", round(self._sim["led"], 2), "A")]
+
+        out: List[Reading] = []
+        i1 = self._current(ADS1115_PUMP12_ADDR, ADS_CH_PUMP1, PUMP_SHUNT_OHMS[1])
+        i2 = self._current(ADS1115_PUMP12_ADDR, ADS_CH_PUMP2, PUMP_SHUNT_OHMS[2])
+        i3 = self._current(ADS1115_PH_EC_ADDR, ADS_CH_PUMP3, PUMP_SHUNT_OHMS[3])
+        for n, amps in ((1, i1), (2, i2), (3, i3)):
+            out.append(Reading.bad(f"pump/{n}/current", "A", "ads1115 read failed") if amps is None
+                       else checked(f"pump/{n}/current", round(amps, 3), "A"))
+        i_led = self._current(ADS1115_LED_ADDR, ADS_CH_LED, LED_SHUNT_OHMS)
+        out.append(Reading.bad("lights/current", "A", "ads1115 read failed") if i_led is None
+                   else checked("lights/current", round(i_led, 2), "A"))
+        return out
+
+    def close(self) -> None:
+        if self._bus is not None:
+            self._bus.close()
+
+
+# ---------------------------------------------------------------------------
+# PCA9685 -- every PWM output (pumps, LED, fan, the two status LEDs) goes
+# through this, not direct Pi GPIO PWM. see ARCHITECTURE.md section 4 for the
+# channel map.
+# ---------------------------------------------------------------------------
+
+_PCA_MODE1, _PCA_PRESCALE, _PCA_LED0_ON_L = 0x00, 0xFE, 0x06
+_PCA_OSC_HZ = 25_000_000
+
+
+class Pca9685:
+    def __init__(self, simulate: bool = False, frequency: float = 1000.0) -> None:
+        self.simulate = simulate
+        self._bus = None
+        if not simulate:
+            import smbus2
+            self._bus = smbus2.SMBus(I2C_BUS)
+            self._set_frequency(frequency)
+
+    def _set_frequency(self, freq: float) -> None:
+        prescale = max(3, round(_PCA_OSC_HZ / (4096.0 * freq)) - 1)
+        old_mode = self._bus.read_byte_data(PCA9685_ADDR, _PCA_MODE1)
+        self._bus.write_byte_data(PCA9685_ADDR, _PCA_MODE1, (old_mode & 0x7F) | 0x10)  # sleep
+        self._bus.write_byte_data(PCA9685_ADDR, _PCA_PRESCALE, prescale)
+        self._bus.write_byte_data(PCA9685_ADDR, _PCA_MODE1, old_mode)
+        time.sleep(0.0005)
+        self._bus.write_byte_data(PCA9685_ADDR, _PCA_MODE1, old_mode | 0x80)  # restart, auto-increment
+
+    def set_duty(self, channel: int, duty: float) -> None:
+        duty = max(0.0, min(1.0, float(duty)))
+        reg = _PCA_LED0_ON_L + 4 * channel
+        if self.simulate or self._bus is None:
+            return
+        if duty <= 0.0:
+            self._bus.write_i2c_block_data(PCA9685_ADDR, reg, [0, 0, 0, 0x10])   # full off
+            return
+        if duty >= 1.0:
+            self._bus.write_i2c_block_data(PCA9685_ADDR, reg, [0, 0x10, 0, 0])   # full on
+            return
+        off = round(duty * 4095)
+        self._bus.write_i2c_block_data(PCA9685_ADDR, reg, [0, 0, off & 0xFF, (off >> 8) & 0x0F])
+
+    def close(self) -> None:
+        if self._bus is not None:
+            for ch in range(16):
+                try:
+                    self.set_duty(ch, 0.0)
+                except OSError:
+                    pass
+            self._bus.close()
+
+
+# PCA9685 channel assignment, verified against the schematic (ARCHITECTURE.md section 4)
+PCA_CH_PUMP1, PCA_CH_PUMP2, PCA_CH_PUMP3 = 0, 1, 2
+PCA_CH_LED, PCA_CH_FAN = 3, 4
+PCA_CH_STAT_RAIL, PCA_CH_STAT_PUMP = 5, 6
+
+
+class Channel:
+    """One PCA9685 channel, wearing the same interface the old direct-GPIO
+    Channel had (on/off/set/pulse) so Lights and Doser don't need to change.
+
+    `simulate=True` (or omitting `pca`) makes this self-contained -- it just
+    tracks duty locally without touching any real device, same as the old
+    Channel did. That's what the test suite constructs directly."""
+
+    def __init__(self, channel: int, name: str, pca: Optional["Pca9685"] = None,
+                 simulate: bool = False) -> None:
+        self.pca, self.channel, self.name = pca, channel, name
+        self.simulate = simulate or pca is None
+        self._duty = 0.0
 
     @property
     def duty(self) -> float:
@@ -453,8 +756,8 @@ class Channel:
     def set(self, duty: float) -> None:
         duty = max(0.0, min(1.0, float(duty)))
         self._duty = duty
-        if self._dev is not None:
-            self._dev.value = duty
+        if not self.simulate:
+            self.pca.set_duty(self.channel, duty)
 
     def on(self) -> None:
         self.set(1.0)
@@ -474,9 +777,7 @@ class Channel:
         return time.time() - started
 
     def close(self) -> None:
-        if self._dev is not None:
-            self._dev.value = 0.0
-            self._dev.close()
+        self.set(0.0)
 
     def __str__(self) -> str:
         return f"{self.name}={self._duty:.0%}"
@@ -676,6 +977,62 @@ class Doser:
             ch.close()
 
 
+class Watchdog:
+    """Toggles /HB_ALIVE (BCM18) at WATCHDOG_TOGGLE_S off a dedicated thread, and
+    owns /ARM (BCM25). Both must be held for the CD4081 AND gate to enable pumps
+    and the LED strip -- if this thread dies, the toggle stops, and the CD4538's
+    ~3.3s timeout (measured off the real R1/C2) drops the enable line regardless
+    of anything else. See ARCHITECTURE.md section 7.
+
+    Deliberately simple: no sensor reads, no I2C, nothing that can block or
+    raise for reasons unrelated to "is this process still alive." The point of
+    this thread is that it keeps running even when everything else has gone
+    wrong."""
+
+    def __init__(self, simulate: bool = False) -> None:
+        self.simulate = simulate
+        self._hb = self._arm = None
+        self._stop = threading.Event()
+        self._thread: Optional[threading.Thread] = None
+        if not simulate:
+            from gpiozero import DigitalOutputDevice
+            self._hb = DigitalOutputDevice(PIN_HB_ALIVE, initial_value=False)
+            self._arm = DigitalOutputDevice(PIN_ARM, initial_value=False)  # disarmed until start()
+
+    def start(self) -> None:
+        if self.simulate:
+            return
+        self._thread = threading.Thread(target=self._run, name="watchdog", daemon=True)
+        self._thread.start()
+
+    def _run(self) -> None:
+        while not self._stop.is_set():
+            self._hb.toggle()
+            self._stop.wait(WATCHDOG_TOGGLE_S)
+
+    def arm(self) -> None:
+        if not self.simulate:
+            self._arm.on()
+
+    def disarm(self) -> None:
+        if not self.simulate:
+            self._arm.off()
+
+    @property
+    def armed(self) -> bool:
+        return True if self.simulate else bool(self._arm.value)
+
+    def close(self) -> None:
+        self._stop.set()
+        if self._thread is not None:
+            self._thread.join(timeout=WATCHDOG_TOGGLE_S * 2)
+        if not self.simulate:
+            self._arm.off()
+            self._hb.off()
+            self._arm.close()
+            self._hb.close()
+
+
 class CsvLogger:
     def __init__(self, directory: str = CSV_DIR) -> None:
         self.directory = directory
@@ -853,12 +1210,15 @@ def _stop(_signum, _frame):
 
 
 class SensorSet:
-    def __init__(self, simulate: bool, link) -> None:
+    def __init__(self, simulate: bool) -> None:
         self.water_temp = WaterTemp(simulate)
         self.air = AirSensor(simulate)
-        self.level = TankLevel(link, simulate)
+        self.co2 = Co2Sensor(simulate)
+        self.light = LightSensor(simulate)
+        self.level = TankLevel(simulate)
         self.probes = ProbePair(simulate)
-        self.board = BoardSensors(link, simulate)
+        self.current = CurrentSense(simulate)
+        self.flow_fan = FlowAndFan(simulate)
         self.supply = Supply(simulate)
 
     def sweep(self) -> List[Reading]:
@@ -868,14 +1228,18 @@ class SensorSet:
         self.probes.water_temp_c = next(
             (r.value for r in temp if r.sensor == "water/temp" and r.valid), None)
         out.extend(self.air.read())
+        out.extend(self.co2.read())
+        out.extend(self.light.read())
         out.extend(self.level.read())
         out.extend(self.probes.read())
-        out.extend(self.board.read())
+        out.extend(self.current.read())
+        out.extend(self.flow_fan.read())
         out.extend(self.supply.read())
         return out
 
     def close(self) -> None:
-        for s in (self.water_temp, self.air, self.level, self.probes, self.board, self.supply):
+        for s in (self.water_temp, self.air, self.co2, self.light, self.level,
+                  self.probes, self.current, self.flow_fan, self.supply):
             try:
                 s.close()
             except Exception as exc:
@@ -883,21 +1247,30 @@ class SensorSet:
 
 
 class Outputs:
-    """Every output is on the pumps board; the link carries the setpoints."""
+    """Every PWM output rides the PCA9685 now; nothing is on a second board."""
 
-    def __init__(self, simulate: bool, probes: ProbePair, link) -> None:
-        from link import LinkChannel
-        self.link = link
-        self.lights = Lights(LinkChannel(link, "led", 0, "lights"))
-        pumps = {MICRO: LinkChannel(link, "pump", 0, "micro"),
-                 GRO: LinkChannel(link, "pump", 1, "gro"),
-                 PH_DOWN: LinkChannel(link, "pump", 2, "ph_down")}
+    def __init__(self, pca: Pca9685, simulate: bool, probes: ProbePair) -> None:
+        self.pca = pca
+        self.lights = Lights(Channel(PCA_CH_LED, "lights", pca=pca))
+        self.fan = Channel(PCA_CH_FAN, "fan", pca=pca)
+        self.fan.set(FAN_DUTY)
+        pumps = {MICRO: Channel(PCA_CH_PUMP1, "micro", pca=pca),
+                 GRO: Channel(PCA_CH_PUMP2, "gro", pca=pca),
+                 PH_DOWN: Channel(PCA_CH_PUMP3, "ph_down", pca=pca)}
         self.doser = Doser(pumps, simulate, on_dose=probes.simulate_dose if simulate else None)
-        link.set_fan(FAN_DUTY)
+        self.stat_rail = Channel(PCA_CH_STAT_RAIL, "stat_rail", pca=pca)
+        self.stat_pump = Channel(PCA_CH_STAT_PUMP, "stat_pump", pca=pca)
+
+    def update_status_leds(self, rail_ok: bool) -> None:
+        self.stat_rail.set(1.0 if rail_ok else 0.0)
+        self.stat_pump.set(1.0 if self.doser.state == FAULT else 0.0)
 
     def close(self) -> None:
         self.lights.close()
+        self.fan.close()
         self.doser.close()
+        self.stat_rail.close()
+        self.stat_pump.close()
 
 
 def value_of(readings: List[Reading], sensor: str) -> Optional[float]:
@@ -949,18 +1322,23 @@ def main() -> int:
     signal.signal(signal.SIGINT, _stop)
     signal.signal(signal.SIGTERM, _stop)
 
+    watchdog = None
     try:
-        from link import Link
-        link = Link(args.simulate)
-        sensors = SensorSet(args.simulate, link)
-        outputs = None if args.no_outputs else Outputs(args.simulate, sensors.probes, link)
+        watchdog = Watchdog(args.simulate)
+        sensors = SensorSet(args.simulate)
+        outputs = None
+        if not args.no_outputs:
+            pca = Pca9685(args.simulate)
+            outputs = Outputs(pca, args.simulate, sensors.probes)
     except ImportError as exc:
         print(f"missing a hardware library: {exc}", file=sys.stderr)
         print("on a dev machine use --simulate", file=sys.stderr)
         return 1
     except OSError as exc:
-        print(f"pumps board link: {exc}", file=sys.stderr)
+        print(f"hardware init failed: {exc}", file=sys.stderr)
         return 1
+
+    watchdog.start()
 
     logger = CsvLogger(args.dir)
     pub = Publisher(args.broker)
@@ -983,8 +1361,15 @@ def main() -> int:
             pub.publish(readings)
             pub.heartbeat()
 
+            rail_ok = value_of(readings, "power/volts") is not None
             line = ""
             if outputs is not None:
+                # arm only once a sweep has actually produced a rail reading --
+                # never dose/light on the very first, possibly-still-settling pass
+                if rail_ok:
+                    watchdog.arm()
+                else:
+                    watchdog.disarm()
                 apply_commands(pub, outputs)
                 duty = outputs.lights.update(dt.datetime.now())
                 pub.publish_state("lights", outputs.lights.state())
@@ -995,12 +1380,15 @@ def main() -> int:
                 state = outputs.doser.state_dict()
                 state.update(result)
                 pub.publish_state("dosing", state)
+                outputs.update_status_leds(rail_ok)
                 line = f"   lights {duty:.0%}   dosing {result['state']}: {result['note']}"
-            pub.publish_state("board", link.state())
+            pub.publish_state("board", {"armed": watchdog.armed})
 
+            readings.append(checked("board/armed", 1.0 if watchdog.armed else 0.0, ""))
             bad = sum(1 for r in readings if not r.valid)
             print(f"\n[{time.strftime('%H:%M:%S')}] {len(readings)} readings"
-                  f"{f', {bad} INVALID' if bad else ''}  -> csv, mqtt {pub.status}")
+                  f"{f', {bad} INVALID' if bad else ''}  -> csv, mqtt {pub.status}, "
+                  f"watchdog {'armed' if watchdog.armed else 'DISARMED'}")
             for r in readings:
                 print(f"   {r}")
             if line:
@@ -1012,10 +1400,11 @@ def main() -> int:
             while _running and time.time() < deadline:
                 time.sleep(min(0.5, max(0.0, deadline - time.time())))
     finally:
+        watchdog.disarm()
         if outputs is not None:
             outputs.close()
         sensors.close()
-        link.close()
+        watchdog.close()
         pub.close()
     return 0
 

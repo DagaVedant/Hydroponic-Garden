@@ -3,6 +3,7 @@
 # and web.py run without the hardware libraries, and lgpio does not build off a pi
 flask>=3.0             # web.py, the dashboard
 paho-mqtt>=2.0         # everything talks to the local broker
-smbus2>=0.4.3          # i2c, for the ads1115 and the sht31
-gpiozero>=2.0          # the probe power switches and the mains sense pin
+smbus2>=0.4.3          # i2c, for the ads1115s, sht31, scd40, veml7700, ina226
+gpiozero>=2.0          # probe power switches, the watchdog/arm lines, pulse counters
 lgpio>=0.2.2.0         # gpiozero backend, kernel timed pwm
+pyserial>=3.5          # the jsn-sr04t, read directly in its own uart mode now

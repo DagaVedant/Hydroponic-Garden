@@ -49,9 +49,9 @@ Pulled directly from the schematic's component labels. Six devices on the bus:
 | `0x40` | INA226 | 12V rail voltage + current monitor (default address, unchanged) |
 | `0x41` | PCA9685 | 16-channel PWM driver (A0 strapped to +3V3 specifically to avoid colliding with the INA226 default of 0x40) |
 | `0x44` | SHT31 | air temperature + humidity |
-| `0x48` | ADS1115 #1 | pH (single-ended) + EC (single-ended) + pump 3 current (differential pair) |
-| `0x49` | ADS1115 #2 | pump 1 current + pump 2 current (two differential pairs) |
-| `0x4A` | ADS1115 #3 | LED strip current (one differential pair; other two pins likely unused) |
+| `0x48` | ADS1115 #1 | pH (single-ended) + EC (single-ended) + pump 3 current (single-ended across a low-side shunt) |
+| `0x49` | ADS1115 #2 | pump 1 current + pump 2 current (both single-ended across low-side shunts) |
+| `0x4A` | ADS1115 #3 | LED strip current (single-ended across a low-side shunt; the other 2 analog pins are unused, one of them genuinely floating -- see section 5b) |
 | (default) | SCD40 | CO2 + temp + humidity -- standard SCD40 address, not re-strapped |
 | (default) | VEML7700 | ambient light -- standard address, not re-strapped |
 | (default) | DS3231 | RTC, with its own onboard battery holder |
@@ -61,10 +61,11 @@ schematic has **three**, at 0x48/0x49/0x4A, as listed above. The BOM.csv line fo
 been corrected (3-pack, all 3 used, already a zero-waste fit) -- if you're working from an older
 copy of this repo or from a summary predating this file, distrust the "2 used" number.
 
-**why three ADS1115s and not one with a mux:** each chip only has 4 analog inputs (2 single-ended
-+ 1 differential, or up to 4 single-ended). pH, EC, and 4 independent current-sense differential
-reads (3 pumps + LED) don't fit in one chip's channel budget, so the design spreads them across
-three chips at three addresses instead of multiplexing.
+**why three ADS1115s and not one with a mux:** each chip only has 4 analog inputs. pH, EC, and 4
+independent current-sense reads (3 pumps + LED, each single-ended across its own low-side shunt
+-- see section 5b, not differential as an earlier draft of this doc said) don't fit in one
+chip's channel budget, so the design spreads them across three chips at three addresses instead
+of multiplexing.
 
 ## 4. PCA9685 channel map -- confirmed
 
@@ -82,23 +83,26 @@ ch7-15 are unused/spare on this board.
 
 ## 5. non-I2C signals (GPIO / 1-Wire / UART)
 
-these exist and are wired, but **exact BCM pin numbers are not labeled as plain text in the
-schematic** -- they need to be pulled from the actual netlist/PCB (`hat.kicad_pcb`) or from a
-freshly-exported schematic PDF before writing driver code. don't guess pin numbers; verify them
-against the board.
+**exact BCM pin numbers are now confirmed -- see section 5a**, extracted and verified directly
+against `hat.kicad_pcb`'s header footprint. what follows is the functional description; cross
+reference 5a for the actual pin number on each.
 
-confirmed to exist, pin numbers TBD:
-- **DS18B20** (water temp), 1-Wire, with a 4.7k pull-up resistor on the HAT itself
-- **JSN-SR04T** (tank level), wired in **UART/serial mode** (not the trigger/echo GPIO mode) --
-  confirmed by the schematic's own label ("JSN-SR04T (uart mode)")
-- **flow sensor** input, cleaned up by two gates of a CD40106 hex Schmitt inverter wired as a
-  non-inverting buffer, clamped by a 1N4148 diode. the flow sensor module itself is **not yet in
-  the BOM** -- the input circuitry is populated and ready, but nothing is plugged into it yet
-- **probe power switching** (the pH/EC cross-talk fix, see section 6) -- two GPIO-driven low-side
-  N-FETs (2N7000) each gating a high-side P-FET (BS250) that switches probe VCC
-- **watchdog toggle line** -- a GPIO the control process must toggle at a steady rate (see
-  section 7)
-- **spare GPIO** -- explicitly broken out and unused, per the schematic label "spare gpio"
+- **DS18B20** (water temp), 1-Wire on BCM4, with a 4.7k pull-up resistor (R10, verified) on the
+  HAT itself between `+3V3` and the 1-Wire net
+- **JSN-SR04T** (tank level), wired in **UART/serial mode** on BCM14/15 (not the trigger/echo
+  GPIO mode) -- confirmed by the schematic's own label ("JSN-SR04T (uart mode)")
+- **flow sensor** input on BCM17, cleaned up by two gates of a CD40106 hex Schmitt inverter
+  (U19) wired as a non-inverting buffer, clamped by a 1N4148 diode. the flow sensor module
+  itself is **not yet in the BOM** -- the input circuitry is populated and ready, but nothing is
+  plugged into it yet
+- **probe power switching** (the pH/EC cross-talk fix, see section 6) on BCM23 (`/PH_EN`) and
+  BCM24 (`/EC_EN`) -- two GPIO-driven low-side N-FETs (2N7000) each gating a high-side P-FET
+  (BS250) that switches probe VCC
+- **watchdog toggle line** on BCM18 (`/HB_ALIVE`) -- toggle at a steady rate (see section 7)
+- **arm line** on BCM25 (`/ARM`) -- the software's own deliberate disarm signal, ANDed with the
+  watchdog output; see the note under section 5a
+- **spare GPIO** on BCM12/13 -- explicitly broken out and unused, per the schematic label "spare
+  gpio"
 
 ## 5a. verified pin map -- pulled from hat.kicad_pcb (J_PI, the 2x20 header)
 
@@ -132,9 +136,11 @@ high. dropping BCM25 low is the software's own clean, deliberate way to disarm t
 without waiting for the watchdog to time out -- use it on shutdown, on any fault, and as the
 default state at boot until the control loop is healthy.
 
-`+3V3_PI` (header pins 1/17) feeds the I2C pull-ups R4/R5 (10k) and the unpopulated EEPROM's
-VDD. so it *is* a supply, just a tiny one -- the earlier "confirm its actual use" note is
-resolved.
+`+3V3_PI` (header pins 1/17) feeds R4/R5 (10k), which are pull-ups on `/EEPROM_SDA` and
+`/EEPROM_SCL` specifically -- the HAT ID EEPROM's own bus per the Pi HAT spec, not the main
+`/SDA`/`/SCL` bus everything else in section 3 sits on -- plus the unpopulated EEPROM's VDD. so
+it *is* a supply, just a tiny one feeding an unpopulated part's bus, not general-purpose I2C
+pull-up power. the earlier "confirm its actual use" note is resolved.
 
 ## 5b. ADS1115 channels and shunts -- verified
 
@@ -151,7 +157,10 @@ pad 7 = VDD, pad 8 = SDA, pad 9 = SCL. address comes from where ADDR is strapped
 |---|---|---|---|---|
 | 0x48 | `/PH_S` (pH board analog out) | `/EC_S` (EC board analog out) | `/PUMP3_S` | GND |
 | 0x49 | `/PUMP1_S` | GND | `/PUMP2_S` | GND |
-| 0x4A | `/LED_S` | GND | GND | GND |
+| 0x4A | `/LED_S` | GND | **not connected (floating)** | GND |
+
+**correction:** 0x4A's A2 pin is genuinely unconnected on the PCB, not tied to GND. only read A0
+on this chip -- don't poll A1-A3 expecting clean zeros, A2 in particular can read anything.
 
 | sense net | shunt | value | full-scale hint |
 |---|---|---|---|
@@ -196,6 +205,18 @@ reliable, most-frequently-executed pieces of code -- ideally from something that
 even if higher-level logic (dosing decisions, web server, etc.) throws an exception. don't let a
 try/except around business logic accidentally also swallow the watchdog toggle.
 
+**timeout, measured off the real board:** R1 (470k) and C2 (10uF) form the CD4538's timing
+network on `MONO_RC`/`MONO_CEXT`. using the datasheet's `t ~= 0.7 * R * C`, that's **~3.3
+seconds**. `control.py`'s `Watchdog` class toggles `/HB_ALIVE` every 1 second from a dedicated
+background thread -- comfortably inside the timeout, and deliberately isolated from sensor I/O
+so a slow or hung I2C read can't starve it. treat the 0.7RC figure as a formula estimate, not a
+bench measurement -- worth confirming on a scope once real hardware exists.
+
+**`/ARM` (BCM25) is the software's own kill switch, separate from the hardware timeout.** the
+Watchdog class holds it low until the first sweep produces a real rail reading, and drops it
+again on any clean shutdown or on `power/volts` going missing -- so a graceful stop and a silent
+crash both end up disarmed, just by two different paths.
+
 ## 8. actuators and their drive path
 
 - **3x peristaltic dosing pumps** -- PCA9685 ch0/1/2 -> gate drivers (IRLZ44N logic-level
@@ -238,20 +259,45 @@ don't reintroduce these while adapting the old `control.py`/`link.py` shape:
 - **no isolated RS-485.** it had no defined second device to talk to even in the two-board
   design; there's nothing on this board for it to connect to.
 
-## 11. software task, concretely
+## 11. software task -- status
 
-- rewrite the hardware-access layer of `control.py` for: 3x ADS1115 (0x48/0x49/0x4A) via
-  differential + single-ended reads, PCA9685 PWM output (7 channels used, see section 4), SHT31,
-  SCD40, VEML7700, INA226, DS3231, DS18B20 (1-Wire), JSN-SR04T (UART mode, not GPIO
-  trigger/echo), a flow-sensor GPIO interrupt (once the sensor itself is sourced), the two
-  probe-power-switch GPIOs, and the watchdog toggle GPIO.
-- delete `link.py` and `firmware/` entirely.
+**done**, as of the `control.py` rewrite that accompanies this revision of the doc:
+- all 3 ADS1115s (0x48/0x49/0x4A), each a single-ended read against GND per section 5b, covering
+  pH, EC, and all 4 current-sense shunts
+- PCA9685 PWM output, implemented directly over smbus2 (no vendor library) -- all 7 channels
+  from section 4, including the two status LEDs
+- SHT31, SCD40 (co2 only -- SHT31 already covers air temp/humidity and settles faster), VEML7700,
+  INA226, DS18B20 (1-Wire, unchanged from the old code), JSN-SR04T read directly over
+  `/dev/serial0` in its native 4-byte framed protocol (no more relaying through a pumps board)
+- the flow-sensor GPIO interrupt (BCM17) and the fan tachometer (BCM27, a real find from the
+  verified pin map that wasn't in this doc's first draft) -- both wired up as a shared
+  `PulseCounter`, the flow sensor will just read "no pulses" gracefully until one is sourced
+- the watchdog toggle (BCM18) and `/ARM` (BCM25), as a dedicated `Watchdog` class with its own
+  background thread -- see the updated section 7 for the measured timing
+- `link.py` and `firmware/` are deleted (already done in a prior pass, ahead of this rewrite)
+- mains-presence sensing and the battery-voltage read are both **removed** from `control.py` --
+  they referenced hardware (a mains-sense divider, a UPS battery divider) that no longer exists
+  on this board, and the old code's `ADS_CH_BATTERY = 2` would have silently misread pump 3's
+  current sense as a battery voltage if left in place. see section 10.
+- the test suite (`pi/tests/`) passes unchanged against the rewrite -- it only exercises the
+  hardware-independent logic (`Doser`, `Lights`, the crc/ph/tds math, `CsvLogger`), which didn't
+  need to change.
+
+**not done / explicitly out of scope for this pass:**
 - `config.py`'s MEASURE-tagged constants (probe settling time, per-pump flow rate, ph/ec
   change-per-mL, level sensor height) still need real values from a physical build -- none of
-  this can be filled in from the schematic alone.
-- `store.py`, `web.py`, `dashboard.html` are broker/storage/UI layers relatively decoupled from
-  the hardware change -- lower priority to touch, but check for any assumption that a second
-  board/process exists.
+  this can be filled in from the schematic alone, simulate mode uses the existing placeholders
+- the ADC gain range chosen for the 4 current-sense channels (+-0.256V) is a reasoned estimate
+  from the shunt values and expected currents, not bench-verified -- confirm actual signal swing
+  once hardware exists, before trusting the current readings at face value
+- DS3231 (RTC) is on the I2C bus (section 3) but **not read anywhere in `control.py`** -- the Pi's
+  own clock is used as-is. only matters if the Pi can't reach NTP reliably; add if that turns out
+  to be a problem
+- the buzzer and OLED footprints are unpopulated (section 9) and have no corresponding code --
+  nothing to drive
+- `store.py`, `web.py`, `dashboard.html` were only touched to strip dead pumps-board references,
+  not otherwise updated for the new sensor set (e.g. `air/co2`, `air/light`, `fan/rpm` are new
+  topics the dashboard doesn't know how to render yet)
 
 ## 12. sources of truth, in order of trust
 

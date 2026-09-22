@@ -25,7 +25,9 @@ python web.py --test-alert          one ntfy notification
 on a laptop `pip install flask paho-mqtt` is enough. on the pi:
 
 ```
-sudo raspi-config                   enable i2c and 1-wire
+sudo raspi-config                   enable i2c, 1-wire, and the serial port hardware
+                                     (disable the serial login shell -- the jsn-sr04t owns
+                                     /dev/serial0 now, nothing else can be on that pin)
 sudo apt install mosquitto python3-venv
 sudo usermod -aG gpio,i2c,dialout $USER
 python3 -m venv .venv && .venv/bin/pip install -r requirements.txt
