@@ -174,14 +174,14 @@ button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
 <script>
 const $ = (id) => document.getElementById(id);
-const ORDER = ['water/level', 'water/ph', 'water/ec', 'water/temp', 'air/temp', 'air/humidity'];
-const NAME = { 'water/level': 'Water level', 'water/ph': 'pH', 'water/ec': 'Conductivity', 'water/temp': 'Water temp', 'air/temp': 'Air temp', 'air/humidity': 'Humidity' };
+const ORDER = ['water/level', 'water/ph', 'water/ec', 'water/temp', 'air/temp', 'air/humidity', 'air/co2'];
+const NAME = { 'water/level': 'Water level', 'water/ph': 'pH', 'water/ec': 'Conductivity', 'water/temp': 'Water temp', 'air/temp': 'Air temp', 'air/humidity': 'Humidity', 'air/co2': 'CO2' };
 let refresh = () => {};
 
 function fmt(v, k) {
   if (v == null) return '-';
   if (k === 'water/ec') return Math.round(v).toLocaleString();
-  if (k === 'air/humidity') return Math.round(v).toString();
+  if (k === 'air/humidity' || k === 'air/co2') return Math.round(v).toString();
   return (+v).toFixed(2).replace(/\.?0+$/, '');
 }
 function ago(s) {

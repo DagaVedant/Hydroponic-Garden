@@ -95,6 +95,7 @@ BANDS = {
     "water/temp":   (18.0, 24.0),     # C
     "air/temp":     (18.0, 28.0),
     "air/humidity": (40.0, 70.0),     # %RH
+    "air/co2":      (400.0, 1500.0),  # ppm. no enrichment -- flags a stuffy room, not a plant target
 }
 
 # ---------------------------------------------------------------- alerts

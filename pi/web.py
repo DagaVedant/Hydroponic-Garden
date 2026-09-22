@@ -37,6 +37,7 @@ SENSORS = [
     ("water/temp",   "water temp",  "C",     *BANDS["water/temp"]),
     ("air/temp",     "air temp",    "C",     *BANDS["air/temp"]),
     ("air/humidity", "humidity",    "%RH",   *BANDS["air/humidity"]),
+    ("air/co2",      "CO2",         "ppm",   *BANDS["air/co2"]),
 ]
 LABELS = {k: (label, unit, lo, hi) for k, label, unit, lo, hi in SENSORS}
 TANK_FULL_L = round(TankLevel.depth_to_litres(MAX_FILL_DEPTH_MM), 1)
@@ -259,13 +260,13 @@ def seed_demo(path: str) -> int:
     start, step = now - 86400, 300
 
     walk = {"water/level": TANK_FULL_L - 0.3, "water/ph": 5.72, "water/ec": 1255.0,
-            "water/temp": 20.6, "air/temp": 21.6, "air/humidity": 58.0}
+            "water/temp": 20.6, "air/temp": 21.6, "air/humidity": 58.0, "air/co2": 650.0}
     drift = {"water/level": -0.006, "water/ph": 0.0011, "water/ec": -0.42,
-             "water/temp": 0.0, "air/temp": 0.0, "air/humidity": 0.0}
+             "water/temp": 0.0, "air/temp": 0.0, "air/humidity": 0.0, "air/co2": 0.0}
     jitter = {"water/level": 0.012, "water/ph": 0.008, "water/ec": 2.5,
-              "water/temp": 0.05, "air/temp": 0.10, "air/humidity": 0.45}
+              "water/temp": 0.05, "air/temp": 0.10, "air/humidity": 0.45, "air/co2": 15.0}
     units = {"water/level": "L", "water/ph": "pH", "water/ec": "uS/cm",
-             "water/temp": "C", "air/temp": "C", "air/humidity": "%RH"}
+             "water/temp": "C", "air/temp": "C", "air/humidity": "%RH", "air/co2": "ppm"}
 
     def lit_at(ts: int) -> bool:
         t = time.localtime(ts)
@@ -316,13 +317,13 @@ def seed_demo(path: str) -> int:
 
 LABEL = {k: v[0] for k, v in LABELS.items()}
 UNIT = {"water/level": " L", "water/ph": "", "water/ec": " uS/cm",
-        "water/temp": " C", "air/temp": " C", "air/humidity": "%"}
-URGENT = ("level_rise", "dosing_fault", "offline", "level_low")
+        "water/temp": " C", "air/temp": " C", "air/humidity": "%", "air/co2": " ppm"}
+URGENT = ("level_rise", "dosing_fault", "offline", "level_low", "disarmed")
 EVENTS = ("level_rise",)
 
 
 def _fmt(sensor: str, value: float) -> str:
-    if sensor == "water/ec":
+    if sensor in ("water/ec", "air/co2"):
         return f"{value:.0f}{UNIT[sensor]}"
     return f"{value:.2f}{UNIT[sensor]}".replace(".00", "")
 
@@ -372,6 +373,9 @@ class Rules:
         if self.dosing_fault:
             c["dosing_fault"] = (f"dosing stopped: {self.dosing_fault}. clear the fault on the "
                                  f"dashboard once fixed")
+        armed = self.last.get("board/armed")
+        if armed and armed[1] < 0.5:
+            c["disarmed"] = "watchdog disarmed: pumps and lights are locked out until it re-arms"
         lvl = self.last.get("water/level")
         if lvl and lvl[1] < ALERT_LEVEL_LOW_L:
             c["level_low"] = f"tank is down to {lvl[1]:.1f} L, top it up"

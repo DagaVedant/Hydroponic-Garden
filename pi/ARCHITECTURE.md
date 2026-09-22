@@ -295,9 +295,12 @@ don't reintroduce these while adapting the old `control.py`/`link.py` shape:
   to be a problem
 - the buzzer and OLED footprints are unpopulated (section 9) and have no corresponding code --
   nothing to drive
-- `store.py`, `web.py`, `dashboard.html` were only touched to strip dead pumps-board references,
-  not otherwise updated for the new sensor set (e.g. `air/co2`, `air/light`, `fan/rpm` are new
-  topics the dashboard doesn't know how to render yet)
+- `store.py` needed no changes -- it subscribes to every `sensor/#` topic generically, so the new
+  ones land in sqlite automatically. `web.py`/`dashboard.html` got a headline tile for `air/co2`
+  (a real plant-health signal, banded in `config.py` like the other six) and a `board/armed`-driven
+  "watchdog disarmed" alert in `Rules`, matching the existing hand-written offline/dosing-fault
+  conditions. `air/light` and `fan/rpm` stay diagnostic-only -- stored and queryable, no dashboard
+  tile -- the same treatment the old code already gave pump currents and rail voltage.
 
 ## 12. sources of truth, in order of trust
 
