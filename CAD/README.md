@@ -20,6 +20,13 @@ placed. pictures are in `../images`.
 
 one tower is 4 modules, 4 grates, 4 spreaders, and one of everything else.
 
+`HAT.step` is the electronics: the populated hat board, exported straight from
+`../PCB/kicad/hat/hat.kicad_pcb` with `kicad-cli pcb export step` (every
+through-hole part with a 3D model attached, board body included). it isn't
+placed in `Tower Assembly` yet -- the hat mounts to the pi 5, which lives
+outside the tower/tank stack entirely, so it has no fixed position in that
+model.
+
 ## how the bottom goes together
 
 * the tank ring snaps over the bucket rim on twelve fingers and carries an

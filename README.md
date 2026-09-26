@@ -20,7 +20,9 @@ piping and valves, im using just angles, geometry, and shapes to distribute the 
 | ![tank cap](images/tank-cap.png) | ![tank cap and drain base](images/tank-cap-and-base.png) |
 | **tank lid plate**, the screw-in cap that carries the pipe, level sensor pod and probe cables | **cap + drain base**, the base twist-locks onto the cap's hooks, this is what actually holds the tower down |
 
-[![View PCB on KiCanvas](https://hack.club/pcb-badge)](https://kicanvas.org/?repo=https://github.com/DagaVedant/Hydroponic-Garden/tree/main/PCB)
+![the hat, 3D render straight off the routed board file](images/pcb-board.png)
+
+[![View PCB on KiCanvas](https://hack.club/pcb-badge)](https://kicanvas.org/?repo=https://github.com/DagaVedant/Hydroponic-Garden/tree/main/PCB/kicad/hat)
 
 the hat is a single 4-layer board, routed in KiCad, 0 DRC errors -- click the badge above for a live,
 interactive view straight off this repo. see [how it's wired](#how-its-wired) below for the block
