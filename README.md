@@ -13,52 +13,15 @@ piping and valves, im using just angles, geometry, and shapes to distribute the 
 
 ## gallery
 
-|                                              |                                              |
-|:--------------------------------------------:|:--------------------------------------------:|
-| ![full tower assembly](images/tower-assembly.png) | ![tank ring on the bucket](images/tank-ring.png) |
-| **full tower assembly**, onshape render, 16 parts stacked | **tank ring**, snaps over the bucket rim, carries the internal thread the cap screws into |
-| ![tank cap](images/tank-cap.png) | ![tank cap and drain base](images/tank-cap-and-base.png) |
-| **tank lid plate**, the screw-in cap that carries the pipe, level sensor pod and probe cables | **cap + drain base**, the base twist-locks onto the cap's hooks, this is what actually holds the tower down |
+![full tower assembly](images/tower-assembly.png)
 
 ![the hat, 3D render straight off the routed board file](images/pcb-board.png)
 
 [![View PCB on KiCanvas](https://hack.club/pcb-badge)](https://kicanvas.org/?repo=https://github.com/DagaVedant/Hydroponic-Garden/tree/main/PCB/kicad/hat)
 
-the hat is a single 4-layer board, routed in KiCad, 0 DRC errors -- click the badge above for a live,
-interactive view straight off this repo. see [how it's wired](#how-its-wired) below for the block
-diagram, since every non-PCB connection in this build (the pump's GFCI plug, the 12 V PSU feed) is
-plain point to point wiring, not a separate loom that needs its own diagram.
+the hat is a single 4-layer board, about a foot big, i think i dont remember....im still making it smaller but its not done fully. you can check it out in the link here [how it's wired](#how-its-wired)
 
-## how it works
-
-the pump only does one job: get water to the top. after that it's all shape.
-
-```
-   pump ──► pipe ──► tower lid bowl ──► 4 metering holes
-                                          │
-            ┌─────────────────────────────▼─────────────┐
-            │  spreader ──► 4 spouts ──► walls          │  repeats,
-            │  roots ──► grate ──► sloped floor         │  identically,
-            │  gutter ──► 4 drip holes ────────────────►│  every module
-            └───────────────────────────────────────────┘
-                              ▼
-                         back to the tank
-```
-
-1. the pipe feeds a shallow bowl in the **tower lid**, which meters water out through 4 holes --
-   the same trick every module's own gutter uses below it
-2. the metered flow lands on a **spreader**, a cone with four spouts aimed at the four plant sockets
-3. water runs down the walls, past the hanging roots, through a **grate**
-4. the floor is **two 45° cones meeting at a ring gutter**. everything collects there and drops
-   through 4 holes, one under each socket, onto the next module's spreader
-5. because every module re-collects and re-distributes, **module 4 gets watered like module 1**
-
-## how it's wired
-
-one board, one computer -- a raspberry pi 5 and a custom hat, no second microcontroller. an earlier
-two-board revision (pi 4b hat + pico pumps board over an isolated link) is fully routed and archived
-at [twoboard_vertical_garden/](twoboard_vertical_garden/); see [spec.md](spec.md) for why this one
-replaced it.
+## non-pcb wiring
 
 ```
 120 V AC wall
@@ -72,47 +35,6 @@ replaced it.
 
 the hat regulates its own 12 V-to-5 V and 5 V-to-3.3 V for its own load. none of that comes from
 the Pi's 5 V/3.3 V pins, and the hat never feeds the Pi's rail either.
-
-```
-raspberry pi 5
-  └── 40 pin header, tall standoffs to clear the active cooler and side ports
-        └── hat   (the custom pcb)
-              │
-              ├── i2c ────┬── ads1115 #1 ──┬── ph board ◄── ph probe
-              │           │                └── ec board ◄── ec probe
-              │           ├── ads1115 #2 ──── 3x pump current + LED current (differential shunts)
-              │           ├── sht31 .......... air temp + humidity
-              │           ├── scd40 .......... co2
-              │           ├── ina226 ......... 12V rail voltage + current
-              │           ├── pca9685 ........ 3 pumps, LED, fan -- all PWM
-              │           └── oled ........... local status
-              │
-              ├── 1-wire ──── ds18b20 ............ water temp, 4.7k pull-up
-              ├── uart ────── jsn-sr04t .......... tank level
-              ├── gpio (int)── flow sensor ........ pulse output
-              ├── gpio x2 ──── mosfets ............ ph and ec probe power
-              ├── gpio ─────── buzzer
-              └── gpio (toggle) ── watchdog monostable ──► pump/LED enable line
-                                   hung control process ⇒ line drops on its own
-```
-
-the ads1115 is a hard dependency. the pi has no analog input, so ph, ec, and both current reads reach
-it only through those two chips. the two gpio switching probe power are the cross-talk fix: ph on, ec
-off, settle, sample. then swap. then both off.
-
-## specs
-
-| | |
-|---|---|
-| plants | 16, four modules of four |
-| module | ⌀190 × 200mm, pla/petg. prints turned 45° on the bed, 214 × 214 × 202 |
-| tower | ~800mm, ~1.35m with the tank |
-| tank | 5 gal, 18.9 L |
-| pump | 550 gph, 2.2m lift, throttled to 1-3.5 L/min with a bypass |
-| sensors | water level, water temp, air temp + humidity, co2, ph, ec, water flow, pump/LED current, 12V rail |
-| dosing | 3 peristaltic pumps, nutrient a/b and ph down |
-| control | raspberry pi 5 + custom hat → mqtt → sqlite + dashboard |
-| scaling | `MODULE_COUNT` is one number. a taller tower is a parameter change, not a redesign |
 
 ## repo
 
@@ -128,7 +50,7 @@ off, settle, sample. then swap. then both off.
 
 ## bill of materials
 
-full sourcing notes and links are in [BOM.csv](BOM.csv); this is the same data as a table.
+just copied from [BOM.csv](BOM.csv)
 
 | Item | Description | Qty | Unit Price (USD) | Total (USD) | Supplier | Status |
 |---|---|---|---|---|---|---|
