@@ -1,5 +1,7 @@
 # vertical hydroponic garden
 
+[![View PCB on KiCanvas](https://hack.club/pcb-badge)](https://kicanvas.org/?repo=https://github.com/DagaVedant/Hydroponic-Garden/tree/main/PCB/kicad/hat)
+
 a modular 3d printed hydroponic tower, with one pump, one pipe, and no pumps per level. the shape of the part is the entire system
 
 **[onshape](https://cad.onshape.com/documents/e7b652182e17b56d968bf971/w/74d572342f8ebf967bd0880e/e/9edb8eefc30c47e9fd32fa36?renderMode=0&uiState=6aa58dd8d5139ca4163fd859)**
@@ -15,8 +17,6 @@ i wanted a hydroponic tower thats one efficent, two scalable, and doesnt need to
 ![full tower assembly](images/tower-assembly.png)
 
 ![pcb](images/pcb-board.png)
-
-[![View PCB on KiCanvas](https://hack.club/pcb-badge)](https://kicanvas.org/?repo=https://github.com/DagaVedant/Hydroponic-Garden/tree/main/PCB/kicad/hat)
 
 the hat is a single 4-layer board, 217 x 226mm (down from an original 330 x 283mm). you can check it out in the link here [how it's wired](#how-its-wired)
 

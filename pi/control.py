@@ -30,8 +30,8 @@ from config import (CSV_DIR, DOSE_EC_DEADBAND, FAN_DUTY, DOSE_EC_TARGET, DOSE_FL
                     TDS_TO_EC)
 
 # ---------------------------------------------------------------------------
-# hardware map. see ARCHITECTURE.md for how every one of these was verified
-# against hat.kicad_pcb -- this is not reasoned from memory, it's transcribed.
+# hardware map, verified against hat.kicad_pcb -- this is not reasoned from
+# memory, it's transcribed.
 # ---------------------------------------------------------------------------
 
 I2C_BUS = 1
@@ -465,8 +465,8 @@ class PulseCounter:
 
 class FlowAndFan(Sensor):
     """Flow sensor (BCM17) and fan tach (BCM27). The flow sensor module itself
-    isn't sourced yet -- see ARCHITECTURE.md section 5 -- so this will report
-    'no pulses' until one is plugged in. That's expected, not a fault."""
+    isn't sourced yet, so this will report 'no pulses' until one is plugged
+    in. That's expected, not a fault."""
     name = "flow_fan"
     FLOW_HZ_PER_LPM = 7.5  # carried over from the old design's flow sensor spec;
                            # re-verify once an actual sensor is sourced and dated
@@ -497,8 +497,7 @@ class FlowAndFan(Sensor):
 
 class Supply(Sensor):
     """The HAT's own 12V input: the INA226 at 0x40. no mains-sense and no
-    battery in this design -- see ARCHITECTURE.md section 10, both were cut with
-    the UPS."""
+    battery in this design -- both were cut with the UPS."""
     name = "power"
 
     def __init__(self, simulate: bool = False) -> None:
@@ -679,8 +678,7 @@ class CurrentSense(Sensor):
 
 # ---------------------------------------------------------------------------
 # PCA9685 -- every PWM output (pumps, LED, fan, the two status LEDs) goes
-# through this, not direct Pi GPIO PWM. see ARCHITECTURE.md section 4 for the
-# channel map.
+# through this, not direct Pi GPIO PWM.
 # ---------------------------------------------------------------------------
 
 _PCA_MODE1, _PCA_PRESCALE, _PCA_LED0_ON_L = 0x00, 0xFE, 0x06
@@ -729,7 +727,7 @@ class Pca9685:
             self._bus.close()
 
 
-# PCA9685 channel assignment, verified against the schematic (ARCHITECTURE.md section 4)
+# PCA9685 channel assignment, verified against the schematic
 PCA_CH_PUMP1, PCA_CH_PUMP2, PCA_CH_PUMP3 = 0, 1, 2
 PCA_CH_LED, PCA_CH_FAN = 3, 4
 PCA_CH_STAT_RAIL, PCA_CH_STAT_PUMP = 5, 6
@@ -982,7 +980,7 @@ class Watchdog:
     owns /ARM (BCM25). Both must be held for the CD4081 AND gate to enable pumps
     and the LED strip -- if this thread dies, the toggle stops, and the CD4538's
     ~3.3s timeout (measured off the real R1/C2) drops the enable line regardless
-    of anything else. See ARCHITECTURE.md section 7.
+    of anything else.
 
     Deliberately simple: no sensor reads, no I2C, nothing that can block or
     raise for reasons unrelated to "is this process still alive." The point of
