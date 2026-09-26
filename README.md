@@ -18,7 +18,7 @@ i wanted a hydroponic tower thats one efficent, two scalable, and doesnt need to
 
 [![View PCB on KiCanvas](https://hack.club/pcb-badge)](https://kicanvas.org/?repo=https://github.com/DagaVedant/Hydroponic-Garden/tree/main/PCB/kicad/hat)
 
-the hat is a single 4-layer board, about a foot big...im still making it smaller but its not done fully. you can check it out in the link here [how it's wired](#how-its-wired)
+the hat is a single 4-layer board, 217 x 226mm (down from an original 330 x 283mm). you can check it out in the link here [how it's wired](#how-its-wired)
 
 ## non-pcb wiring
 
@@ -91,7 +91,7 @@ just copied from [BOM.csv](BOM.csv)
 | [12V peristaltic dosing pump](https://www.amazon.com/INTLLAB-Peristaltic-Liquid-Aquarium-Analytical/dp/B07Q1C3PW2) | intllab 5-100mL/min, 4 per pack. doses nutrient a, nutrient b and ph down without me measuring by hand | 1 | 29.99 | 29.99 | Amazon | TO BUY |
 | [Peristaltic pump tubing 10m](https://www.amazon.com/dp/B0DSQLWKFF/) | rebower silicone 3mm ID x 5mm OD. the pump pack ships none, without it nothing doses | 1 | 9.39 | 9.39 | Amazon | TO BUY |
 | [1L HDPE bottles with caps](https://www.amazon.com/United-Scientific-Supplies-33410-Capacity/dp/B07B32GNQ6) | united scientific wide mouth, 6 per pack. holds each concentrate, the cap carries the intake tube and a vent | 1 | 22.43 | 22.43 | Amazon | TO BUY |
-| [PCB fabrication](https://cart.jlcpcb.com) | jlcpcb, one board (330x283mm), 4 layer, no smd anywhere -- hand-solder rows, >0.2mm holes, no via-in-pad. live jlcpcb quote at qty 5: $105.80, board cost only, excludes shipping | 1 | 105.80 | 105.80 | JLCPCB | TO BUY |
+| [PCB fabrication](https://cart.jlcpcb.com) | jlcpcb, one board (217x226mm), 4 layer, no smd anywhere -- hand-solder rows, >0.2mm holes, no via-in-pad. board shrunk from an original 330x283mm layout; price below is the old quote and needs a fresh check at the new size | 1 | 105.80 | 105.80 | JLCPCB | TO BUY |
 | [SB5H100 schottky diode](https://www.digikey.com/en/products/detail/vishay-general-semiconductor-diodes-division/SB5H100-E3-54/2146221) | do-201ad, 5a/100v. sits on the 12v input in place of the old ideal-diode controller circuit -- just a series diode, accepting the forward-voltage drop for the sake of staying through-hole | 1 | 1.49 | 1.49 | Digikey | TO BUY |
 | [1.5KE15A TVS diode](https://www.digikey.com/en/products/detail/stmicroelectronics/1-5KE15A/497-11371-1-ND/2674521) | do-201ae axial. clamps the 12v input | 1 | 1.10 | 1.10 | Digikey | TO BUY |
 | [5 mOhm 1W axial shunt](https://www.digikey.com/en/products/filter/through-hole-resistors/1w/53) | do0411, hand-solder. the ina226 shunt on the 12v input -- kept on Digikey: the matching Amazon part (Ohmite 15FR005E) runs $40.30 for 10 there, nearly double Digikey's per-unit price, so switching this one loses money | 1 | 2.20 | 2.20 | Digikey | TO BUY |
