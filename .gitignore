@@ -1,4 +1,5 @@
 journal/
+spec.md
 pi/data/
 pi/*.sqlite*
 pi/.venv/
@@ -9,7 +10,6 @@ desktop.ini
 ~$*
 pi/firmware/build/
 
-# kicad editor/session state, not project data
 .history/
 *.kicad_prl
 *.lck
