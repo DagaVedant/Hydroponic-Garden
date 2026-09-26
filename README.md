@@ -6,12 +6,9 @@ a modular 3d printed hydroponic tower, with one pump, one pipe, and no pumps per
 
 ## why
 
-i wanted a hydroponic setup i actually designed, not a kit off amazon. every commercial tower either
-runs tubing to each level or the bottom plants get little to no water. my goal is to make a tower that
-is one, functional, two, modular, and three, actually waters all the layers. instead of buying tons of
-piping and valves, im using just angles, geometry, and shapes to distribute the water evenly.
+i wanted a hydroponic tower thats one efficent, two scalable, and doesnt need tons of tubes to water each layer. this one needs one pump, its modular, and each level gets the same amount of water as all the others
 
-## gallery
+## photos
 
 ![full tower assembly](images/tower-assembly.png)
 
@@ -19,34 +16,30 @@ piping and valves, im using just angles, geometry, and shapes to distribute the 
 
 [![View PCB on KiCanvas](https://hack.club/pcb-badge)](https://kicanvas.org/?repo=https://github.com/DagaVedant/Hydroponic-Garden/tree/main/PCB/kicad/hat)
 
-the hat is a single 4-layer board, about a foot big, i think i dont remember....im still making it smaller but its not done fully. you can check it out in the link here [how it's wired](#how-its-wired)
+the hat is a single 4-layer board, about a foot big...im still making it smaller but its not done fully. you can check it out in the link here [how it's wired](#how-its-wired)
 
 ## non-pcb wiring
 
 ```
 120 V AC wall
   └── GFCI outlet, manual reset
-        ├── pump, 30 W ................. always on, nothing switches it
+        ├── pump, 30 W ................. always on
         ├── 12 V 100 W PSU  ............ one rail for everything
         │     ├── LED strip, fan ....... switched via the hat's PCA9685 PWM driver
         │     └── 3 dosing pumps ....... 12 V, same PWM driver
-        └── Pi 5, over its own USB-C ... powered separately, per the Pi 5's own guidance
+        └── Pi 5, over its own USB-C ... powered separately
 ```
-
-the hat regulates its own 12 V-to-5 V and 5 V-to-3.3 V for its own load. none of that comes from
-the Pi's 5 V/3.3 V pins, and the hat never feeds the Pi's rail either.
 
 ## repo
 
 | | |
 |---|---|
-| [spec.md](spec.md) | the design. structure, water path, electronics, software |
-| [parameters.md](parameters.md) | every dimension, straight from the onshape variable studio |
-| [BOM.csv](BOM.csv) | the full bill of materials, in csv, every line linked. rendered as a table [below](#bill-of-materials) |
-| [CAD/](CAD/) | step exports of every printed part, plus the onshape part list |
-| [PCB/](PCB/) | raspberry pi 5 hat -- kicad source (`.kicad_pro`/`.kicad_sch`/`.kicad_pcb`), routed, 0 DRC errors, gerbers exported |
-| [pi/](pi/) | the control software -- `control.py`, `store.py`, `web.py`, the dashboard, systemd units |
-| [twoboard_vertical_garden/](twoboard_vertical_garden/) | the archived pi 4b + pico two-board design (kicad source, gerbers, pico firmware), superseded but kept for reference |
+| [parameters.md](parameters.md) | the dimensions on the onshape variable studio |
+| [BOM.csv](BOM.csv) | just a Bill Of Materials [below](#bill-of-materials) |
+| [CAD/](CAD/) | .STEP export + what each file is on the onshape |
+| [PCB/](PCB/) | raspberry pi 5 hat (`.kicad_pro`/`.kicad_sch`/`.kicad_pcb`)|
+| [pi/](pi/) | the pi firmware `control.py`, `store.py`, `web.py` |
+| [twoboard_vertical_garden/](twoboard_vertical_garden/) | the old pi 4b + pico two-board design (kicad source, gerbers, pico firmware)...im not building that but i left it as reference(was able to cut the costs a lot by switching to a single board design|
 
 ## bill of materials
 
