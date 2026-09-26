@@ -2,7 +2,8 @@
 
 step exports of every printed part. 00 to 05 were modelled in onshape, 06 to 08
 in cadquery and imported into onshape. `Tower Assembly` on onshape has all of them
-placed. pictures are in `../images`.
+placed, and `Tower Assembly.step` is that full assembly exported as one file.
+pictures are in `../images`.
 
 ## parts
 
