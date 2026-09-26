@@ -1,4 +1,4 @@
-# vertical hydroponic garden
+# Vertical Hydroponic Garden
 a fully MODULAR, 3D PRINTED hydroponic tower which needs NO EXTRA tubing because its designed to distribute the water evenly
 
 [![View PCB on KiCanvas](https://hack.club/pcb-badge)](https://kicanvas.org/?repo=https://github.com/DagaVedant/Hydroponic-Garden/tree/main/PCB/kicad/hat)
