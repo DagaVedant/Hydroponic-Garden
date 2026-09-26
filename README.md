@@ -14,7 +14,7 @@ i wanted a hydroponic tower thats one efficent, two scalable, and doesnt need to
 
 ![full tower assembly](images/tower-assembly.png)
 
-![the hat, 3D render straight off the routed board file](images/pcb-board.png)
+![pcb](images/pcb-board.png)
 
 [![View PCB on KiCanvas](https://hack.club/pcb-badge)](https://kicanvas.org/?repo=https://github.com/DagaVedant/Hydroponic-Garden/tree/main/PCB/kicad/hat)
 
