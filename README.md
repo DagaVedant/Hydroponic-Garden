@@ -2,7 +2,9 @@
 
 a modular 3d printed hydroponic tower, with one pump, one pipe, and no pumps per level. the shape of the part is the entire system
 
-> **[onshape](https://cad.onshape.com/documents/e7b652182e17b56d968bf971/w/74d572342f8ebf967bd0880e/e/9edb8eefc30c47e9fd32fa36?renderMode=0&uiState=6aa58dd8d5139ca4163fd859)** · **[spec](spec.md)** · **[parameters](parameters.md)**
+**[onshape](https://cad.onshape.com/documents/e7b652182e17b56d968bf971/w/74d572342f8ebf967bd0880e/e/9edb8eefc30c47e9fd32fa36?renderMode=0&uiState=6aa58dd8d5139ca4163fd859)**
+
+**[KiCanvas](https://kicanvas.org/?repo=https://github.com/DagaVedant/Hydroponic-Garden/tree/main/PCB/kicad/hat)**
 
 ## why
 
@@ -34,7 +36,6 @@ the hat is a single 4-layer board, about a foot big...im still making it smaller
 
 | | |
 |---|---|
-| [parameters.md](parameters.md) | the dimensions on the onshape variable studio |
 | [BOM.csv](BOM.csv) | just a Bill Of Materials [below](#bill-of-materials) |
 | [CAD/](CAD/) | .STEP export + what each file is on the onshape |
 | [PCB/](PCB/) | raspberry pi 5 hat (`.kicad_pro`/`.kicad_sch`/`.kicad_pcb`)|
