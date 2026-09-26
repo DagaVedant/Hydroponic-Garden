@@ -14,7 +14,7 @@ i wanted a hydroponic tower thats one efficent, two scalable, and doesnt need to
 
 ![pcb](images/pcb-board.png)
 
-the hat is a single 4-layer board, 217 x 226mm (down from an original 330 x 283mm). you can check it out in the link here [how it's wired](#how-its-wired)
+the hat is a single 4-layer board, 217 x 226mm (down from an original 330 x 283mm)
 
 ## non-pcb wiring
 
